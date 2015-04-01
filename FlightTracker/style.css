@@ -1,0 +1,264 @@
+/* http://meyerweb.com/eric/tools/css/reset/ 
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+th,td
+{
+font-family:arial;color:black;font-size:14px;
+padding:3px;
+}
+h3
+{
+padding: 0px;
+margin: 5px;
+font-family:arial;color:black;font-size:32px;
+}
+img
+{
+padding: 0px;
+margin: 0px;
+vertical-align: text-bottom;
+}
+u 
+{    
+border-bottom: 1px dotted #000;
+text-decoration: none;
+}
+
+caption {
+	/*coordinated marking to match cell's padding*/
+	margin-bottom:.5em;
+	/*centered so it doesn't blend in to other content*/
+	text-align:center;
+}
+p,fieldset {
+	/*so things don't run into each other*/
+	margin-bottom:1em;
+}
+
+#mainwrapper {
+	font: 10pt normal Arial, sans-serif;
+	height: auto;
+	text-align: center;
+	width: auto;
+}
+
+/* Image Box Style */
+#mainwrapper .box {
+	cursor: pointer;
+	height: 380px;
+	position: relative;
+	overflow: hidden;
+	width: 525px;
+}
+#mainwrapper .box img {
+	position: absolute;
+	left: 0;
+		-webkit-transition: all 300ms ease-out;
+		-moz-transition: all 300ms ease-out;
+		-o-transition: all 300ms ease-out;
+		-ms-transition: all 300ms ease-out;	
+	transition: all 300ms ease-out;
+}
+
+/* Caption Common Style */
+#mainwrapper .box .caption {
+	background-color: rgba(0,0,0,0.8);
+	position: absolute;
+	z-index: 100;
+		-webkit-transition: all 300ms ease-out;
+		-moz-transition: all 300ms ease-out;
+		-o-transition: all 300ms ease-out;
+		-ms-transition: all 300ms ease-out;	
+		transition: all 300ms ease-out;
+	left: 0;
+}
+
+/** Caption 1: Simple **/
+#mainwrapper .box .simple-caption {
+	height: 400px;
+	width: 520px;
+	display: block;
+	bottom: -382px;
+	text-align: left;
+	color:white;
+	padding: 5px 5px 5px 5px;
+}
+
+/** Simple Caption :hover Behaviour **/
+#mainwrapper .box:hover .simple-caption {
+	-moz-transform: translateY(-93%);
+	-o-transform: translateY(-93%);
+	-webkit-transform: translateY(-93%);
+	opacity: 1;
+	transform: translateY(-93%);
+}
+
+#mainwrapper .box:hover .scale-caption h3, #mainwrapper .box:hover .scale-caption p {
+	-moz-transform: translateX(200px);
+	-o-transform: translateX(200px);
+	-webkit-transform: translateX(200px);
+	transform: translateX(200px);
+}
+
+#container
+{
+    height:16px;
+    width:150px;
+    position:relative;
+}
+
+#image
+{    
+    position:absolute;
+    left:60;
+    top:0;
+}
+#text
+{
+    z-index:100;
+    position:absolute;    
+    color:black;
+    font-size:12px;
+    left:81px;
+}
+
+/* CSS Tree menu styles */
+ol.tree
+{
+	padding: 0 0 0 30px;
+	width: 245px;
+	border-style: double;
+	border-width: 5px;
+}
+	li 
+	{ 
+		position: relative; 
+		margin-left: -15px;
+		list-style: none;
+	}
+		li.blank a
+		{
+			color: #000000;
+			padding-left: 21px;
+			text-decoration: none;
+			display: block;
+			margin-left: -1px !important;
+		}
+		li.asteroid a
+		{
+			background: url(button_vessel_asteroid.png) 0 0 no-repeat;
+			color: #000000;
+			padding-left: 21px;
+			text-decoration: none;
+			display: block;
+			margin-left: -1px !important;
+		}
+		li.base a
+		{
+			background: url(button_vessel_base.png) 0 0 no-repeat;
+			color: #000000;
+			padding-left: 21px;
+			text-decoration: none;
+			display: block;
+			margin-left: -1px !important;
+		}
+		li.debris a
+		{
+			background: url(button_vessel_debris.png) 0 0 no-repeat;
+			color: #000000;
+			padding-left: 21px;
+			text-decoration: none;
+			display: block;
+			margin-left: -1px !important;
+		}
+		li.eva a
+		{
+			background: url(button_vessel_eva.png) 0 0 no-repeat;
+			color: #000000;
+			padding-left: 21px;
+			text-decoration: none;
+			display: block;
+			margin-left: -1px !important;
+		}
+		li.lander a
+		{
+			background: url(button_vessel_lander.png) 0 0 no-repeat;
+			color: #000000;
+			padding-left: 21px;
+			text-decoration: none;
+			display: block;
+			margin-left: -1px !important;
+		}
+		li.probe a
+		{
+			background: url(button_vessel_probe.png) 0 0 no-repeat;
+			color: #000000;
+			padding-left: 21px;
+			text-decoration: none;
+			display: block;
+			margin-left: -1px !important;
+		}
+		li.rover a
+		{
+			background: url(button_vessel_rover.png) 0 0 no-repeat;
+			color: #000000;
+			padding-left: 21px;
+			text-decoration: none;
+			display: block;
+			margin-left: -1px !important;
+		}
+		li.ship a
+		{
+			background: url(button_vessel_ship.png) 0 0 no-repeat;
+			color: #000000;
+			padding-left: 21px;
+			text-decoration: none;
+			display: block;
+			margin-left: -1px !important;
+		}
+		li.station a
+		{
+			background: url(button_vessel_station.png) 0 0 no-repeat;
+			color: #000000;
+			padding-left: 21px;
+			text-decoration: none;
+			display: block;
+			margin-left: -1px !important;
+		}
+	li input
+	{
+		position: absolute;
+		left: 0;
+		margin-left: 0;
+		opacity: 0;
+		z-index: 2;
+		cursor: pointer;
+		height: 1em;
+		width: 1em;
+		top: 0;
+	}
+		li input + ol
+		{
+			background: url(toggle-small-expand.png) 40px 0 no-repeat;
+			margin: -0.938em 0 0 -44px; /* 15px */
+			height: 1em;
+		}
+		li input + ol > li { display: none; margin-left: -14px !important; padding-left: 1px; }
+	li label
+	{
+		background: url(button_bodies.png) 15px 1px no-repeat;
+		cursor: pointer;
+		display: block;
+		padding-left: 37px;
+	}
+
+	li input:checked + ol
+	{
+		background: url(toggle-small.png) 40px 5px no-repeat;
+		margin: -1.25em 0 0 -44px; /* 20px */
+		padding: 1.563em 0 0 80px;
+		height: auto;
+	}
+		li input:checked + ol > li { display: block; margin: 0 0 0.125em;  /* 2px */}
+		li input:checked + ol > li:last-child { margin: 0 0 0.063em; /* 1px */ }
