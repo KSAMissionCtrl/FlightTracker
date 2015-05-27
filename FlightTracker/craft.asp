@@ -1,4 +1,4 @@
-<!-- turn word wrap off in your text editor-->
+<!-- code/comments not formatted for word wrap -->
 
 <!DOCTYPE html>
 <html>
@@ -8,31 +8,178 @@
   <link rel="shortcut icon" href="/images/KSA/favicon.ico" type="image/x-icon" />
 
   <title>KSA Flight Tracker</title>
-  <link href="style.css" rel="stylesheet" type="text/css" media="screen" />
 
   <!-- use this image link to force reddit to use a certain image for its thumbnail -->
-  <meta property="og:image" content="https://i.imgur.com/g2KVnpN.png" />
+  <meta property="og:image" content="http://i.imgur.com/HvT2d8f.png" />
+	<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 
+	<!-- CSS stylesheets -->
+	<link href="style.css" rel="stylesheet" type="text/css" media="screen" />
+	<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Roboto:900" />
+	<link rel="stylesheet" type="text/css" href="http://static.kerbalmaps.com/leaflet.css" />
+	<link rel="stylesheet" type="text/css" href="leaflet.label.css" />
+	<link rel="stylesheet" type="text/css" href="tipped.css" />
+
+	<!-- JS libraries -->
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+	<script type="text/javascript" src="leaflet.js"></script>
+	<script type="text/javascript" src="leafletembed.js"></script>
+	<script type="text/javascript" src="sylvester.js"></script>
+	<script type="text/javascript" src="sylvester.src.js"></script>
+	<script type="text/javascript" src="leaflet.label.js"></script>
+	<script type="text/javascript" src="numeral.min.js"></script>
+	<script type="text/javascript" src="tipped.js"></script>
+	
+	<script>
+		// determine whether this is a touchscreen device for proper tooltip handling
+		// http://ctrlq.org/code/19616-detect-touch-screen-javascript
+		function is_touch_device() {
+		 return (('ontouchstart' in window)
+					|| (navigator.MaxTouchPoints > 0)
+					|| (navigator.msMaxTouchPoints > 0));
+		}
+		
+		// take an amount of time in seconds and convert it to years, days, hours, minutes and seconds
+		// leave out any values that are not necessary (0y, 0d won't show, for example)
+		function formatTime(time) {
+			var years = 0;
+			var days = 0;
+			var hours = 0;
+			var minutes = 0;
+			var ydhms = "";
+
+			if (time >= 86400) {
+				days = Math.floor(time / 86400);
+				time -= days * 86400;
+				ydhms = days + "d, ";
+			}
+
+			if (days >= 365) {
+				years = Math.floor(days / 365);
+				days -= years * 365;
+				ydhms = years + "y " + days + "d, ";
+			}
+
+			if (time >= 3600) {
+				hours = Math.floor(time / 3600);
+				time -= hours * 3600;
+				ydhms += hours + "h ";
+			}
+
+			if (time >= 60) {
+				minutes = Math.floor(time / 60);
+				time -= minutes * 60;
+				ydhms += minutes + "m "
+			}
+
+			return ydhms += Math.floor(time) + "s";
+		}
+
+		// JQuery setup
+		$(document).ready(function(){
+			// shows the map again after it is hidden to show static orbits
+			$("#img").click(function(){
+					$("#map").css("visibility", "visible");
+			});
+			
+			// does away with the notification for orbital plot length
+			$("#msg").click(function(){
+					$("#msg").css("visibility", "hidden");
+			});
+			
+			// does away with the information box presented to redditor visitors
+			$("#close").click(function(){
+					$("#intro").css("visibility", "hidden");
+			});
+			
+			// behavior of the tooltip depends on the device
+			if (is_touch_device()) {
+				var showOpt = 'click';
+			} else {
+				var showOpt = 'mouseenter';
+			}
+			
+			// create all the tooltips using Tipped.js - http://www.tippedjs.com/
+			// separate class for updating tooltips so they don't mess with any static ones set to show over mouse cursor
+			Tipped.create('.tip', {size: 'small', showOn: showOpt, hideOnClickOutside: is_touch_device()});
+			Tipped.create('.tip-update', {size: 'small', showOn: showOpt, hideOnClickOutside: is_touch_device()});
+		});
+		
+		// purposefully delay the display of the map (and orbital plot message if need)
+		// this is so users can see the static plot exists first
+		setTimeout(function () { 
+			$("#map").css("visibility", "visible"); 
+			if (showMsg) { $("#msg").css("visibility", "visible"); }
+		}, 2500);
+			
+		// for retrieving URL query strings
+		// http://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
+		function getParameterByName(name) {
+				name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+				var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+						results = regex.exec(location.search);
+				return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+		}		
+	</script>	
 </head>
-<body>
+<body style="padding: 0; margin: 0;">
 
-<!-- VESSEL DATABASE INFORMATION
-     ===========================
-     
-     Craft Data recordset contains various general information about the vessel that is always displayed with every update.
-     Craft Resources recordset contains information on vessel resources, types and weight.
-     Flight Data recordset contains orbital information for when the craft is in space.
-     Crew Manifest recordset contains information on any astronauts currently aboard.
-     Craft Comms recordset contains information on any communications equipment aboard.
-     Ascent Data recordset contains telemetry information for vessel ascent to orbit after launch. (usage not required)
-     
-     All recordsets can be updated independently. If you add a record to Craft Data, you do not have to add a corresponding UT record to all the other recordsets
-     
-     See the various recordset display code sections below for further details.
+<!-- 
+CRAFT DATABASE INFORMATION
+==========================
+
+Planets recordset contains all planets in the Kerbol system, each given a name and assigned a unique ID. Can include any additional planets, not just stock
+This also contains all details needed for calculating orbital plots
+
+Moons recordset contains all moons in the Kerbol system, each given a name and assigned a unique ID. Their reference field links them to the planet they orbit.
+Like planets there can be additional moons besides stock
+This also contains all details needed for calculating orbital plots
+
+Crafts recordset contains data on crafts within certain SOIs
+See the menu creation code later on for details on the recordset
 -->
 
 <%
 'open craft database. "db" was prepended because without it for some reason I had trouble connecting
+db = "..\..\..\..\database\dbCrafts.mdb"
+Dim connBodies
+Set connBodies = Server.CreateObject("ADODB.Connection")
+sConnection2 = "Provider=Microsoft.Jet.OLEDB.4.0;" & _
+
+              "Data Source=" & server.mappath(db) &";" & _
+
+              "Persist Security Info=False"
+connBodies.Open(sConnection2)
+
+'create the tables
+set rsPlanets = Server.CreateObject("ADODB.recordset")
+set rsMoons = Server.CreateObject("ADODB.recordset")
+set rsCrafts = Server.CreateObject("ADODB.recordset")
+
+'query the data, ensure that bookmarking is enabled
+rsPlanets.open "select * from planets", connBodies, 1, 1
+rsMoons.open "select * from moons", connBodies, 1, 1
+rsCrafts.open "select * from crafts", connBodies, 1, 1
+%>
+
+<!-- 
+VESSEL DATABASE INFORMATION
+===========================
+
+Craft Data recordset contains various general information about the vessel that is always displayed with every update.
+Craft Resources recordset contains information on vessel resources, types and weight.
+Flight Data recordset contains orbital information for when the craft is in space.
+Crew Manifest recordset contains information on any astronauts currently aboard.
+Craft Comms recordset contains information on any communications equipment aboard.
+Ascent Data recordset contains telemetry information for vessel ascent to orbit after launch. (usage not required)
+
+All recordsets can be updated independently. If you add a record to Craft Data, you do not have to add a corresponding UT record to all the other recordsets
+
+See the various recordset display code sections below for further details.
+-->
+
+<%
+'open vessel database. "db" was prepended because without it for some reason I had trouble connecting
 db = "..\..\..\..\database\db" & request.querystring("db") & ".mdb"
 Dim connCraft, sConnection
 Set connCraft = Server.CreateObject("ADODB.Connection")
@@ -42,6 +189,21 @@ sConnection = "Provider=Microsoft.Jet.OLEDB.4.0;" & _
 
               "Persist Security Info=False"
 connCraft.Open(sConnection)
+
+'create the tables
+set rsCraft = Server.CreateObject("ADODB.recordset")
+set rsOrbit = Server.CreateObject("ADODB.recordset")
+set rsCrew = Server.CreateObject("ADODB.recordset")
+set rsResources = Server.CreateObject("ADODB.recordset")
+set rsComms = Server.CreateObject("ADODB.recordset")
+set rsAscent = Server.CreateObject("ADODB.recordset")
+
+'query the data
+rsCraft.open "select * from [craft data]", connCraft, 2
+rsResources.open "select * from [craft resources]", connCraft, 2
+rsOrbit.open "select * from [flight data]", connCraft, 2
+rsCrew.open "select * from [crew manifest]", connCraft, 2
+rsComms.open "select * from [craft comms]", connCraft, 2
 
 'determine if this DB has ascent information, older databases may not contain this table
 set adoxConn = CreateObject("ADOX.Catalog")  
@@ -54,44 +216,37 @@ for each table in adoxConn.tables
 		end if 
 next 
 
+'trying to open a recordset that does not exist will kill the page
+if bAscentData then rsAscent.open "select * from [ascent data]", connCraft, 2
+
 'calculate the time in seconds since epoch 0 when the game started
 fromDate = "16-Feb-2014 00:00:00"
 UT = datediff("s", fromdate, now())
 
-'what record are we looking to pull from the DB, the one that is prior to the current UT or a specific entry?
+'used to debug orbital plotting by adjusting the current UT
+if request.querystring("deltaut") then
+	UT = UT + request.querystring("deltaut")
+end if
+
+'what record are we looking to pull from the DB, the one that is most recent to the current UT or a specific entry?
 if request.querystring("ut") then
   'convert the text string into a number
 	dbUT = request.querystring("ut") * 1
 	
 	'do not allow people to abuse the UT query to peek ahead 
-	'a passcode query is required for when requesting a UT entry later than the current UT
+	'a passcode query is required when requesting a UT entry later than the current UT
 	if dbUT > UT then
 		if request.querystring("pass") <> "2725" then 
+			'passcode incorrect or not supplied. Revert back to current UT
 			dbUT = UT
 		end if
 	end if
 else
 	dbUT = UT
 end if
+'regardless of previous outcomes, moving forward all recordset quieries should be made via dbUT
 
-'get the craft tables
-set rsCraft = Server.CreateObject("ADODB.recordset")
-set rsOrbit = Server.CreateObject("ADODB.recordset")
-set rsCrew = Server.CreateObject("ADODB.recordset")
-set rsResources = Server.CreateObject("ADODB.recordset")
-set rsComms = Server.CreateObject("ADODB.recordset")
-set rsAscent = Server.CreateObject("ADODB.recordset")
-
-rsCraft.open "select * from [craft data]", connCraft, 2
-rsResources.open "select * from [craft resources]", connCraft, 2
-rsOrbit.open "select * from [flight data]", connCraft, 2
-rsCrew.open "select * from [crew manifest]", connCraft, 2
-rsComms.open "select * from [craft comms]", connCraft, 2
-
-'trying to open a recordset that does not exist will kill the page
-if bAscentData then rsAscent.open "select * from [ascent data]", connCraft, 2
-
-'point to the relevant record for this UT by finding one earlier
+'starting from the end, work back to find the first record earlier than or equal to the UT we are looking for
 if not rsCraft.eof then
 	rsCraft.MoveLast
 	do until rsCraft.fields.item("id") <= dbUT
@@ -111,12 +266,12 @@ nextevent = 0
 prevevent = 0
 rsCraft.movenext
 if not rsCraft.eof then
-  'remember "id" is the UT - I should really change that field name
- 	nextevent = rsCraft.fields.item("id")
+  'remember "id" is the UT
+	nextevent = rsCraft.fields.item("id")
 	nexteventdesc = rsCraft.fields.item("CraftDescTitle")
 end if
 rsCraft.moveprevious
-
+'done looking ahead, now look behind then reset pointer again to current record
 rsCraft.moveprevious
 if not rsCraft.bof then 
 	prevevent = rsCraft.fields.item("id")
@@ -125,12 +280,22 @@ end if
 rsCraft.movenext
 
 'are we auto-refreshing the page?
+'this feature will become fully deprecated once real-time launch telemetry is implemented
 if request.QueryString("r") then
+	'reset all 60s pages to 5min
+	if isnull(rsCraft.fields.item("RefreshRate")) then
+		refreshrate = 300
+	elseif rsCraft.fields.item("RefreshRate") = "60" then 
+		refreshrate = 300
+	else
+		refreshrate = rsCraft.fields.item("RefreshRate")
+	end if
+	
 	'if there is a future event, go to it on refresh. Otherwise, refresh the page normally
 	if nextevent and UT > nextevent then
-		Response.AddHeader "Refresh", rsCraft.fields.item("RefreshRate") & ";URL=http://" & Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL") & "?db=" & request.querystring("db") & "&r=true" & "&ut=" & nextevent
+		Response.AddHeader "Refresh", refreshrate & ";URL=http://" & Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL") & "?db=" & request.querystring("db") & "&r=true" & "&ut=" & nextevent
 	else
-		Response.AddHeader "Refresh", rsCraft.fields.item("RefreshRate") & ";URL=http://" & Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL") & "?" & request.querystring()
+		Response.AddHeader "Refresh", refreshrate & ";URL=http://" & Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL") & "?" & request.querystring()
 	end if
 end if
 
@@ -150,8 +315,8 @@ if UT >= nextevent and rsCraft.fields.item("Scrub") then
 		rsCraft.movenext
 		if not rsCraft.fields.item("Scrub") then 
 			fromdate = rsCraft.fields.item("LaunchDate")
-			'inform reader that displayed time for this record is not accurate
-			msg = "Actual launch time: " & rsCraft.fields.item("LaunchDateUTC") & " UTC&#013;"
+			'inform user that displayed time for this record is not accurate
+			msg = "Actual launch time: " & rsCraft.fields.item("LaunchDateUTC") & " UTC<br />"
 			tzero = true
 			exit do
 		end if
@@ -162,19 +327,21 @@ end if
 		
 'calculate the time since the start of the mission
 'this field could be blank if a new entry was created in Craft Data after a scrub with no new launch time
-if not isnull(rsCraft.fields.item("LaunchDate")) then MET = datediff("s", fromdate, now())
+if not isnull(rsCraft.fields.item("LaunchDate")) then origMET = datediff("s", fromdate, now())
 
-'is it prior to launch?
-if MET <= 0 then
-	MET = MET * -1
-	msg = "Mission yet to launch&#013;T-"
+'is it prior to or after launch?
+'save the original MET for use with JS update
+if origMET <= 0 then
+	MET = origMET * -1
+	msg = "Mission yet to launch<br />T-"
 else
-	msg = "Mission ongoing&#013;MET: "
+	MET = origMET
+	msg = "Mission ongoing<br />MET: "
 end if
 
-'redo if the mission is over
+'redo the message entirely if the mission is over
 if not isnull(rsCraft.fields.item("EndTime")) and UT >= rsCraft.fields.item("EndTime") then
-	msg = rsCraft.fields.item("EndMsg") & "&#013;MET: "
+	msg = rsCraft.fields.item("EndMsg") & "<br />MET: "
 	MET = datediff("s", rsCraft.fields.item("LaunchDate"), rsCraft.fields.item("EndDate"))
 end if
 
@@ -183,47 +350,64 @@ years = 0
 days = 0
 hours = 0
 minutes = 0
+ydhms = ""
 
 if MET >= 86400 then
 	days = int(MET / 86400)
 	MET = MET - (days * 86400)
+	ydhms = days & "d, "
 end if
 
 if days >= 365 then
-	years = int(MET / 365)
-	days = days - (years * 86400)
+	years = int(days / 365)
+	days = days - (years * 365)
+	ydhms = years & "y " & days & "d, "
 end if
 
 if MET >= 3600 then
 	hours = int(MET / 3600)
 	MET = MET - (hours * 3600)
+	ydhms = ydhms & hours & "h "
 end if
 
 if MET >= 60 then
 	minutes = int(MET / 60)
 	MET = MET - (minutes * 60)
+	ydhms = ydhms & minutes & "m "
 end if
 
-seconds = MET
+if MET > 0 then
+	seconds = MET
+	ydhms = ydhms & round(seconds,2) & "s"
+end if
 
 'we need to compose the pop-up text for a variety of situations
 datestamp = "UTC"
 if isnull(rsCraft.fields.item("LaunchDate")) or not tzero then
   'launch has been scrubbed but a new launch time has not yet been announced
-	launchmsg = "Awaiting new launch time'"
+	launchmsg = "To Be Determined"
 	if isnull(rsCraft.fields.item("LaunchDate")) then	datestamp = ""
 else
   'launch is a go!
-	launchmsg = msg & years & "y " & days & "d, " & hours & "h:" & minutes & "m:" & seconds & "s'"
+	launchmsg = msg & ydhms
 end if 
+
+'make note of whether this mission has ended or not, to disable tooltip updates
+'any of the 3 end mission fields will do, all will be filled out if mission is over
+'note also we should not update if there is no time to update
+bUpdateMET = true
+if not isnull(rsCraft.fields.item("EndTime")) or launchmsg = "To Be Determined" or not tzero then bUpdateMET = false
 
 'depending on whether we are in a pop-out window or normal page decides how page is formatted
 if request.querystring("popout") then
 	response.write("<div style='width: 100%; overflow: hidden;'>")
 else
-	response.write("<div style='width: 1145px; overflow: hidden; margin-left: auto; margin-right: auto; '>")
+	response.write("<div style='width: 1145px; overflow: hidden; margin-left: auto; margin-right: auto; position: relative'>")
 end if
 %>
+
+<!-- area for displaying text with JQuery for debugging purposes -->
+<div id="debug" style="position: absolute; top: 38px; left: 0px;"></div>
 
 <!-- create the page section for craft information -->
 <div style="width: 840px; float: left;">
@@ -232,35 +416,36 @@ end if
 <center>
 <h3><%response.write rsCraft.fields.item("CraftName")%></h3>
 
-<!-- main table for craft image and data fields -->
+<!-- main table for craft image, data fields and data display -->
 <table style="width:100%">
 <tr>
 	<td>
 	<table style="width:100%">
 		<tr>
 
-      <!-- CRAFT DATA FIELDS
-           =================
-           
-           ID - the time in seconds from 0 epoch at which this change occurs (UT)
-           RefreshRate - how often, in seconds, to refresh the page to possibly display new data
-           LaunchDateTerm - The text that will appear before the launch date UTC time (too many characters will cause text wrap)
-           [launchDate] - the date/time of the launch in VBScript date expression format: dd-mmm-yyyy hh:mm:ss (local time)
-           Scrub - whether this date will be invalidated by a scrubbed launch (True) or not (False). Consecutive scrubs okay
-           [EndTime] - time in UT the mission ends (if included, must be included in every record)
-           [EndDate] - time in VBScript date expression the mission ends (if included, must be included in every record)
-           [EndMsg] - message to display in pop-up text over launch time to explain mission ending (if included, must be included in every record)
-           CraftName - name of the craft to display at the top of the page
-           CraftImg - URL that points to the 525x380 image of the craft showing its current state (configuration, SOI)
-           CraftDescTitle - a short event description that will appear at the bottom of the craft image, at the top of the rollup text
-           CraftDescContent - HTML code to fill in the rollup text box that appears when user hovers over the craft image
-           LaunchDateUTC - the text that will appear for craft launch time, given in UTC with format mm/dd/yy @ hh:mm:ss
-           LastUpdate - the text that will appear for most recent update, given in UTC with format mm/dd/yy @ hh:mm:ss
-           [MissionReport] - URL link to the mission report (if included, must be included in every record)
-           [MissionReportTitle] - text describing mission that appears in pop-up when hovered over link (if included, must be included in every record)
-           [NextEventTitle] - text that appears over Next image if a future event is scheduled
-           ImgDataCode - HTML that shows an image infographic below the craft information in an area of 760x380
-           [DistanceTraveled] - the distance (in km) the spacecraft has traveled since launch
+      <!-- 
+      CRAFT DATA FIELDS
+			=================
+
+			ID - the time in seconds from 0 epoch at which this update occurs (UT)
+			RefreshRate - how often, in seconds, to refresh the page to possibly display new data
+			LaunchDateTerm - The text that will appear before the launch date UTC time (too many characters will cause text wrap)
+			[launchDate] - the date/time of the launch in VBScript date expression format: dd-mmm-yyyy hh:mm:ss (local time)
+			Scrub - whether this date will be invalidated by a scrubbed launch (True) or not (False). Consecutive scrubs okay
+			[EndTime] - time in UT the mission ends (if included, must be included in every record)
+			[EndDate] - time in VBScript date expression the mission ends (if included, must be included in every record)
+			[EndMsg] - message to display in pop-up text over launch time to explain mission ending (if included, must be included in every record)
+			CraftName - name of the craft to display at the top of the page
+			CraftImg - URL that points to the 525x380 image of the craft showing its current state (configuration, SOI)
+			CraftDescTitle - a short event description that will appear at the bottom of the craft image, at the top of the rollup text
+			CraftDescContent - HTML code to fill in the rollup text box that appears when user hovers over the craft image
+			LaunchDateUTC - the text that will appear for craft launch time, given in UTC with format mm/dd/yy @ hh:mm:ss
+			LastUpdate - the text that will appear for most recent update, given in UTC with format mm/dd/yy @ hh:mm:ss
+			[MissionReport] - URL link to the mission report (if included, must be included in every record)
+			[MissionReportTitle] - text describing mission that appears in pop-up when hovered over link (if included, must be included in every record)
+			[NextEventTitle] - text that appears over Next image if a future event is scheduled
+			[ImgDataCode] - HTML that shows an image infographic below the craft information in an area of 760x380. Special formatting is also recognized
+			[DistanceTraveled] - the total (not change in) distance (in km) the spacecraft has traveled since launch
       -->
       
       <!-- CSS slide-up caption image box -->
@@ -280,19 +465,38 @@ end if
       <!-- information box for orbital data, ascent data, resources, crew, etc -->
 			<td style="width:36%"  valign="top">
 				<table border="1" style="width:100%;">
-					<tr><td><b><%response.write rsCraft.fields.item("LaunchDateTerm")%>:</b> <span style="cursor:help" <%response.write("title='" & launchmsg)%>><u><%response.write(rsCraft.fields.item("LaunchDateUTC") & " " & datestamp)%></u></span></td></tr>
+
+					<!-- start time -->
+					<tr>
+						<td>
+							<b><%response.write rsCraft.fields.item("LaunchDateTerm")%>:</b> 
+							<!-- this tooltip can be dynamically updated -->
+							<div id="met" style="display: none"><%response.write(launchmsg)%></div>
+							<span style="cursor:help" class="tip-update" data-tipped-options="inline: 'met'">
+								<u><%response.write(rsCraft.fields.item("LaunchDateUTC") & " " & datestamp)%></u>
+							</span>
+						</td>
+					</tr>
 					
-					<!-- FLIGHT DATA FIELDS
-               ==================
-               ID - the time in seconds from 0 epoch at which this change occurs (UT)
-               [Avg Velocity] - the average velocity (calculated from Ap/Pe velocities) of the craft along current *trajectory* (not necessarily an orbit)
-               [VelocityPe] - the speed of the craft at lowest point along current trajectory
-               [VelocityAp] - the speed of the craft at highest point along current trajectory
-               [Periapsis] - the altitude, in km, of lowest point along current trajectory
-               [Apoapsis] - the altitude, in km, of highest point along current trajectory
-               [Eccentricity] - eccentricity value of the current trajectory
-               [inclination] - inclination value of the current trajectory in degrees
-               [Orbital Period] - number of seconds to complete one orbit
+					<!-- 
+					FLIGHT DATA FIELDS
+					==================
+					ID - the time in seconds from 0 epoch at which this change occurs (UT)
+					[Avg Velocity] - the average velocity (calculated from Ap/Pe velocities) of the craft along *current trajectory* (i.e. hyperbolic)
+					[VelocityPe] - the speed of the craft at lowest point along current trajectory
+					[VelocityAp] - the speed of the craft at highest point along current trajectory
+					[Periapsis] - the altitude, in km, of lowest point along current trajectory
+					[Apoapsis] - the altitude, in km, of highest point along current trajectory
+					[Eccentricity] - eccentricity value of the current trajectory
+					[inclination] - inclination value of the current trajectory in degrees
+					[Orbital Period] - number of seconds to complete one orbit
+					[SMA] - semi-major axis of the current trajectory. Required only for real-time orbital display
+					[RAAN] - right ascension of ascending node of the current trajectory. Required only for real-time orbital display
+					[Arg] - argument of periapsis of the current trajectory. Required only for real-time orbital display
+					[Mean] - mean anomaly of the current trajectory. Required only for real-time orbital display
+					[Eph] - UT at which the previous Keplerian properties are valid. Not to be confused with the ID, which is the UT of the update. Required only for real-time orbital display
+					
+					NOTE: fields can be text, but there should be NO commas included in any of these values. Numbers will be formatted via ASP/JS
           -->
                
 					<%
@@ -307,22 +511,23 @@ end if
 						Loop
 						
 						'only execute further if we found a record earlier than this UT
-						'print out all fields, check for any blank records
+						'print out all fields, check for and handle any blank records
 						if not rsOrbit.bof then
-							response.write("<tr><td><b><span style='cursor:help' title='Periapsis: ")
+							response.write("<tr><td><b><span style='cursor:help' class='tip' title='Periapsis: ")
 							if isnull(rsOrbit.fields.item("VelocityPe")) then
 								response.write("N/A")
 							else
 								response.write rsOrbit.fields.item("VelocityPe")
 								response.write("km/s")
 							end if
-							response.write("&#013;Apoapsis: ")
+							response.write("<br />Apoapsis: ")
 							if isnull(rsOrbit.fields.item("VelocityAp")) then
 								response.write("N/A")
 							else
 								response.write rsOrbit.fields.item("VelocityAp")
 								response.write("km/s")
 							end if
+							'technically this could be calculated, but useful to have as a reference w/o needing to
 							response.write("'><u>Avg Velocity</u><span>:</b> ")
 							if isnull(rsOrbit.fields.item("Avg Velocity")) then
 								response.write("N/A")
@@ -334,57 +539,96 @@ end if
 							if isnull(rsOrbit.fields.item("Periapsis")) then
 								response.write("N/A")
 							else
-								response.write rsOrbit.fields.item("Periapsis")
+								response.write formatnumber(rsOrbit.fields.item("Periapsis")*1, 3)
 								response.write("km")
 							end if
 							response.write("</td></tr><tr><td><b>Apoapsis:</b> ")
 							if isnull(rsOrbit.fields.item("Apoapsis")) then
 								response.write("N/A")
 							else
-								response.write rsOrbit.fields.item("Apoapsis")
+								response.write formatnumber(rsOrbit.fields.item("Apoapsis")*1, 3)
 								response.write("km")
 							end if
 							response.write("</td></tr><tr><td><b>Eccentricity:</b> ")
 							if isnull(rsOrbit.fields.item("Eccentricity")) then
 								response.write("N/A")
 							else
-								response.write rsOrbit.fields.item("Eccentricity")
+								response.write formatnumber(rsOrbit.fields.item("Eccentricity")*1, 6)
 							end if
 							response.write("</td></tr><tr><td><b>Inclination:</b> ")
 							if isnull(rsOrbit.fields.item("Inclination")) then
 								response.write("N/A")
 							else
-								response.write rsOrbit.fields.item("Inclination")
-								response.write("°")
+								response.write formatnumber(rsOrbit.fields.item("Inclination")*1, 3)
+								response.write("&deg;")
 							end if
 							response.write("</td></tr><tr><td><b>Orbital Period:</b> ")
 							if isnull(rsOrbit.fields.item("Orbital Period")) then
-								response.write("N/A")
+								response.write("<u><span style='cursor:help' class='tip' title='Lack of orbital period means craft is on a hyperbolic/SOI-crossing trajectory<br />Ap/Pe refer to the lowest and highest points of the current trajectory'>N/A</span></u>")
 							else
-								response.write rsOrbit.fields.item("Orbital Period")
+								'convert from seconds to yy:ddd:hh:mm:ss
+								years = 0
+								days = 0
+								hours = 0
+								minutes = 0
+								period = rsOrbit.fields.item("Orbital Period")
+								ydhms = ""
+
+								if period >= 86400 then
+									days = int(period / 86400)
+									period = period - (days * 86400)
+									ydhms = days & "d, "
+								end if
+
+								if days >= 365 then
+									years = int(days / 365)
+									days = days - (years * 365)
+									ydhms = years & "y " & days & "d, "
+								end if
+
+								if period >= 3600 then
+									hours = int(period / 3600)
+									period = period - (hours * 3600)
+									ydhms = ydhms & hours & "h "
+								end if
+
+								if period >= 60 then
+									minutes = int(period / 60)
+									period = period - (minutes * 60)
+									ydhms = ydhms & minutes & "m "
+								end if
+
+								if period > 0 then
+									seconds = period
+									ydhms = ydhms & round(seconds,2) & "s"
+								end if
+								response.write("<u><span style='cursor:help' class='tip' title='" & ydhms & "'>")
+								response.write formatnumber(rsOrbit.fields.item("Orbital Period")*1, 2)
 								response.write("s")
+								response.write("</span></u>")
 							end if
 							response.write("</td></tr>")
 						end if
 					end if
 					%>
 					
-					<!-- ASCENT DATA FIELDS
-               ==================
-               
-               ID - the time in seconds from 0 epoch at which this change occurs (UT)
-               Velocity - the current *orbital* velocity of the craft, in km/s
-               TWR - the current acceleration of the craft
-               Altitude - the current altitude of the craft above sea level in km
-               Apoapsis - the current apokee of the craft in km
-               Inclination - the current inclination of the craft in degrees
-               Mass - the current mass of the craft in tonnes
-               [Q] - the current Q, or aerodynamic pressure, of the craft in pascals (using FAR). When omitted, such as out of the atmosphere, Periapsis is used instead
-               [Periapsis] - current perikee of the craft in km. If omitted, Q field must be used
-               SolidFuel - the % of solid fuel propellant remaining (total or per-stage is up to user) from 0-1
-               LiquidFuel - the % of liquid fuel propellant remaining (and thus equal to remaining oxidizer) from 0-1
-               DstDownrange - the distance the rocket has traveled over land from the launch point in km (using VOID)
-               DstTraveled - the distance the rocket has traveled along its flight path from the launch point in km (using Persistent Trails)
+					<!-- 
+					ASCENT DATA FIELDS
+					==================
+
+					ID - the time in seconds from 0 epoch at which this change occurs (UT)
+					Velocity - the current *orbital* velocity of the craft, in km/s
+					TWR - the current acceleration of the craft, in Gs
+					Altitude - the current altitude of the craft above sea level in km
+					Apoapsis - the current apokee of the craft in km
+					Inclination - the current inclination of the craft in degrees
+					Mass - the current mass of the craft in tonnes
+					[Q] - the current Q, or aerodynamic pressure, of the craft in pascals (using FAR). When omitted, such as out of the atmosphere, Periapsis is used instead
+					[Periapsis] - current perikee of the craft in km. If omitted, Q field must be used
+					SolidFuel - the % of solid fuel propellant remaining (total or per-stage is up to user) from 0-1
+					LiquidFuel - the % of liquid fuel propellant remaining (and thus equal to remaining oxidizer) from 0-1
+					DstDownrange - the distance the rocket has traveled over land from the launch point in km (using VOID)
+					DstTraveled - the distance the rocket has traveled along its flight path from the launch point in km (using Persistent Trails)
           -->
           
 					<%
@@ -403,7 +647,8 @@ end if
 					
 							'only execute further if we found a record earlier than this UT
 							'and only if this record is older than the orbital data
-							if not rsAscent.bof and rsOrbit.bof then
+							'and only if we have data
+							if not rsAscent.bof and rsOrbit.bof and not isnull(rsAscent.fields.item("Velocity")) then
 								response.write("<tr><td><b>Velocity:</b> ")
 								response.write rsAscent.fields.item("Velocity")
 								response.write("km/s (")
@@ -423,8 +668,7 @@ end if
 									response.write("</td></tr><tr><td><b>Periapsis:</b> ")
 									response.write rsAscent.fields.item("Periapsis")
 									response.write("km")
-								end if
-								if not isnull(rsAscent.fields.item("Q")) then
+								else
 									response.write("</td></tr><tr><td><b>Atmo Press (Q):</b> ")
 									response.write rsAscent.fields.item("Q")
 									response.write("Pa")
@@ -432,7 +676,7 @@ end if
 
 								response.write("</td></tr><tr><td><b>Inclination:</b> ")
 								response.write rsAscent.fields.item("Inclination")
-								response.write("°")
+								response.write("&deg;")
 
 								response.write("</td></tr><tr><td><b>Total Mass:</b> ")
 								response.write rsAscent.fields.item("Mass")
@@ -467,18 +711,19 @@ end if
 					end if
 					%>
 					
-					<!-- CREW MANIFEST FIELDS
-               ====================
-               
-               ID - the time in seconds from 0 epoch at which this change occurs (UT)
-               Hide - should be used to remove this data from display to allow room for ascent data
-               CrewName# - the name of the crew member to appear in pop-up text for crew icon
-               CrewRoster# - the URL of the crew member's roster page
-               
-               Adding additional CN#/CR# field pairs will create additional crew members listed for the vessel
-     
-							 CN/CR fields can be extended as much as needed, maintaining the paired values. They do not need to be named CN2/CR2, CN3/CR3 etc. 
-							 They do not need to contain a value, so long as any empty fields are at the end of a continuous run of field pairs
+					<!-- 
+					CREW MANIFEST FIELDS
+					====================
+
+					ID - the time in seconds from 0 epoch at which this change occurs (UT)
+					Hide - should be used to remove this data from display to allow room for ascent data
+					CrewName# - the name of the crew member to appear in pop-up text for crew icon
+					CrewRoster# - the URL of the crew member's roster page
+
+					Adding additional CN#/CR# field pairs will create additional crew members listed for the vessel
+
+					CN/CR fields can be extended as much as needed, maintaining the paired values. They do not need to be named CN2/CR2, CN3/CR3 etc. 
+					They do not need to contain a value, so long as any empty fields are at the end of a continuous run of field pairs
           -->
           
           <%
@@ -525,35 +770,36 @@ end if
 									closemsg = ""
 								end if
 								
-								response.write("<a " & closemsg & " target='_blank' href='")
-								response.write rsCrew.fields.item(x+1)
-								response.write("'><img src='http://www.blade-edge.com/images/KSA/Flights/favicon.ico' title='")
+								response.write("<span class='tip' title='")
 								response.write rsCrew.fields.item(x)
-								response.write("'></a> ")
+								response.write("'><a " & closemsg & " target='_blank' href='")
+								response.write rsCrew.fields.item(x+1)
+								response.write("'><img src='http://www.blade-edge.com/images/KSA/Flights/favicon.ico'></a></span> ")
 							next
 							response.write("</td></tr>")
 						else
-              'handles a special case scenario
+              'handles a special case scenario... I do not recall exactly what
 							if bShow then response.write("<tr><td><b>Crew:</b> None</td></tr>")
 						end if
 					end if
 					%>
 					
-					<!-- CRAFT RESOURCES FIELDS
-               ======================
-               
-               ID - the time in seconds from 0 epoch at which this change occurs (UT)
-               Hide - should be used to remove this data from display to allow room for ascent data
-               DeltaV - the total amount of delta-v remaining for the craft, in km/s
-               TotalMass - the mass of the entire craft, including resources, in tonnes
-               ResourceMass - the mass of all resources aboard the ship that have it, in tonnes
-               ResourceName# - the name of a resource that corresponds to a PNG image file on the server
-               ResourceTitle# - the text that will appear when the resource image is hovered over
-               
-               Adding additional RN#/RT# field pairs will create additional resources listed for the vessel
-     
-							 RN/RT fields can be extended as much as needed, maintaining the paired values. They do not need to be named RN2/RT2, RN3/RT3 etc. 
-							 They do not need to contain a value, so long as any empty fields are at the end of a continuous run of field pairs               
+					<!-- 
+					CRAFT RESOURCES FIELDS
+					======================
+
+					ID - the time in seconds from 0 epoch at which this change occurs (UT)
+					Hide - should be used to remove this data from display to allow room for ascent data
+					DeltaV - the total amount of delta-v remaining for the craft, in km/s
+					TotalMass - the mass of the entire craft, including resources, in tonnes
+					ResourceMass - the mass of all resources aboard the ship that have it, in tonnes
+					ResourceName# - the name of a resource that corresponds to a PNG image file on the server
+					ResourceTitle# - the text that will appear when the resource image is hovered over
+
+					Adding additional RN#/RT# field pairs will create additional resources listed for the vessel
+
+					RN/RT fields can be extended as much as needed, maintaining the paired values. They do not need to be named RN2/RT2, RN3/RT3 etc. 
+					They do not need to contain a value, so long as any empty fields are at the end of a continuous run of field pairs               
           -->
           
           <%
@@ -578,11 +824,11 @@ end if
 						end if
 						
 						if bShow then
-							response.write("<tr><td><b><span style='cursor:help' title='Total &Delta;v: ")
+							response.write("<tr><td><b><span style='cursor:help' class='tip' title='Total &Delta;v: ")
 							response.write rsResources.fields.item("DeltaV")
-							response.write("km/s&#013;Total mass: ")
+							response.write("km/s<br />Total mass: ")
 							response.write rsResources.fields.item("TotalMass")
-							response.write("t&#013;Resource mass: ")
+							response.write("t<br />Resource mass: ")
 							response.write rsResources.fields.item("ResourceMass")
 							response.write("t'><u>Resources</u><span>:</b> ")
 							
@@ -598,30 +844,33 @@ end if
 									if x = col then response.write "None"
 									exit for
 								end if
-								response.write("<span style='cursor:help'><img src='http://www.blade-edge.com/images/KSA/Flights/")
+								response.write("<span style='cursor:help' class='tip' title='")
+								'prior to using Tipped.js for tooltips a newline character was used for line breaks. This needs to be replaced
+								str = replace(rsResources.fields.item(x+1), "&#013;", "<br />")
+								response.write str
+								response.write("'><img src='http://www.blade-edge.com/images/KSA/Flights/")
 								response.write rsResources.fields.item(x)
-								response.write(".png' title='")
-								response.write rsResources.fields.item(x+1)
-								response.write("'></span> ")
+								response.write(".png'></span> ")
 							next
 							response.write("</td></tr>")
 						end if
 					end if
 					%>
 					
-					<!-- CRAFT COMMS FIELDS
-               ==================
-               
-               ID - the time in seconds from 0 epoch at which this change occurs (UT)
-               Hide - should be used to remove this data from display to allow room for ascent data
-               [SignalDelay] - if using RemoteTech, signal delay is reported in seconds
-               CommType# - the name of a comm unit that corresponds to a PNG image file on the server
-               CommDesc# - the text that will appear when the comm image is hovered over
-              
-               Adding additional CT#/CD# field pairs will create additional comm units listed for the vessel
-     
-							 CT/CD fields can be extended as much as needed, maintaining the paired values. They do not need to be named CT2/CD2, CT3/CD3 etc. 
-							 They do not need to contain a value, so long as any empty fields are at the end of a continuous run of field pairs               
+					<!-- 
+					CRAFT COMMS FIELDS
+					==================
+
+					ID - the time in seconds from 0 epoch at which this change occurs (UT)
+					Hide - should be used to remove this data from display to allow room for ascent data
+					[SignalDelay] - if using RemoteTech, max possible signal delay for this time is reported in seconds
+					CommType# - the name of a comm unit that corresponds to a PNG image file on the server
+					CommDesc# - the text that will appear when the comm image is hovered over
+
+					Adding additional CT#/CD# field pairs will create additional comm units listed for the vessel
+
+					CT/CD fields can be extended as much as needed, maintaining the paired values. They do not need to be named CT2/CD2, CT3/CD3 etc. 
+					They do not need to contain a value, so long as any empty fields are at the end of a continuous run of field pairs               
           -->
           
           <%
@@ -646,8 +895,7 @@ end if
 						end if
 
 						if bShow then
-							response.write("<tr><td><b><span style='cursor:help' title='Signal delay (max): ")
-
+							response.write("<tr><td><b><span style='cursor:help' class='tip' title='Signal delay (max): ")
               'can leave signal delay field empty if RT not installed
               'or when connected direct to mission control prior to launch or when no connection is present
 							if isnull(rsComms.fields.item("SignalDelay")) then
@@ -669,11 +917,13 @@ end if
 									if x = col then response.write "None"
 									exit for
 								end if 
-								response.write("<span style='cursor:help'><img src='http://www.blade-edge.com/images/KSA/Flights/")
+								response.write("<span style='cursor:help' class='tip' title='")
+								'prior to using Tipped.js for tooltips a newline character was used for line breaks. This needs to be replaced
+								str = replace(rsComms.fields.item(x+1), "&#013;", "<br />")
+								response.write str
+								response.write("'><img src='http://www.blade-edge.com/images/KSA/Flights/")
 								response.write rsComms.fields.item(x)
-								response.write(".png' title='")
-								response.write rsComms.fields.item(x+1)
-								response.write("'></span> ")
+								response.write(".png'></span> ")
 							next
 							response.write("</td></tr>")
 						end if
@@ -683,12 +933,44 @@ end if
 					<tr><td><b>Last Update:</b>
 					
 					<%
+					'we need dummy values to assign to JS later regardless of whether they are needed or not
+					dstTraveled = 0
+					bEstDst = false
 					if bDstTraveled then
-            'field can be left empty, such as prior to launch
+            'field can be left empty, such as prior to or during launch
 						if not isnull(rsCraft.fields.item("DistanceTraveled")) then
-							response.write("<span style='cursor:help' title='Distance Traveled: ")
-							response.write rsCraft.fields.item("DistanceTraveled")
-							response.write("km'><u>")
+							strAccDst = "Total Distance Traveled as of Last Update: " & formatnumber(rsCraft.fields.item("DistanceTraveled")*1, 0) & "km"
+														
+							'only estimate distance if we are the last record or the current record for the current time
+							rsCrafts.find("db='" & request.querystring("db") & "'")
+							'rover check is for until I decide how to handle updating rover travel distances
+							if rsCrafts.fields.item("Type") <> "rover" then
+								rsCraft.movenext
+								if rsCraft.eof then
+									bEstDst = true
+								else
+									if rsCraft.fields.item("id") > UT then
+										bEstDst = true
+									end if
+								end if
+								rsCraft.moveprevious
+							end if
+							
+							'string starts empty. If we have nothing more to add, nothing more will show in tooltip
+							strEstDst = ""
+							if bEstDst then
+								if not isnull(rsOrbit.fields.item("Avg Velocity")) then
+									strEstDst = "<br />Estimated Current Total Distance Traveled: "
+									prevUT = rsCraft.fields.item("id")
+									'distance is estimated based on the average speed
+									dstTraveled = round((rsCraft.fields.item("DistanceTraveled")*1) + (rsOrbit.fields.item("Avg Velocity") * (UT - prevUT)))
+									strEstDst = strEstDst & FormatNumber(dstTraveled, 0) & "km"
+								end if
+							end if
+							rsCrafts.movefirst
+
+							response.write("<div id='distance' style='display: none'>" & strAccDst & strEstDst & "</div>")
+							response.write("<span style='cursor:help' class='tip-update' data-tipped-options=""inline: 'distance'""><u>")
 							response.write(rsCraft.fields.item("LastUpdate") & " UTC")
 							response.write("</u></span>")
 						else
@@ -706,57 +988,66 @@ end if
 					'there a previous event?
 					if prevevent then
 						'reload the page on click and force an earlier UT
-						response.write("<a href='http://")
+						response.write("<span class='tip' title='")
+						response.write preveventdesc
+						response.write("'><a href='http://")
 						response.write(Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL"))
 						response.write("?db=" & request.querystring("db") & "&ut=" & prevevent)
-						if request.querystring("pass") = "2725" then response.write("&pass=2725")
-						response.write("'><img src='http://www.blade-edge.com/images/KSA/Flights/prev.png' title='")
-						response.write preveventdesc
-						response.write("'></a> ")
+						if len(request.querystring("filter")) then response.write("&filter=" & request.querystring("filter"))
+						if len(request.querystring("pass")) then response.write("&pass=" & request.querystring("pass"))
+						response.write("'><img src='http://www.blade-edge.com/images/KSA/Flights/prev.png'></a></span> ")
 					else
-						response.write("<span style='cursor:help'><img src='http://www.blade-edge.com/images/KSA/Flights/prev.png' title='No previous events'></span> ")
+						response.write("<span style='cursor:help' class='tip' title='No previous events'><img src='http://www.blade-edge.com/images/KSA/Flights/prev.png'></span> ")
 					end if
 					
 					'whether we need to close the window when going to an external link
+					'if user chose to enable refresh, we will keep it open, assuming they are keeping tabs on it for some reason
 					close = " "
 					if request.querystring("r") = "" then close = " onclick='window.close()' "
 					
 					'what is the current status of the mission?
 					'not really a fan of current implementation - requires these fields set for every record
 					if not isnull(rsCraft.fields.item("MissionReport")) then
-						response.write("<b><a" & close & "target='_blank' href='")
-						response.write rsCraft.fields.item("MissionReport")
-						response.write("' title='")
+						response.write("<span class='tip' title='")
 						response.write rsCraft.fields.item("MissionReportTitle")
-						response.write("'>Mission Report</a></b> ")
+						response.write("'><b><a" & close & "target='_blank' href='")
+						response.write rsCraft.fields.item("MissionReport")
+						response.write("'>Mission Report</a></b></span> ")
 					elseif UT >= rsCraft.fields.item("EndTime") then
-						response.write("<b><a" & close & "target='_blank' href='https://twitter.com/KSA_MissionCtrl' title='Mission report coming soon&#013;Updates on twitter'>Mission Concluded</a></b> ")
+						response.write("<b><span class='tip' title='Mission report coming soon<br />Updates on twitter'><a" & close & "target='_blank' href='https://twitter.com/KSA_MissionCtrl'>Mission Concluded</a></span></b> ")
 					else
-						response.write("<b><a" & close & "target='_blank' href='https://twitter.com/KSA_MissionCtrl' title='Updates on twitter'>Mission Ongoing</a></b> ")
+						response.write("<b><span class='tip' title='Updates on twitter'><a" & close & "target='_blank' href='https://twitter.com/KSA_MissionCtrl'>Mission Ongoing</a></span></b> ")
 					end if
 					
 					'is there a future event?
 					if nextevent then
             'if we have passed that event time we can let people go to it
 						if UT >= nextevent then
-							response.write("<a href='http://")
+							response.write("<span class='tip' title='")
+							response.write nexteventdesc
+							response.write("'><a href='http://")
 							response.write(Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL"))
 							response.write("?db=" & request.querystring("db") & "&ut=" & nextevent)
-							response.write("'><img src='http://www.blade-edge.com/images/KSA/Flights/next.png' title='")
-							response.write nexteventdesc
-							response.write("'></a> ")
+							if len(request.querystring("filter")) then response.write("&filter=" & request.querystring("filter"))
+							response.write("'><img src='http://www.blade-edge.com/images/KSA/Flights/next.png'></a></span> ")
 						'otherwise do not link to next event
 						else
-							response.write("<span style='cursor:help'><img src='http://www.blade-edge.com/images/KSA/Flights/next.png' title='")
+							response.write("<span style='cursor:help' class='tip' title='")
 							if not isnull(rsCraft.fields.item("NextEventTitle")) then
 								response.write rsCraft.fields.item("NextEventTitle")
 							else
 								response.write "No future events"
 							end if
-							response.write("'></span>")
+							response.write("'><img src='http://www.blade-edge.com/images/KSA/Flights/next.png'></span>")
 						end if
 					else
-						response.write("<span style='cursor:help'><img src='http://www.blade-edge.com/images/KSA/Flights/next.png' title='No future events'></span>")
+						if not isnull(rsCraft.fields.item("NextEventTitle")) then
+							response.write("<span style='cursor:help'><img src='http://www.blade-edge.com/images/KSA/Flights/next.png' title='")
+							response.write rsCraft.fields.item("NextEventTitle")
+							response.write("'></span>")
+						else
+							response.write("<span style='cursor:help' class='tip' title='No future events'><img src='http://www.blade-edge.com/images/KSA/Flights/next.png'></span>")
+						end if
 					end if
 					%>
 					</center></td></tr>
@@ -768,196 +1059,976 @@ end if
 	
 <!-- visualization field for orbits, locations, paths, etc -->
 </tr>
-	<%response.write rsCraft.fields.item("ImgDataCode")%>
+	<%
+	str = rsCraft.fields.item("ImgDataCode")
+	'if there is no code then this is an ascent state
+	if isnull(str) then
+		response.write("<tr> <td> <div id='map' class='map' style='padding: 0; margin: 0; height: 380px; width: 835px;'></div> </td> </tr>")
+		bMapOrbit = false
+	'if there is a @ symbol this is a pre-launch state
+	'same result as the previous state but we can not test for a null field and a non-null field at the same time. No short-circuit logic
+	'TODO - interactive map for pre-launch with a marker for launch location
+	elseif left(str,1) = "@" then
+		response.write("<tr> <td> <div id='map' class='map' style='padding: 0; margin: 0; height: 380px; width: 835px;'></div> </td> </tr>")
+		
+	'if there is a ! symbol this is an orbital state
+	elseif left(str,1) = "!" then
+		'do not create the real-time map if current orbital data is out of date
+		'this means we are either at the last record or the next record has a UT greater than the present
+		bMapOrbit = false
+		rsOrbit.movenext
+		if rsOrbit.eof then
+			bMapOrbit = true
+		else
+			if rsOrbit.fields.item("id") > UT then 
+				bMapOrbit = true
+			end if
+		end if
+		rsOrbit.moveprevious
+		
+		'as with the last code block, we assume no dynamic map and adjust message as required
+		mapMsg = "<br />Dynamic view not available - old orbital data loaded"
+		if bMapOrbit then
+			mapMsg = "<br />Click for dynamic view"
+			
+			'creat the map area, also create the orbital period notice box but hide it until needed
+			response.write("<div id='map' class='map' style='padding: 0; margin: 0; height: 380px; width: 835px; position: absolute; top: 451px; left: 0px; visibility: hidden;'></div>")
+			response.write("<div id='msg' style='cursor: pointer; font-family: sans-serif; border-style: solid; border-width: 2px; height: 133px; width: 415px; padding: 0; margin: 0; position: absolute; top: 561px; left: 210px; visibility: hidden; background-color: gray;'><b>NOTICE</b><p>This craft's orbital period exceeds 100,000 seconds. For performance reasons, its full orbit was not rendered. Ap/Pe markings may be missing as a result.</p><p>Click to dismiss</p></div>")
+			
+			'special notice box to be used when directing anyone here who possibly is unfamiliar with the concept of @KSA_MissionCtrl
+			if request.querystring("intro") = "y" then
+				response.write("<div id='intro' style='font-family: sans-serif; border-style: solid; border-width: 2px; height: 727px; width: 670px; padding: 0; position: absolute; z-index: 101; margin: 0; top: 50px; left: 100px; visibility: visible; background-color: gray;'><b>The Significance of the Orbital Plotting Feature</b><p style='font-size: 14px; text-align: justify; margin-left: 5px; margin-right: 5px'>The main concept of the Kerbal Space Agency is that the game time is locked to real time (in this case Eastern Time US). The game was begun on Feb 16th, 2014 - which meant that on Year 1, Day 1 @ 13:45:00 it was 1:45pm EST on 2/16/14. Tweets that appear on @KSA_MissionCtrl reflect this, showing up when events actually happen at certain times in the game. So the ability for people to come here and see a spacecraft's orbital trajectory and current position isn't just some fancy gimmick for show. The events transpiring via @KSA_MissionCtrl are now more immersive than ever. If a launch is scheduled to occur beneath the orbit of a satellite, anyone looking at the track of that satellite at launch time would see its #1 orbit over KSC. In the future, maneuver nodes will be shown on the map as well, for starters.</p><p style='font-size: 14px; text-align: justify; margin-left: 5px; margin-right: 5px'>To better see the link between game and Flight Tracker, here's an image with the relevant bits correlated by color. Again, the game began on 2/16/14, so a game time of Year 2, Day 99 corresponds to 5/25/15. Likewise, the game time of 20:37:04 corresponds to a real-world time of 8:37:04pm EST. You can see that the flight tracker and game data match within a reasonable error of margin.</p><a target='_blank' href='http://i.imgur.com/fTgODPx.png'><img src='http://i.imgur.com/fTgODPxl.png'></a><p><span id='close' style='cursor: pointer;'>Thanks for reading! Click here to close this box</span><br /><a target='_blank' href='https://github.com/Gaiiden/FlightTracker'>Source on Github</a></p></div>")
+			end if
+		end if
+		
+		'this could have been done better and made more robust, now that I know more about JQuery
+		'this is one of 3 specific formats that the static orbital display will use
+		'the other two static display types are for hyperbolic orbits, which are not yet supported so they fall under the "old data" category
+		response.write("<tr> <td> <center> <span id='img' style='cursor:help'><img src='" & mid(str, 2, instr(str, "|")) & "' class='tip' data-tipped-options=""target: 'mouse'"" title='Ecliptic View" & mapMsg & "'>&nbsp;<img src='" & mid(str, instr(str, "|")+1) & "' class='tip' data-tipped-options=""target: 'mouse'"" title='Polar View" & mapMsg & "'></span> </center> </td> </tr>")
+		
+	'old data, just spit it out
+	else
+		response.write rsCraft.fields.item("ImgDataCode")
+	end if
+	%>
 </table>
 
 <!-- footer links for craft information section-->
+<span style="font-family:arial;color:black;font-size:12px;">
 <%
 'build the basic URL then add any included server variables as needed
-url = "http://" & Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL") & "?db=" & request.querystring("db")
-if request.querystring("ut") then url = url & "&ut=" & request.querystring("ut")
+url = "http://" & Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL")
+vars = "?db=" & request.querystring("db")
+if request.querystring("ut") then vars = vars & "&ut=" & request.querystring("ut")
+if request.querystring("pass") then vars = vars & "&pass=" & request.querystring("ut")
 
+closemsg = ""
 if request.querystring("r") then
-	refreshmsg = "Disable auto-refresh (" & rsCraft.fields.item("RefreshRate") & "s)"
+	refreshmsg = "Disable auto-refresh (" & refreshrate & "s)"
 else
-	refreshmsg = "Enable auto-refresh (" & rsCraft.fields.item("RefreshRate") & "s)"
-	url = url & "&r=true"
-end if
-
-if request.querystring("popout") then
-	closemsg = "onclick='window.close()'"
-else 
-	closemsg = ""
+	'allow popout window to close if user has not switched on refresh
+	if request.querystring("popout") then	closemsg = "onclick='window.close()'"
+	refreshmsg = "Enable auto-refresh"
+	vars = vars & "&r=true"
 end if
 
 response.write("<a " & closemsg & " target='_blank' href='http://bit.ly/KSAHomePage'>KSA Historical Archives</a>")
 response.write(" | ")
+response.write("<a href='" & url & vars & "'>" & refreshmsg & "</a>")
 
 'creates a pop-out window the user can move around
-response.write("<a href='" & url & "'>" & refreshmsg & "</a>")
 if not request.querystring("popout") then
-	url = "http://www.blade-edge.com/images/KSA/Flights/redirect.asp?popout=true&db=" & request.querystring("db")
-	if request.querystring("ut") then url = url & "&ut=" & request.querystring("ut")
-	if request.querystring("r") then url = url & "&r=true"
+	url = "http://www.blade-edge.com/images/KSA/Flights/redirect.asp"
+	vars = vars & "&popout=true"
 	response.write(" | ")
-	response.write("<a href='" & url & "'>Open in Popout Window</a>")
+	response.write("<a target='_blank' href='" & url & vars & "'>Open in Popout Window</a>")
 end if
 %>
+</span>
 </center>
 </div>
 
-<!-- active craft menu section -->
+<!-- craft menu section -->
 <div style="margin-left: 845px; font: 12pt normal Arial, sans-serif;"> 
 
-<!-- active craft menu header -->
-<center><h3>All Active Vessels</h3></center>
+<!-- craft menu header -->
+<%
+if request.querystring("filter") = "inactive" then
+	response.write("<center><h3>Inactive Vessels</h3></center>")
+else
+	response.write("<center><h3>Active Vessels</h3></center>")
+end if
+%>
 
 <!-- menu tree -->
 <!-- yes, this method is very brute-force and not overly efficient but load times don't seem visibly affected to bother optimizing -->
 
-<!-- MENU DATABASE INFORMATION
-     =========================
-     
-     Planets recordset contains all planets in the Kerbol system, each given a name and assigned a unique ID. Can include any additional planets, not just stock
-     
-     Moons recordset contains all moons in the Kerbol system, each given a name and assigned a unique ID. Their reference field links them to the planet they orbit.
-     Like planets there can be additional moons besides stock
+<!-- 
+CRAFT FIELDS
+============
 
-     Crafts recordset contains data on crafts within certain SOIs
-     
-     CRAFT FIELDS
-     ============
-     
-     ID - a unique number, used only for the database record. Can be anything as long as it's unique
-     DB - the name of the database containing the craft information, minus the "db" prefix
-     Vessel - the printed name of the vessel to appear in the menu tree
-     Type - the name of a vessel description that corresponds to a PNG image file on the server, should match all in-game types (Ship, Probe, Debris, etc)
-     Desc - a short description of the vessel that will appear as pop-up text when the link is hovered over
-     UT# - the time in seconds from 0 epoch (UT) at which the vessel is within this SOI
-     Ref# - the unique planet or moon ID that identifies the SOI the vessel is within
-     
-     Adding additional UT/Ref field pairs will cause the vessel to move from one SOI to another as the UT for that transition is passed
-     
-     UT/Ref fields can be extended as much as needed, maintaining the paired values. They do not need to be named UT2/Ref2, UT3/ref3 etc. 
-     They do not need to contain a value, so long as any empty fields are at the end of a continuous run of field pairs
+ID - a unique number, used only for the database record. Can be anything as long as it's unique
+DB - the name of the database containing the craft information, minus the "db" prefix
+[Popout] - link to open craft data in a popout, required for older craft. Can also open external site if no craft data is available (for a mission report, for example)
+Vessel - the printed name of the vessel to appear in the menu tree
+Type - the name of a vessel description that corresponds to a PNG image file on the server, should match all in-game types (Ship, Probe, Debris, etc)
+Desc - a short description of the vessel that will appear as pop-up text when the link is hovered over
+Collection - the ID for a twitter collection created in Tweetdeck and made into a widget
+UT# - the time in seconds from 0 epoch (UT) at which the vessel is within this SOI. A value of -1 moves vessel to the Inactive list. A value of -2 removes it from both Active & Inactive listings
+Ref# - the unique planet or moon ID that identifies the SOI the vessel is within
+
+Adding additional UT/Ref field pairs will cause the vessel to move from one SOI to another as the UT for that transition is passed
+
+UT/Ref fields can be extended as much as needed, maintaining the paired values. They do not need to be named UT2/Ref2, UT3/ref3 etc. 
+They do not need to contain a value, so long as any empty fields are at the end of a continuous run of field pairs
+
+MOON/PLANET FIELDS
+==================
+
+ID - the reference number vessels use to determine what SOI they are within at a certain time. 0-49 for planets. 50+ for moons
+Body - the name of the body
+[Ref] - available and required only for moons, which links them to the planet that they orbit
+Gm - the gravitaional constant for this body, taken from KSPTOT's bodies.ini file
+Radius - the radius of the body, in km, taken from KSPTOT's bodies.ini file
+RotPeriod - the rotaional period of the body, in seconds, taken from KSPTOT's bodies.ini file
+RotIni - the amount the body is rotated at epoch 0, in degrees, taken from KSPTOT's bodies.ini file
+AllowPlot - checked if this body is supported by KSP.Leaflet (everything except Jool, Kerbol and any custom bodies)
 -->
+
 <%
-'open craft database
-db = "..\..\..\..\database\dbCrafts.mdb"
-Dim connBodies
-Set connBodies = Server.CreateObject("ADODB.Connection")
-sConnection2 = "Provider=Microsoft.Jet.OLEDB.4.0;" & _
-
-              "Data Source=" & server.mappath(db) &";" & _
-
-              "Persist Security Info=False"
-connBodies.Open(sConnection2)
-
-'get the tables
-set rsPlanets = Server.CreateObject("ADODB.recordset")
-set rsMoons = Server.CreateObject("ADODB.recordset")
-set rsCrafts = Server.CreateObject("ADODB.recordset")
-
-rsPlanets.open "select * from planets", connBodies, 2
-rsMoons.open "select * from moons", connBodies, 2
-rsCrafts.open "select * from crafts", connBodies, 2
+filters = Array("debris", "probe", "rover", "lander", "ship", "station", "base", "asteroid")
 
 'start the tree
 response.write("<ol class='tree'>")
 
-'loop through all the planets
-do while not rsPlanets.eof
-	bPlanet = False
-	
-	'check for any moons of this planet
-	do while not rsMoons.eof
-		if rsMoons.fields.item("ref") = rsPlanets.fields.item("id") then
-			
-			'check for vessels in moon SOI
-			'corresponding to this UT
-			bVessels = false
-			do while not rsCrafts.eof
-				ref = -1
-				
-				'field 5 is the start of SOI information, which uses two fields
-				for x = 5 to rsCrafts.fields.count - 1 step 2
+'decide whether we are building a menu for active or inactive vessels
+bEntry = false
+if request.querystring("filter") = "inactive" then
 
-          'first field is the UT, second field is the body reference #
-					if rsCrafts.fields.item(x) <= UT then 
-						ref = rsCrafts.fields.item(x+1)
-					else
-						exit for
-					end if
-				next
+	'we can add or remove the craft types to search for by modifying the previously-defined array above
+	for each x in filters
 
-        'check if the craft that matches this UT is within the SOI of this moon
-				if ref = rsMoons.fields.item("id") then
-					if not bVessels then
-						if not bPlanet then
-              'include the planet in the tree if this has not yet been done
-							response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'>" & rsPlanets.fields.item("body") & "</label> <input type='checkbox' id='" & rsPlanets.fields.item("body") & "' /> <ol>")
-							bPlanet = true
-						end if
-						
-						'include the moon as a child of the planet if this is the first vessel found within its SOI
-						response.write("<li><label for='" & rsMoons.fields.item("body") & "'>" & rsMoons.fields.item("body") & "</label> <input type='checkbox' id='" & rsMoons.fields.item("body") & "' /> <ol>")
-					end if
-					bVessels = true
-					
-					'include the craft as a child of the moon
-					response.write("<li class='" & rsCrafts.fields.item("type") & "'><a title='" & rsCrafts.fields.item("desc") & "' href='http://www.blade-edge.com/images/KSA/Flights/craft.asp?r=true&db=" & rsCrafts.fields.item("db") & "'>" & rsCrafts.fields.item("vessel") & "</a></li>")
+		'look through all crafts in the table
+		bVessels = false
+		do while not rsCrafts.eof
+
+			'stepping through each UT/Ref pair to find any entries for this UT
+			'since we are starting from the earliest time, move forward until we hit a later one
+			ref = -2
+			for i = 7 to rsCrafts.fields.count - 1 step 2
+				if rsCrafts.fields.item(i) <= UT then 
+					ref = rsCrafts.fields.item(i+1)
+				else
+					exit for
 				end if
-				rsCrafts.movenext
-			loop
+			next
+
+			'check if this is an inactive vessel or not
+			'then check that this vessel belongs under this filter category
+			if ref = -1 then
+				if rsCrafts.fields.item("type") = x then
+				
+					'if this is the first vessel found for this filter, then create the category to list the vessel under
+					if not bVessels then
+						bVessels = true
+						
+						'convert the string to first character upper case
+						letter = left(x, 1)
+						letter = ucase(letter)
+						title = letter & mid(x, 2, len(x)-1)
+						response.write("<li> <label" & title & " for='" & title & "'>" & title & "</label" & title & "> <input type='checkbox' id='" & title & "' /> <ol>")
+					end if
+					
+					'if there is no database then we need to resort to the popout or external link
+					if isnull(rsCrafts.fields.item("db")) then
+						response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "'target='_blank' href='"& rsCrafts.fields.item("popout") & "'>" & rsCrafts.fields.item("vessel") & "</a></li>")
+					else
+						response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "' href='http://www.blade-edge.com/images/KSA/Flights/craft.asp?db=" & rsCrafts.fields.item("db") & "&filter=inactive'>" & rsCrafts.fields.item("vessel") & "</a></li>")
+					end if
+				end if
+			end if
 			
-			'reset the craft record pointer for the next moon
+			'advance to the next record
+			rsCrafts.movenext
+		loop
+		
+		'only close off the category if entries were created
+		'then re-rack the crafts for another search through
+		if bVessels then response.write("</ol> </li>")
+		rsCrafts.movefirst
+	next
+else
+	'loop through all the planets
+	do while not rsPlanets.eof
+		
+		'check for any moons of this planet
+		bPlanet = false
+		do while not rsMoons.eof
+			if rsMoons.fields.item("ref") = rsPlanets.fields.item("id") then
+				
+				'stepping through each UT/Ref pair to find any entries for this UT
+				'since we are starting from the earliest time, move forward until we hit a later one
+				bVessels = false
+				do while not rsCrafts.eof
+					ref = -1
+					for x = 7 to rsCrafts.fields.count - 1 step 2
+						if rsCrafts.fields.item(x) <= UT then 
+							ref = rsCrafts.fields.item(x+1)
+						else
+							exit for
+						end if
+					next
+
+					'check for an active filter, otherwise ensure craft is selected by assigning craft type to the filter
+					if request.querystring("filter") = "" then
+						filterBy = rsCrafts.fields.item("type")
+					else
+						filterBy = request.querystring("filter")
+					end if
+					if filterBy = rsCrafts.fields.item("type") then
+					
+						'check if the craft that matches this UT is within the SOI of this moon
+						if ref = rsMoons.fields.item("id") then
+
+							'include the moon as a child of the planet if this is the first vessel found within its SOI
+							if not bVessels then
+							
+								'include the planet in the tree if this has not yet been done
+								if not bPlanet then
+									url = "http://www.blade-edge.com/images/KSA/Flights/body.asp?db=bodies&body=" & rsPlanets.fields.item("body") & "-System"
+									if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
+									response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'topleft'"" title='Show body overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a></label> <input type='checkbox' id='' /> <ol>")
+									bPlanet = true
+								end if
+								
+								url = "http://www.blade-edge.com/images/KSA/Flights/body.asp?db=bodies&body=" & rsMoons.fields.item("body")
+								if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
+								response.write("<li><label for='" & rsMoons.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'topleft'"" title='Show body overview' href='" & url & "'>" & rsMoons.fields.item("body") & "</a></label> <input type='checkbox' id='' /> <ol>")
+								bVessels = true
+							end if
+							
+							'include the craft as a child of the moon
+							url = "http://www.blade-edge.com/images/KSA/Flights/craft.asp?db=" & rsCrafts.fields.item("db")
+							if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
+							response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "' href='" & url & "'>" & rsCrafts.fields.item("vessel") & "</a></li>")
+							bEntry = true
+						end if
+					end if
+					
+					'advance to the next craft
+					rsCrafts.movenext
+				loop
+				
+				'reset the craft record pointer for the next moon
+				rsCrafts.movefirst
+				
+				'if we found vessels around moons, there is a tree we need to close off
+				if bVessels then response.write("</ol> </li>")
+			end if
+			
+			'advance to the next mooon
+			rsMoons.movenext
+		loop
+
+		'set for the next loop through the next planet
+		rsMoons.movefirst
+		
+		'time to look for any craft orbiting this planet
+		'stepping through each UT/Ref pair to find any entries for this UT
+		'since we are starting from the earliest time, move forward until we hit a later one
+		do while not rsCrafts.eof
+			ref = -1
+			for x = 7 to rsCrafts.fields.count - 1 step 2
+				if rsCrafts.fields.item(x) <= UT then 
+					ref = rsCrafts.fields.item(x+1)
+				else
+					exit for
+				end if
+			next
+			
+			'check for an active filter, otherwise ensure craft is selected by assigning craft type to the filter
+			if request.querystring("filter") = "" then
+				filterBy = rsCrafts.fields.item("type")
+			else
+				filterBy = request.querystring("filter")
+			end if
+			if filterBy = rsCrafts.fields.item("type") then
+			
+				'check if the craft that matches this UT is within the SOI of this planet
+				if ref = rsPlanets.fields.item("id") then
+				
+					'include the planet in the tree if this has not yet been done
+					if not bPlanet then
+						url = "http://www.blade-edge.com/images/KSA/Flights/body.asp?db=bodies&body=" & rsPlanets.fields.item("body") & "-System"
+						if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
+						response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'topleft'"" title='Show body overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a></label> <input type='checkbox' id='' /> <ol>")
+						bPlanet = true
+					end if
+					
+					'include the craft as a child of the planet
+					url = "' href='http://www.blade-edge.com/images/KSA/Flights/craft.asp?db=" & rsCrafts.fields.item("db")
+					if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
+					response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & url & "'>" & rsCrafts.fields.item("vessel") & "</a></li>")
+					bEntry = true
+				end if
+			end if
+			
+			'advance to the next craft
+			rsCrafts.movenext
+		loop
+
+		'if we found vessels around planets, there is a tree we need to close off
+		'then re-rack the crafts and advance to the next planet
+		if bPlanet then response.write("</ol>	</li>")
+		rsCrafts.movefirst
+		rsPlanets.movenext
+	loop
+	
+	'let the user know if we did not find anything for this particular filter
+	if not bEntry then response.write("<span style='margin-left: 70px'>No Vessels Found</a>")
+end if
+
+'finish off the entire tree list
+response.write("</ol>")
+
+'build a URL to use for linking
+url = "http://" & Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL") & "?db=" & request.querystring("db")
+if request.querystring("ut") then url = url & "&ut=" & request.querystring("ut")
+
+'decide what message to include beneath the menu tree
+response.write("<span style='font-family:arial;color:black;font-size:12px;'>")
+if request.querystring("filter") = "inactive" then
+	response.write("<b>Filter By:</b> <a href='" & url & "'>Active Vessels</a><br><br><b>NOTE:</b> Some older craft not compatible with the database display will require a popout window. Please allow popups. Some vessels prior to 10/20/14 were not tracked & instead link to their mission dispatches.")
+else
+	response.write("<b>Filter By:</b> ")
+	if len(request.querystring("filter")) then response.write("<a href='" & url & "'>All</a> | ")
+	
+	'print out the available filters depending on what is defined
+	for each x in filters
+		'convert the string to first character upper case
+		letter = left(x, 1)
+		letter = ucase(letter)
+		title = letter & mid(x, 2, len(x)-1)
+		
+		'do not link to an active filter
+		if request.querystring("filter") <> x then
+			response.write("<a href='" & url & "&filter=" & x & "'>" & title & "</a> | ")
+		else
+			response.write(title & " | ")
+		end if
+	next
+	
+	response.write("<a href='" & url & "&filter=inactive'>Inactive Vessels</a>")
+end if
+%>
+
+<!-- temporary notice concerning the current status of the KSA -->
+<p><table style="border: 1px solid red;	border-collapse: collapse; background-color: #FFB8B8;"><tr><td><center><b>Special Notice</b><p>Please read <a target="_blank" href="http://t.co/iaKV2TGDPe">this statement</a> regarding future and ongoing operations for the Kerbal Space Agency</p></center></td></tr></table></p>
+
+<!-- this will either display a mission timeline if the craft has one, or the recent tweets from @KSA_MissionCtrl --> 
+<%
+rsCrafts.movefirst
+rsCrafts.find("db='" & request.querystring("db") & "'")
+if isnull(rsCrafts.fields.item("collection")) then 
+	response.write("<p><a class='twitter-timeline' href='https://twitter.com/KSA_MissionCtrl' data-widget-id='598711760149852163'>Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','twitter-wjs');</script></p>")
+else
+	response.write("<p><a class='twitter-timeline' href='/KSA_MissionCtrl/timelines/598076346514984960' data-widget-id='" & rsCrafts.fields.item("collection") & "'>Mission Timeline</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','twitter-wjs');</script></p>")
+end if
+%>
+
+</span></div> </div>
+
+<%
+'get everything reset for use again
+rsCrafts.movefirst
+rsPlanets.movefirst
+rsMoons.movefirst
+%>
+
+<!-- this script controls the real-time page elements, including the Leaflet map -->
+<script>
+	var drawMap = "<%response.write rsCraft.fields.item("ImgDataCode")%>";
+	var latlon = [];
+	var orbitdata = [];
+
+	// if string is empty, this is an ascent event
+	if (drawMap.length == 0) {
+	
+		// create the map with some custom options
+		// details on Leaflet API can be found here - http://leafletjs.com/reference.html
+		var map = new L.KSP.Map('map', {
+			layers: [L.KSP.CelestialBody.KERBIN],
+			center: [0,0],
+			bodyControl: false,
+			layersControl: false,
+			scaleControl: true,
+		});
+		
+		// touchscreens don't register the cursor location, so only show location data if this isn't a touchscreen
+		// leaflet.js was modified to remove the biome, slope and elevation data displays
+		if (!is_touch_device()) { map.addControl(new L.KSP.Control.Info()); }
+		
+		<%
+		'do not run this code if there is image data to display instead
+		if isnull(rsCraft.fields.item("ImgDataCode")) then
+		
+			' set craft icon, determined by the entry in the crafts database
+			rsCrafts.find("db='" & request.querystring("db") & "'")
+			response.write("var ship = L.icon({iconUrl: 'button_vessel_" & rsCrafts.fields.item("Type") & ".png', iconSize: [16, 16]});")
 			rsCrafts.movefirst
 			
-			'if we found vessels around moons, there is a tree we need to close off
-			if bVessels then response.write("</ol> </li>")
-		end if
-		rsMoons.movenext
-	loop
-	rsMoons.movefirst
+			'we have already used ascent data so reset the record pointer
+			rsAscent.movefirst
+			
+			'draw the rocket path up to the current time
+			i = 0
+			do while rsAscent.fields.item("id") <= dbUT 
+			
+				'make sure the lat/lon data was not ommitted for some reason
+				if not isnull(rsAscent.fields.item("lat")) and not isnull(rsAscent.fields.item("lon")) then
+					response.write("latlon[" & i & "] = [" & rsAscent.fields.item("lat") & "," & rsAscent.fields.item("lon") & "];")
+					i = i + 1
+				end if
+				
+				'advance to the next record but exit the loop if that is beyond the last one
+				rsAscent.movenext
+				if rsAscent.eof then exit do
+			loop
+			
+			'we need to back up to get the last location, which is where the craft marker will be placed after we draw the ground plot
+			rsAscent.moveprevious
+			response.write("L.polyline(latlon, {smoothFactor: .25, clickable: false, color: '#00FF00', weight: 2, opacity: 1}).addTo(map);")
+			response.write("L.marker([" & rsAscent.fields.item("lat") & "," & rsAscent.fields.item("lon") & "], {icon: ship, clickable: false}).addTo(map);")
 	
-	'check for vessels in planet SOI
-	'corresponding to this UT
-	do while not rsCrafts.eof
-		ref = -1
+			'really hackish method of zooming out the map further as KSC falls off the edge
+			'assumes launch from KSC, assumes launch east with little inclination (accounts for lon movement only)
+			if rsAscent.fields.item("lon") < -65.5714 then
+				response.write("map.setView(latlon[latlon.length-1], 5);")
+			elseif rsAscent.fields.item("lon") < -56.4697 then
+				response.write("map.setView(latlon[latlon.length-1], 4);")
+			else 
+				response.write("map.setView(latlon[latlon.length-1], 3);")
+			end if
+			
+			'keep the map locked to the ship if the page is going to update anyways in 15s
+			if request.querystring("r") then 
+				response.write("map.dragging.disable();")
+				response.write("map.touchZoom.disable();")
+				response.write("map.doubleClickZoom.disable();")
+				response.write("map.scrollWheelZoom.disable();")
+				response.write("map.boxZoom.disable();")
+				response.write("map.removeControl(map.zoomControl);")
+			end if
+		end if
+		%>
+	
+	// we can have an ! denoting an orbital state that doesn't require a map, so check that the element was created
+	} else if (drawMap.charAt(0) == "!" && $("#map").length) {
+	
+		// just dummy values in case the real values are not available to retrieved from the database
+		var gmu = 301.363211975;
+		var sma = 1340.296;
+		var ecc = 0.7178298;
+		var inc = 1.57085636612117;
+		var raan = 5.77553709561526;
+		var arg = 4.71418317885574;
+		var mean = 6.15350210776865;
+		var eph = 37819923.931;
+		var period = 17759.7;
+		var UT = 40117725;
+		var ap = 0;
+		var pe = 0;
 
-		'field 5 is the start of SOI information, which uses two fields
-		for x = 5 to rsCrafts.fields.count - 1 step 2
-
-      'first field is the UT, second field is the body reference #
+		<%
+		'get the record containing the information relative to this vessel
+		'if we do not have an orbit to plot, we still need to fill out variables with some data so just use Du-SCAN. Could be any craft
+		if bMapOrbit then
+			rsCrafts.find("db='" & request.querystring("db") & "'")
+		else
+			rsCrafts.find("db='duscan'")
+		end if
+		
+		'create a recordset copy of the moon/planet recordset depending on what is being orbited at this time
+		'stepping through each UT/Ref pair to find any entries for this UT
+		'since we are starting from the earliest time, move forward until we hit a later one
+		for x = 7 to rsCrafts.fields.count - 1 step 2
+			'first field is the UT, second field is the body reference #
 			if rsCrafts.fields.item(x) <= UT then 
 				ref = rsCrafts.fields.item(x+1)
 			else
 				exit for
 			end if
 		next
-		
-    'check if the craft that matches this UT is within the SOI of this planet
-		if ref = rsPlanets.fields.item("id") then
-			if not bPlanet then
-        'include the planet in the tree if this has not yet been done
-				response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'>" & rsPlanets.fields.item("body") & "</label> <input type='checkbox' id='" & rsPlanets.fields.item("body") & "' /> <ol>")
-				bPlanet = true
-			end if
-			
-			'include the craft as a child of the planet
-			response.write("<li class='" & rsCrafts.fields.item("type") & "'><a title='" & rsCrafts.fields.item("desc") & "' href='http://www.blade-edge.com/images/KSA/Flights/craft.asp?r=true&db=" & rsCrafts.fields.item("db") & "'>" & rsCrafts.fields.item("vessel") & "</a></li>")
+
+		'moons use 50 or greater for reference numbers
+		if ref < 50 then
+			set rsBody = rsPlanets.clone()
+		else
+			set rsBody = rsMoons.clone()
 		end if
-		rsCrafts.movenext
-	loop
-	rsCrafts.movefirst
+		
+		'now get the specific body
+		rsBody.find("id=" & ref)
+		
+		'some bodies are not supported by KSP.Leaflet and should not attempt to be drawn via the map
+		'TODO - create data overlay for static orbit plots in these cases to still show real-time orbital information
+		response.write ("var bDrawMap = " & lcase(rsBody.fields.item("AllowPlot")) & ";")
 
-  'if we found vessels around planets, there is a tree we need to close off
-	if bPlanet then response.write("</ol>	</li>")
+		'set the initial Keplerian orbital elements & time & gravitaional parameter of the body
+		'degrees converted to radians - (angle / 180) * Math.PI
+		if bMapOrbit then
+			response.write("var gmu = " & rsBody.fields.item("Gm") & ";")
+			response.write("var sma = " & rsOrbit.fields.item("SMA") & ";")
+			response.write("var ecc = " & rsOrbit.fields.item("Eccentricity") & ";")
+			response.write("var inc = " & rsOrbit.fields.item("Inclination") * .017453292519943295 & ";")
+			response.write("var raan = " & rsOrbit.fields.item("RAAN") * .017453292519943295 & ";")
+			response.write("var arg = " & rsOrbit.fields.item("Arg") * .017453292519943295 & ";")
+			response.write("var mean = " & rsOrbit.fields.item("Mean") * .017453292519943295 & ";")
+			response.write("var eph = " & rsOrbit.fields.item("Eph") & ";")
+			response.write("var period = " & rsOrbit.fields.item("Orbital Period") & ";")
+			response.write("var UT = " & UT & ";")
+		end if
+		%>
+		
+		if (bDrawMap) {
+		
+			// craft icon, determined by the entry in the crafts database
+			var ship = L.icon({
+				iconUrl: 'button_vessel_<%response.write rsCrafts.fields.item("Type")%>.png',
+				iconSize: [16, 16],
+			});
+			
+			// Ap/Pe icons
+			var apIcon = L.icon({
+				iconUrl: 'ap.png',
+				iconSize: [16, 16],
+				iconAnchor: [8, 16]
+			});
+			var peIcon = L.icon({
+				iconUrl: 'pe.png',
+				iconSize: [16, 16],
+				iconAnchor: [8, 16]
+			});
 
-	rsPlanets.movenext
-loop
-response.write("</ol> *Inactive vessels can be found via the Historical Archives link at bottom</div> </div>")
+			// create the map with some custom options
+			var map = new L.KSP.Map('map', {
+				layers: [L.KSP.CelestialBody.<%response.write ucase(rsBody.fields.item("Body"))%>],
+				zoom: 1,
+				center: [0,0],
+				bodyControl: false,
+				layersControl: false,
+				scaleControl: true,
+			});
 
+			// touchscreens don't register the cursor location, so only show location data if this isn't a touchscreen
+			// leaflet.js was modified to remove the biome, slope and elevation data displays
+			if (!is_touch_device()) { map.addControl(new L.KSP.Control.Info()); }
+		}
+		
+		// compute 3 orbits max, but don't exceed 100,000s or a noticeable freeze in the browser will occur
+		var maxDeltaTime = 100000;
+		var elapsedTime = UT + (Math.round(period * 3));
+		var currUT = UT;
+		if (elapsedTime - currUT > maxDeltaTime) {
+			elapsedTime = UT + maxDeltaTime;
+			
+			// in cases where the orbital period exceeds 100,000s we should inform the user the whole orbit is not being plotted
+			// this is handled via JQuery when the map is shown (see beginning of file)
+			if (period > maxDeltaTime) { showMsg = true; }
+		}
+		while (currUT <= elapsedTime) {
+
+			//////////////////////
+			// computeMeanMotion() <-- refers to a function in KSPTOT code: https://github.com/Arrowstar/ksptot
+			//////////////////////
+			
+			// adjust for motion since the time of this orbit
+			var n = Math.sqrt(gmu/(Math.pow(Math.abs(sma),3)));
+			var newMean = mean + n * (currUT - eph);
+			
+			////////////////
+			// solveKepler()
+			////////////////
+			
+			var EccA = -1;
+			if (newMean < 0 || newMean > 2*Math.PI) {
+				// expanded AngleZero2Pi() function
+				// abs(mod(real(Angle),2*pi));
+				// javascript has a modulo operator, but it doesn't work the way we need. Or something
+				// so using the mod() function implementation from Math.js: x - y * floor(x / y)
+				newMean = Math.abs(newMean - (2*Math.PI) * Math.floor(newMean / (2*Math.PI)));
+			}
+			
+			if (Math.abs(newMean - 0) < 1E-8) {
+				EccA = 0;
+			} else if (Math.abs(newMean - Math.PI) < 1E-8 ) {
+				EccA = Math.PI;
+			}	
+			
+			/////////////
+			// keplerEq()
+			/////////////
+			
+			// since there is no function return to break ahead of this statement, test if variable was modified
+			if (EccA == -1) {
+				var En  = newMean;
+				var Ens = En - (En-ecc*Math.sin(En) - newMean)/(1 - ecc*Math.cos(En));
+				while ( Math.abs(Ens-En) > 1E-10 ) {
+					En = Ens;
+					Ens = En - (En - ecc*Math.sin(En) - newMean)/(1 - ecc*Math.cos(En));
+				}
+				EccA = Ens;
+			}
+			
+			///////////////////////////////
+			// computeTrueAnomFromEccAnom()
+			///////////////////////////////
+			
+			var upper = Math.sqrt(1+ecc) * Math.tan(EccA/2);
+			var lower = Math.sqrt(1-ecc);
+			
+			// expanded AngleZero2Pi() function
+			// abs(mod(real(Angle),2*pi));
+			// javascript has a modulo operator, but it doesn't work the way we need. Or something
+			// so using the mod() function implementation from Math.js: x - y * floor(x / y)
+			var tru = Math.abs((Math.atan2(upper, lower) * 2) - (2*Math.PI) * Math.floor((Math.atan2(upper, lower) * 2) / (2*Math.PI)));
+			
+			///////////////////////////
+			// getStatefromKepler_Alg()
+			///////////////////////////
+			
+			<%
+			'reset these variables in case they were modified on the last run through
+			if bMapOrbit then
+				response.write("raan = " & rsOrbit.fields.item("RAAN") * .017453292519943295 & ";")
+				response.write("arg = " & rsOrbit.fields.item("Arg") * .017453292519943295 & ";")
+			end if
+			%>
+
+			// Special Case: Circular Equitorial
+			if(ecc < 1E-10 && (inc < 1E-10 || Math.abs(inc-Math.PI) < 1E-10)) {
+				var l = raan + arg + tru;
+				tru = l;
+				raan = 0;
+				arg = 0;
+			}
+
+			// Special Case: Circular Inclined
+			if(ecc < 1E-10 && inc >= 1E-10 && Math.abs(inc-Math.PI) >= 1E-10) {
+				var u = arg + tru;
+				tru = u;
+				arg = 0.0;
+			}
+
+			// Special Case: Elliptical Equitorial
+			if(ecc >= 1E-10 && (inc < 1E-10 || Math.abs(inc-Math.PI) < 1E-10)) {
+				raan = 0;
+			}
+
+			var p = sma*(1-(Math.pow(ecc,2)));
+			
+			// vector/matrix operations handled by Sylvester - http://sylvester.jcoglan.com/
+			var rPQW = $V([p*Math.cos(tru) / (1 + ecc*Math.cos(tru)),
+										 p*Math.sin(tru) / (1 + ecc*Math.cos(tru)),
+										 0]);
+										
+			var vPQW = $V([-Math.sqrt(gmu/p)*Math.sin(tru),
+										 Math.sqrt(gmu/p)*(ecc + Math.cos(tru)),
+										 0]);
+			
+			var TransMatrix = $M([
+				[Math.cos(raan)*Math.cos(arg)-Math.sin(raan)*Math.sin(arg)*Math.cos(inc), -Math.cos(raan)*Math.sin(arg)-Math.sin(raan)*Math.cos(arg)*Math.cos(inc), Math.sin(raan)*Math.sin(inc)],
+				[Math.sin(raan)*Math.cos(arg)+Math.cos(raan)*Math.sin(arg)*Math.cos(inc), -Math.sin(raan)*Math.sin(arg)+Math.cos(raan)*Math.cos(arg)*Math.cos(inc), -Math.cos(raan)*Math.sin(inc)],
+				[Math.sin(arg)*Math.sin(inc), Math.cos(arg)*Math.sin(inc), Math.cos(inc)]
+			]);
+			
+			var rVect = TransMatrix.multiply(rPQW);
+			var vVect = TransMatrix.multiply(vPQW);	
+			
+			/////////////////////
+			// getBodySpinAngle()
+			/////////////////////
+			
+			var rotPeriod = <%response.write rsBody.fields.item("RotPeriod")%>;
+			var bodySpinRate = 2*Math.PI/rotPeriod;
+
+			// converted to radians
+			var rotInit = <%response.write rsBody.fields.item("RotIni")%> * .017453292519943295; 
+			
+			// expanded AngleZero2Pi() function
+			// abs(mod(real(Angle),2*pi));
+			// javascript has a modulo operator, but it doesn't work the way we need. Or something
+			// so using the mod() function implementation from Math.js: x - y * floor(x / y)
+			var angle = rotInit + bodySpinRate*currUT;
+			var spinAngle = Math.abs(angle - (2*Math.PI) * Math.floor(angle / (2*Math.PI)));
+
+			//////////////////////////////////////
+			// getFixedFrameVectFromInertialVect()
+			//////////////////////////////////////
+
+			var R = $M([
+				[Math.cos(spinAngle), -Math.sin(spinAngle), 0],
+				[Math.sin(spinAngle), Math.cos(spinAngle), 0],
+				[0, 0, 1]
+			]);
+				
+			R = R.transpose();
+			var rVectECEF = R.multiply(rVect);
+
+			//////////////////////////////////
+			// getLatLongAltFromInertialVect()
+			//////////////////////////////////
+
+			// 2-norm or Euclidean norm of vector
+			var rNorm = Math.sqrt(rVectECEF.e(1) * rVectECEF.e(1) + rVectECEF.e(2) * rVectECEF.e(2) + rVectECEF.e(3) * rVectECEF.e(3));
+			
+			// convert to degrees from radians - angle / Math.PI * 180
+			// expanded AngleZero2Pi() function
+			// abs(mod(real(Angle),2*pi));
+			// javascript has a modulo operator, but it doesn't work the way we need. Or something
+			// so using the mod() function implementation from Math.js: x - y * floor(x / y)
+			var longitude = (Math.abs(Math.atan2(rVectECEF.e(2),rVectECEF.e(1)) - (2*Math.PI) * Math.floor(Math.atan2(rVectECEF.e(2),rVectECEF.e(1)) / (2*Math.PI)))) * 57.29577951308232;
+			var latitude = (Math.PI/2 - Math.acos(rVectECEF.e(3)/rNorm)) * 57.29577951308232;
+			var alt = rNorm - <%response.write rsBody.fields.item("Radius")%>;
+			var vel = Math.sqrt(gmu*(2/rNorm - 1/sma));
+			
+			// convert the lon to proper coordinates (-180 to 180)
+			if (longitude >= 180) { longitude -= 360; }
+			
+			// store all the derived values and advance to the next second
+			latlon.push({lat: latitude, lng: longitude});
+			orbitdata.push({alt: alt, vel: vel});
+			currUT++;
+		}
+		
+		// place the marker at the current Lat/Lon position for this UT, with a high enough Z-index to stay on top of other map markers
+		// put in some maximum default values since the JQuery update doesn't adjust the width of the popup
+		var craft = L.marker(latlon[0], {icon: ship, zIndexOffset: 100}).addTo(map);
+		craft.bindPopup("Lat: <span id='lat'>-000.0000&deg;S</span><br />Lng: <span id='lng'>-000.0000&deg;W</span><br />Alt: <span id='alt'>000,000.000km</span><br />Vel: <span id='vel'>000,000.000km/s</span>", {closeButton: false});
+
+		// set up a listener for click events so we can immediately update the information and not have to wait for the next timer event
+		var cardinal = "";
+		craft.on('click', function(e) {
+			if (latlon[0].lat < 0) {
+				cardinal = "S";
+			} else {
+				cardinal = "N";
+			}
+			$('#lat').html(numeral(latlon[0].lat).format('0.0000') + "&deg;" + cardinal);
+			if (latlon[0].lng < 0) {
+				cardinal = "W";
+			} else {
+				cardinal = "E";
+			}
+			$('#lng').html(numeral(latlon[0].lng).format('0.0000') + "&deg;" + cardinal);
+			$('#alt').html(numeral(orbitdata[0].alt).format('0,0.000') + "km");
+			$('#vel').html(numeral(orbitdata[0].vel).format('0,0.000') + "km/s");
+		});
+		
+		// show the craft info box. This lets people know it exists and also serves to bring the craft into view
+		// after 10 seconds close the box, user can re-open it if they want to
+		craft.openPopup();
+		setTimeout(function () { craft.closePopup(); }, 10000);
+		
+		// draw the orbital paths
+		var coord = 0;
+		var colors = ['#00FF00', '#FF0000', '#FFFF00'];
+		var pathNum = 0;
+		while (coord < latlon.length) {
+			var meridian = true;
+			var path = [];
+			
+			// if a vessel is moving slower than the planet is rotating, it will move west to east
+			// the same can happen for highly-inclined orbits (NOTE: unsure if I actually covered all cases here, at least I did for existing craft)
+			if (period < rotPeriod && ((inc * 57.29577951308232) < 89 || (inc * 57.29577951308232) > 91)) {
+			
+				// check if the plot actually starts west of the meridian and update if needed
+				if (latlon[coord].lng <= 0) { meridian = false; }
+				
+				while (coord < latlon.length) {
+				
+					// have we passed east of the meridian?
+					if (latlon[coord].lng > 0) { meridian = true; }
+					
+					// if we started east or passed the meridian then a negative number means we are at the edge of the map
+					// time to kill off this plot so it does not shoot a straight line to the other side
+					if (meridian && latlon[coord].lng < 0) { break; }
+					
+					// cut the path if we've reached the end of an orbit
+					if (coord/(pathNum+1) > period) {	break; }
+
+					// create a new array entry for this location, then advance the array counter
+					path.push(latlon[coord]);
+					coord++;
+				}
+			} else {
+				// check if the plot actually starts east of the meridian and update if needed
+				if (latlon[coord].lng >= 0) { meridian = false; }
+				
+				while (coord < latlon.length) {
+					// have we passed west of the meridian?
+					if (latlon[coord].lng < 0) { meridian = true; }
+					
+					// if we started west or passed the meridian then a positive number means we are at the edge of the map
+					// time to kill off this plot so it does not shoot a straight line to the other side
+					if (meridian && latlon[coord].lng > 0) { break; }
+					
+					// cut the path if we've reached the end of an orbit
+					if (coord/(pathNum+1) > period) {	break; }
+					
+					// create a new array entry for this location, then advance the array counter
+					path.push(latlon[coord]);
+					coord++;
+				}
+			}
+			
+			// create the path for this orbit
+			// using leaflet.label - https://github.com/Leaflet/Leaflet.label
+			// because for some reason couldn't get Leaflet popups to work
+			var line = L.polyline(path, {smoothFactor: 1.25, clickable: true, color: colors[pathNum], weight: 3, opacity: 1}).bindLabel("Orbit #" + (pathNum+1) + "<br />Click for static view", {className: 'labeltext'}).addTo(map);
+			
+			// set up a listener for clicks on the line so we can let people switch to the static orbit view
+			line.on('click', function(e) {
+				$("#map").css("visibility", "hidden");
+			});
+			
+			// check if we have completed an orbit, not just hit the end of the map
+			if (coord/(pathNum+1) > period) {	pathNum++; }
+		}
+		
+		// find the times to Apoapsis and Periapsis
+		// same code used earlier for determining the change in mean since Eph
+		newMean = mean + n * (UT - eph);
+		if (newMean < 0 || newMean > 2*Math.PI) {
+			newMean = Math.abs(newMean - (2*Math.PI) * Math.floor(newMean / (2*Math.PI)));
+		}
+		var apTime = Math.round((Math.PI - newMean)/n);
+		var peTime = Math.round((Math.PI*2 - newMean)/n);
+		
+		// close to Ap/Pe we can get a negative value, so handle that by just adding the period
+		if (apTime <= 0) { apTime += Math.round(period); }
+		if (peTime <= 0) { peTime += Math.round(period); }
+		
+		// some orbits may be too long to show Ap/Pe markers, so ensure that we can display them at all
+		if (apTime < latlon.length) { 
+			var apMark = L.marker(latlon[apTime], {icon: apIcon}).addTo(map); 
+			apMark.bindPopup("<center><span id='apTime'>Time to Apoapsis<br />" + formatTime(apTime) + "</span></center>", {closeButton: false});
+			apMark.on('click', function(e) {
+				var dd = new Date();
+				var currDate = Math.floor(dd.getTime() / 1000);
+				var now = currDate - startDate;
+				$('#apTime').html("Time to Apoapsis<br />" + formatTime(apTime-now));
+			});
+		}
+		if (peTime < latlon.length) { 
+			var peMark = L.marker(latlon[peTime], {icon: peIcon}).addTo(map); 
+			peMark.bindPopup("<center><span id='peTime'>Time to Periapsis<br />" + formatTime(peTime) + "</span></center>", {closeButton: false});
+			peMark.on('click', function(e) {
+				var dd = new Date();
+				var currDate = Math.floor(dd.getTime() / 1000);
+				var now = currDate - startDate;
+				$('#peTime').html("Time to Periapsis<br />" + formatTime(peTime-now));
+			});
+		}
+	}
+	
+	// keep various things updated by calling this function every second
+	var d = new Date();
+	var startDate = Math.floor(d.getTime() / 1000);
+	var strMsg = "<%response.write msg%>";
+	var MET = <%response.write origMET%>;
+	var bUpdateMET = <%response.write lcase(bUpdateMET)%>;
+	var bEstDst = <%response.write lcase(bEstDst)%>;
+	var strAccDst = "<%response.write strAccDst%>";
+	var dstTraveled = <%response.write dstTraveled%>;
+	<%
+		if not isnull(rsOrbit.fields.item("Avg Velocity")) and not rsOrbit.bof then
+			response.write("var avgSpeed = " & rsOrbit.fields.item("Avg Velocity") & ";")
+		else
+			response.write("var avgSpeed = 0;")
+		end if
+	%>
+	setInterval(function () {
+	
+		// update map if there was one drawn
+		if (drawMap.charAt(0) == "!" && $("#map").length) {
+		
+			// get the difference in time since the page load and use that to find the right coords
+			var dd = new Date();
+			var currDate = Math.floor(dd.getTime() / 1000);
+
+			// if the difference is past the end of the array, then reload the page
+			if (currDate - startDate >= latlon.length) {
+				location.reload(true); 
+			} else {
+				
+				// update the position of the vessel marker
+				var now = currDate - startDate;
+				craft.setLatLng(latlon[now]);
+				
+				// update the popup content with JQuery, because once again I can't seem to get them to cooperate
+				// number formatting done with Numeral.js - http://numeraljs.com/
+				if (latlon[now].lat < 0) {
+					cardinal = "S";
+				} else {
+					cardinal = "N";
+				}
+				$('#lat').html(numeral(latlon[now].lat).format('0.0000') + "&deg;" + cardinal);
+				if (latlon[now].lng < 0) {
+					cardinal = "W";
+				} else {
+					cardinal = "E";
+				}
+				$('#lng').html(numeral(latlon[now].lng).format('0.0000') + "&deg;" + cardinal);
+				$('#alt').html(numeral(orbitdata[now].alt).format('0,0.000') + "km");
+				$('#vel').html(numeral(orbitdata[now].vel).format('0,0.000') + "km/s");
+				
+				// update the Ap/Pe marker popup content
+				$('#apTime').html("Time to Apoapsis<br />" + formatTime(apTime-now));
+				$('#peTime').html("Time to Periapsis<br />" + formatTime(peTime-now));
+
+				// update our Ap/Pe markers if we've passed one by just adding on the orbital period
+				// remove the marker entirely if it's past the end of the current plot
+				if (now > apTime && apTime >= 0) {
+					apTime += Math.round(period);
+					if (apTime <= latlon.length) {
+						apMark.setLatLng(latlon[apTime]);
+					} else {
+						map.removeLayer(apMark);
+						apTime = -1; 
+					}
+				}
+				if (now > peTime && peTime >= 0) {
+					peTime += Math.round(period);
+					if (peTime <= latlon.length) {
+						peMark.setLatLng(latlon[peTime]);
+					} else {
+						map.removeLayer(peMark);
+						peTime = -1; 
+					}
+				}
+			}
+		}	
+
+		// update MET/countdown clock if needed
+		if (bUpdateMET) {
+			MET++;
+			$("#met").html(strMsg + formatTime(MET));
+		}
+		
+		// update the estimated distance if needed
+		if (bEstDst) {
+			dstTraveled += Math.round(now * avgSpeed);
+			$("#distance").html(strAccDst + "<br />Estimated Current Total Distance Traveled: " + numeral(dstTraveled).format('0,0') + "km");
+		}
+		
+		// update all dynamic tooltips
+		Tipped.refresh(".tip-update");
+	},
+	1000);
+</script>
+
+<%
 'clean up all previous connections
 connCraft.Close
 Set connCraft = nothing

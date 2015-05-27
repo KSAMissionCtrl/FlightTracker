@@ -1,6 +1,4 @@
 <!DOCTYPE html>
-<!-- Use this file to allow users to create a pop-up window version of the flight tracker to move around their screen -->
-
 <html>
 <head>
 <script>
@@ -15,21 +13,18 @@ window.close()
 </script>
 </head>
 <%
-'make sure we properly peice together the URL to open in the pop-up window
 queryString = request.querystring("db")
 if request.querystring("ut") then	queryString = queryString & "&ut=" & request.querystring("ut")
 if request.querystring("pass") then	queryString = queryString & "&pass=" & request.querystring("pass")
 
 if request.querystring("popout") then
 	response.write("<body onload=""centeredPopup(")
-	response.write("'http://www.blade-edge.com/images/KSA/Flights/craft.asp?popout=true&r=true&db=" & querystring & "','myWindow','1145','870','no')")
+	response.write("'http://www.blade-edge.com/images/KSA/Flights/craftorbitplot.asp?popout=true&db=" & querystring & "','myWindow','1160','890','no')")
 	response.write(""">")
 else
-	response.redirect "http://www.blade-edge.com/images/KSA/Flights/craft.asp?popout=false&r=true&db=" & querystring
+	response.redirect "http://www.blade-edge.com/images/KSA/Flights/craft.asp?popout=false&db=" & querystring
 end if 
 %>
-
-<!-- mobile users can't see a pop-up window so inform them they can view the page normally -->
 <center>
 <table width="250px">
 <tr>
@@ -42,6 +37,5 @@ end if
 	</tr>
 </table>
 </center>
-
 </body>
 </html>
