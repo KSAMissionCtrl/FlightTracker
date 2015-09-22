@@ -1,6 +1,7 @@
+<!DOCTYPE html>
+
 <!-- code/comments not formatted for word wrap -->
 
-<!DOCTYPE html>
 <html>
 <head>
 
@@ -10,9 +11,12 @@
   <title>KSA Flight Tracker</title>
 
   <!-- use this image link to force reddit to use a certain image for its thumbnail -->
-  <meta property="og:image" content="http://i.imgur.com/HvT2d8f.png" />
+  <meta property="og:image" content="http://i.imgur.com/2IH1UpQ.png" />
 	<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 
+	<!-- ensure proper scale of page -->
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	
 	<!-- CSS stylesheets -->
 	<link href="style.css" rel="stylesheet" type="text/css" media="screen" />
 	<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Roboto:900" />
@@ -69,7 +73,7 @@
 			if (time >= 60) {
 				minutes = Math.floor(time / 60);
 				time -= minutes * 60;
-				ydhms += minutes + "m "
+				ydhms += minutes + "m ";
 			}
 
 			return ydhms += Math.floor(time) + "s";
@@ -79,7 +83,7 @@
 		$(document).ready(function(){
 			// shows the map again after it is hidden to show static orbits
 			$("#img").click(function(){
-					$("#map").css("visibility", "visible");
+					if (bDrawMap) { $("#map").css("visibility", "visible"); }
 			});
 			
 			// does away with the notification for orbital plot length
@@ -108,8 +112,10 @@
 		// purposefully delay the display of the map (and orbital plot message if need)
 		// this is so users can see the static plot exists first
 		setTimeout(function () { 
-			$("#map").css("visibility", "visible"); 
-			if (showMsg) { $("#msg").css("visibility", "visible"); }
+			if (bDrawMap) { 
+				$("#map").css("visibility", "visible");
+				if (showMsg) { $("#msg").css("visibility", "visible"); }
+			}
 		}, 2500);
 			
 		// for retrieving URL query strings
@@ -517,14 +523,14 @@ end if
 							if isnull(rsOrbit.fields.item("VelocityPe")) then
 								response.write("N/A")
 							else
-								response.write rsOrbit.fields.item("VelocityPe")
+								response.write formatnumber(rsOrbit.fields.item("VelocityPe")*1, 3)
 								response.write("km/s")
 							end if
 							response.write("<br />Apoapsis: ")
 							if isnull(rsOrbit.fields.item("VelocityAp")) then
 								response.write("N/A")
 							else
-								response.write rsOrbit.fields.item("VelocityAp")
+								response.write formatnumber(rsOrbit.fields.item("VelocityAp")*1, 3)
 								response.write("km/s")
 							end if
 							'technically this could be calculated, but useful to have as a reference w/o needing to
@@ -532,7 +538,7 @@ end if
 							if isnull(rsOrbit.fields.item("Avg Velocity")) then
 								response.write("N/A")
 							else
-								response.write rsOrbit.fields.item("Avg Velocity")
+								response.write formatnumber(rsOrbit.fields.item("Avg Velocity")*1, 3)
 								response.write("km/s")
 							end if
 							response.write("</td></tr><tr><td><b>Periapsis:</b> ")
@@ -829,7 +835,7 @@ end if
 							response.write("km/s<br />Total mass: ")
 							response.write rsResources.fields.item("TotalMass")
 							response.write("t<br />Resource mass: ")
-							response.write rsResources.fields.item("ResourceMass")
+							response.write formatnumber(rsResources.fields.item("ResourceMass")*1, 3)
 							response.write("t'><u>Resources</u><span>:</b> ")
 							
 							'if we have an ascent table, adjust column start position
@@ -1042,7 +1048,7 @@ end if
 						end if
 					else
 						if not isnull(rsCraft.fields.item("NextEventTitle")) then
-							response.write("<span style='cursor:help'><img src='http://www.blade-edge.com/images/KSA/Flights/next.png' title='")
+							response.write("<span style='cursor:help'><img src='http://www.blade-edge.com/images/KSA/Flights/next.png' class='tip' title='")
 							response.write rsCraft.fields.item("NextEventTitle")
 							response.write("'></span>")
 						else
@@ -1102,13 +1108,24 @@ end if
 		end if
 		
 		'this could have been done better and made more robust, now that I know more about JQuery
-		'this is one of 3 specific formats that the static orbital display will use
-		'the other two static display types are for hyperbolic orbits, which are not yet supported so they fall under the "old data" category
-		response.write("<tr> <td> <center> <span id='img' style='cursor:help'><img src='" & mid(str, 2, instr(str, "|")) & "' class='tip' data-tipped-options=""target: 'mouse'"" title='Ecliptic View" & mapMsg & "'>&nbsp;<img src='" & mid(str, instr(str, "|")+1) & "' class='tip' data-tipped-options=""target: 'mouse'"" title='Polar View" & mapMsg & "'></span> </center> </td> </tr>")
+		'check to see if this has coordinates for a static dynamic display for bodies that have no map data
+		if instr(str, "[") then
+			if mapMsg = "<br />Click for dynamic view" then mapMsg = ""
+			response.write("<tr> <td> <center> <span id='img' style='cursor:help'><img src='" & mid(str, 2, instr(str, "|")) & "' class='tip' data-tipped-options=""target: 'mouse'"" title='Ecliptic View" & mapMsg & "'>&nbsp;<img src='" & mid(str, instr(str, "|")+1, 30) & "' class='tip' data-tipped-options=""target: 'mouse'"" title='Polar View" & mapMsg & "'></span> </center> </td> </tr>")
+			
+			if bMapOrbit then
+				response.write("<div id='orbData' style='visibility: hidden; text-align: left; padding: 2px; font-family: sans-serif; font-size: 14px; border: 2px solid gray;	border-collapse: collapse; background-color: #E6E6E6; position: absolute; top: " & mid(str, instr(str, "[")+1, instr(str, ",") - instr(str, "[") -1) & "px; left: " & mid(str, instr(str, ",")+1, len(str) - instr(str, ",") -1) & "px;'></div>")
+			end if
+		else
+			'this is one of 3 specific formats that the static orbital display will use
+			'the other two static display types are for hyperbolic orbits, which are not yet supported so they fall under the "old data" category
+			response.write("<tr> <td> <center> <span id='img' style='cursor:help'><img src='" & mid(str, 2, instr(str, "|")) & "' class='tip' data-tipped-options=""target: 'mouse'"" title='Ecliptic View" & mapMsg & "'>&nbsp;<img src='" & mid(str, instr(str, "|")+1) & "' class='tip' data-tipped-options=""target: 'mouse'"" title='Polar View" & mapMsg & "'></span> </center> </td> </tr>")
+		end if
 		
 	'old data, just spit it out
+	'but make any titles compatible with new Tipped tooltips
 	else
-		response.write rsCraft.fields.item("ImgDataCode")
+		response.write replace(replace(rsCraft.fields.item("ImgDataCode"), "title", "class='tip' data-tipped-options=""target: 'mouse'"" title"), "&#013;", "<br />")
 	end if
 	%>
 </table>
@@ -1422,9 +1439,6 @@ else
 end if
 %>
 
-<!-- temporary notice concerning the current status of the KSA -->
-<p><table style="border: 1px solid red;	border-collapse: collapse; background-color: #FFB8B8;"><tr><td><center><b>Special Notice</b><p>Please read <a target="_blank" href="http://t.co/iaKV2TGDPe">this statement</a> regarding future and ongoing operations for the Kerbal Space Agency</p></center></td></tr></table></p>
-
 <!-- this will either display a mission timeline if the craft has one, or the recent tweets from @KSA_MissionCtrl --> 
 <%
 rsCrafts.movefirst
@@ -1450,6 +1464,12 @@ rsMoons.movefirst
 	var drawMap = "<%response.write rsCraft.fields.item("ImgDataCode")%>";
 	var latlon = [];
 	var orbitdata = [];
+	
+	// don't show until the mouse is over the map as otherwise it will just come up as undefined
+	function showCursorData(e) {
+		map.addControl(new L.KSP.Control.Info());
+		map.off('mouseover', showCursorData);
+	}
 
 	// if string is empty, this is an ascent event
 	if (drawMap.length == 0) {
@@ -1466,7 +1486,7 @@ rsMoons.movefirst
 		
 		// touchscreens don't register the cursor location, so only show location data if this isn't a touchscreen
 		// leaflet.js was modified to remove the biome, slope and elevation data displays
-		if (!is_touch_device()) { map.addControl(new L.KSP.Control.Info()); }
+		if (!is_touch_device()) { map.on('mouseover', showCursorData); }
 		
 		<%
 		'do not run this code if there is image data to display instead
@@ -1571,7 +1591,6 @@ rsMoons.movefirst
 		rsBody.find("id=" & ref)
 		
 		'some bodies are not supported by KSP.Leaflet and should not attempt to be drawn via the map
-		'TODO - create data overlay for static orbit plots in these cases to still show real-time orbital information
 		response.write ("var bDrawMap = " & lcase(rsBody.fields.item("AllowPlot")) & ";")
 
 		'set the initial Keplerian orbital elements & time & gravitaional parameter of the body
@@ -1622,7 +1641,7 @@ rsMoons.movefirst
 
 			// touchscreens don't register the cursor location, so only show location data if this isn't a touchscreen
 			// leaflet.js was modified to remove the biome, slope and elevation data displays
-			if (!is_touch_device()) { map.addControl(new L.KSP.Control.Info()); }
+			if (!is_touch_device()) { map.on('mouseover', showCursorData); }
 		}
 		
 		// compute 3 orbits max, but don't exceed 100,000s or a noticeable freeze in the browser will occur
@@ -1803,97 +1822,99 @@ rsMoons.movefirst
 		
 		// place the marker at the current Lat/Lon position for this UT, with a high enough Z-index to stay on top of other map markers
 		// put in some maximum default values since the JQuery update doesn't adjust the width of the popup
-		var craft = L.marker(latlon[0], {icon: ship, zIndexOffset: 100}).addTo(map);
-		craft.bindPopup("Lat: <span id='lat'>-000.0000&deg;S</span><br />Lng: <span id='lng'>-000.0000&deg;W</span><br />Alt: <span id='alt'>000,000.000km</span><br />Vel: <span id='vel'>000,000.000km/s</span>", {closeButton: false});
+		if (bDrawMap) {
+			var craft = L.marker(latlon[0], {icon: ship, zIndexOffset: 100}).addTo(map);
+			craft.bindPopup("Lat: <span id='lat'>-000.0000&deg;S</span><br />Lng: <span id='lng'>-000.0000&deg;W</span><br />Alt: <span id='alt'>000,000.000km</span><br />Vel: <span id='vel'>000,000.000km/s</span>", {closeButton: false});
 
-		// set up a listener for click events so we can immediately update the information and not have to wait for the next timer event
-		var cardinal = "";
-		craft.on('click', function(e) {
-			if (latlon[0].lat < 0) {
-				cardinal = "S";
-			} else {
-				cardinal = "N";
-			}
-			$('#lat').html(numeral(latlon[0].lat).format('0.0000') + "&deg;" + cardinal);
-			if (latlon[0].lng < 0) {
-				cardinal = "W";
-			} else {
-				cardinal = "E";
-			}
-			$('#lng').html(numeral(latlon[0].lng).format('0.0000') + "&deg;" + cardinal);
-			$('#alt').html(numeral(orbitdata[0].alt).format('0,0.000') + "km");
-			$('#vel').html(numeral(orbitdata[0].vel).format('0,0.000') + "km/s");
-		});
-		
-		// show the craft info box. This lets people know it exists and also serves to bring the craft into view
-		// after 10 seconds close the box, user can re-open it if they want to
-		craft.openPopup();
-		setTimeout(function () { craft.closePopup(); }, 10000);
-		
-		// draw the orbital paths
-		var coord = 0;
-		var colors = ['#00FF00', '#FF0000', '#FFFF00'];
-		var pathNum = 0;
-		while (coord < latlon.length) {
-			var meridian = true;
-			var path = [];
-			
-			// if a vessel is moving slower than the planet is rotating, it will move west to east
-			// the same can happen for highly-inclined orbits (NOTE: unsure if I actually covered all cases here, at least I did for existing craft)
-			if (period < rotPeriod && ((inc * 57.29577951308232) < 89 || (inc * 57.29577951308232) > 91)) {
-			
-				// check if the plot actually starts west of the meridian and update if needed
-				if (latlon[coord].lng <= 0) { meridian = false; }
-				
-				while (coord < latlon.length) {
-				
-					// have we passed east of the meridian?
-					if (latlon[coord].lng > 0) { meridian = true; }
-					
-					// if we started east or passed the meridian then a negative number means we are at the edge of the map
-					// time to kill off this plot so it does not shoot a straight line to the other side
-					if (meridian && latlon[coord].lng < 0) { break; }
-					
-					// cut the path if we've reached the end of an orbit
-					if (coord/(pathNum+1) > period) {	break; }
-
-					// create a new array entry for this location, then advance the array counter
-					path.push(latlon[coord]);
-					coord++;
+			// set up a listener for click events so we can immediately update the information and not have to wait for the next timer event
+			var cardinal = "";
+			craft.on('click', function(e) {
+				if (latlon[0].lat < 0) {
+					cardinal = "S";
+				} else {
+					cardinal = "N";
 				}
-			} else {
-				// check if the plot actually starts east of the meridian and update if needed
-				if (latlon[coord].lng >= 0) { meridian = false; }
-				
-				while (coord < latlon.length) {
-					// have we passed west of the meridian?
-					if (latlon[coord].lng < 0) { meridian = true; }
-					
-					// if we started west or passed the meridian then a positive number means we are at the edge of the map
-					// time to kill off this plot so it does not shoot a straight line to the other side
-					if (meridian && latlon[coord].lng > 0) { break; }
-					
-					// cut the path if we've reached the end of an orbit
-					if (coord/(pathNum+1) > period) {	break; }
-					
-					// create a new array entry for this location, then advance the array counter
-					path.push(latlon[coord]);
-					coord++;
+				$('#lat').html(numeral(latlon[0].lat).format('0.0000') + "&deg;" + cardinal);
+				if (latlon[0].lng < 0) {
+					cardinal = "W";
+				} else {
+					cardinal = "E";
 				}
-			}
-			
-			// create the path for this orbit
-			// using leaflet.label - https://github.com/Leaflet/Leaflet.label
-			// because for some reason couldn't get Leaflet popups to work
-			var line = L.polyline(path, {smoothFactor: 1.25, clickable: true, color: colors[pathNum], weight: 3, opacity: 1}).bindLabel("Orbit #" + (pathNum+1) + "<br />Click for static view", {className: 'labeltext'}).addTo(map);
-			
-			// set up a listener for clicks on the line so we can let people switch to the static orbit view
-			line.on('click', function(e) {
-				$("#map").css("visibility", "hidden");
+				$('#lng').html(numeral(latlon[0].lng).format('0.0000') + "&deg;" + cardinal);
+				$('#alt').html(numeral(orbitdata[0].alt).format('0,0.000') + "km");
+				$('#vel').html(numeral(orbitdata[0].vel).format('0,0.000') + "km/s");
 			});
 			
-			// check if we have completed an orbit, not just hit the end of the map
-			if (coord/(pathNum+1) > period) {	pathNum++; }
+			// show the craft info box. This lets people know it exists and also serves to bring the craft into view
+			// after 10 seconds close the box, user can re-open it if they want to
+			craft.openPopup();
+			setTimeout(function () { craft.closePopup(); }, 10000);
+			
+			// draw the orbital paths
+			var coord = 0;
+			var colors = ['#00FF00', '#FF0000', '#FFFF00'];
+			var pathNum = 0;
+			while (coord < latlon.length) {
+				var meridian = true;
+				var path = [];
+				
+				// if a vessel is moving slower than the planet is rotating, it will move west to east
+				// the same can happen for highly-inclined orbits (NOTE: unsure if I actually covered all cases here, at least I did for existing craft)
+				if (period < rotPeriod && ((inc * 57.29577951308232) < 89 || (inc * 57.29577951308232) > 91)) {
+				
+					// check if the plot actually starts west of the meridian and update if needed
+					if (latlon[coord].lng <= 0) { meridian = false; }
+					
+					while (coord < latlon.length) {
+					
+						// have we passed east of the meridian?
+						if (latlon[coord].lng > 0) { meridian = true; }
+						
+						// if we started east or passed the meridian then a negative number means we are at the edge of the map
+						// time to kill off this plot so it does not shoot a straight line to the other side
+						if (meridian && latlon[coord].lng < 0) { break; }
+						
+						// cut the path if we've reached the end of an orbit
+						if (coord/(pathNum+1) > period) {	break; }
+
+						// create a new array entry for this location, then advance the array counter
+						path.push(latlon[coord]);
+						coord++;
+					}
+				} else {
+					// check if the plot actually starts east of the meridian and update if needed
+					if (latlon[coord].lng >= 0) { meridian = false; }
+					
+					while (coord < latlon.length) {
+						// have we passed west of the meridian?
+						if (latlon[coord].lng < 0) { meridian = true; }
+						
+						// if we started west or passed the meridian then a positive number means we are at the edge of the map
+						// time to kill off this plot so it does not shoot a straight line to the other side
+						if (meridian && latlon[coord].lng > 0) { break; }
+						
+						// cut the path if we've reached the end of an orbit
+						if (coord/(pathNum+1) > period) {	break; }
+						
+						// create a new array entry for this location, then advance the array counter
+						path.push(latlon[coord]);
+						coord++;
+					}
+				}
+				
+				// create the path for this orbit
+				// using leaflet.label - https://github.com/Leaflet/Leaflet.label
+				// because for some reason couldn't get Leaflet popups to work
+				var line = L.polyline(path, {smoothFactor: 1.25, clickable: true, color: colors[pathNum], weight: 3, opacity: 1}).bindLabel("Orbit #" + (pathNum+1) + "<br />Click for static view", {className: 'labeltext'}).addTo(map);
+				
+				// set up a listener for clicks on the line so we can let people switch to the static orbit view
+				line.on('click', function(e) {
+					$("#map").css("visibility", "hidden");
+				});
+				
+				// check if we have completed an orbit, not just hit the end of the map
+				if (coord/(pathNum+1) > period) {	pathNum++; }
+			}
 		}
 		
 		// find the times to Apoapsis and Periapsis
@@ -1911,24 +1932,28 @@ rsMoons.movefirst
 		
 		// some orbits may be too long to show Ap/Pe markers, so ensure that we can display them at all
 		if (apTime < latlon.length) { 
-			var apMark = L.marker(latlon[apTime], {icon: apIcon}).addTo(map); 
-			apMark.bindPopup("<center><span id='apTime'>Time to Apoapsis<br />" + formatTime(apTime) + "</span></center>", {closeButton: false});
-			apMark.on('click', function(e) {
-				var dd = new Date();
-				var currDate = Math.floor(dd.getTime() / 1000);
-				var now = currDate - startDate;
-				$('#apTime').html("Time to Apoapsis<br />" + formatTime(apTime-now));
-			});
+			if (bDrawMap) {
+				var apMark = L.marker(latlon[apTime], {icon: apIcon}).addTo(map); 
+				apMark.bindPopup("<center><span id='apTime'>Time to Apoapsis<br />" + formatTime(apTime) + "</span></center>", {closeButton: false});
+				apMark.on('click', function(e) {
+					var dd = new Date();
+					var currDate = Math.floor(dd.getTime() / 1000);
+					var now = currDate - startDate;
+					$('#apTime').html("Time to Apoapsis<br />" + formatTime(apTime-now));
+				});
+			} else { apTime = -1; }
 		}
 		if (peTime < latlon.length) { 
-			var peMark = L.marker(latlon[peTime], {icon: peIcon}).addTo(map); 
-			peMark.bindPopup("<center><span id='peTime'>Time to Periapsis<br />" + formatTime(peTime) + "</span></center>", {closeButton: false});
-			peMark.on('click', function(e) {
-				var dd = new Date();
-				var currDate = Math.floor(dd.getTime() / 1000);
-				var now = currDate - startDate;
-				$('#peTime').html("Time to Periapsis<br />" + formatTime(peTime-now));
-			});
+			if (bDrawMap) {
+				var peMark = L.marker(latlon[peTime], {icon: peIcon}).addTo(map); 
+				peMark.bindPopup("<center><span id='peTime'>Time to Periapsis<br />" + formatTime(peTime) + "</span></center>", {closeButton: false});
+				peMark.on('click', function(e) {
+					var dd = new Date();
+					var currDate = Math.floor(dd.getTime() / 1000);
+					var now = currDate - startDate;
+					$('#peTime').html("Time to Periapsis<br />" + formatTime(peTime-now));
+				});
+			} else { peTime = -1; }
 		}
 	}
 	
@@ -1952,7 +1977,7 @@ rsMoons.movefirst
 	
 		// update map if there was one drawn
 		if (drawMap.charAt(0) == "!" && $("#map").length) {
-		
+
 			// get the difference in time since the page load and use that to find the right coords
 			var dd = new Date();
 			var currDate = Math.floor(dd.getTime() / 1000);
@@ -1961,12 +1986,13 @@ rsMoons.movefirst
 			if (currDate - startDate >= latlon.length) {
 				location.reload(true); 
 			} else {
-				
-				// update the position of the vessel marker
 				var now = currDate - startDate;
-				craft.setLatLng(latlon[now]);
+
+				// update the position of the vessel marker
+				if (bDrawMap) {	craft.setLatLng(latlon[now]);	}
 				
 				// update the popup content with JQuery, because once again I can't seem to get them to cooperate
+				// or update the static display data
 				// number formatting done with Numeral.js - http://numeraljs.com/
 				if (latlon[now].lat < 0) {
 					cardinal = "S";
@@ -1979,32 +2005,45 @@ rsMoons.movefirst
 				} else {
 					cardinal = "E";
 				}
-				$('#lng').html(numeral(latlon[now].lng).format('0.0000') + "&deg;" + cardinal);
-				$('#alt').html(numeral(orbitdata[now].alt).format('0,0.000') + "km");
-				$('#vel').html(numeral(orbitdata[now].vel).format('0,0.000') + "km/s");
-				
-				// update the Ap/Pe marker popup content
-				$('#apTime').html("Time to Apoapsis<br />" + formatTime(apTime-now));
-				$('#peTime').html("Time to Periapsis<br />" + formatTime(peTime-now));
-
-				// update our Ap/Pe markers if we've passed one by just adding on the orbital period
-				// remove the marker entirely if it's past the end of the current plot
-				if (now > apTime && apTime >= 0) {
-					apTime += Math.round(period);
-					if (apTime <= latlon.length) {
-						apMark.setLatLng(latlon[apTime]);
-					} else {
-						map.removeLayer(apMark);
-						apTime = -1; 
-					}
+				if (bDrawMap) {
+					$('#lng').html(numeral(latlon[now].lng).format('0.0000') + "&deg;" + cardinal);
+					$('#alt').html(numeral(orbitdata[now].alt).format('0,0.000') + "km");
+					$('#vel').html(numeral(orbitdata[now].vel).format('0,0.000') + "km/s");
+					
+					// update the Ap/Pe marker popup content
+					$('#apTime').html("Time to Apoapsis<br />" + formatTime(apTime-now));
+					$('#peTime').html("Time to Periapsis<br />" + formatTime(peTime-now));
+				} else if ($("#orbData").length) {
+					if ($('#orbData').css("visibility") == "hidden") { $('#orbData').css("visibility", "visible"); }
+					$('#orbData').html(
+						"Lat: " + numeral(latlon[now].lat).format('0.0000') + "&deg;" + cardinal + "<br />" +
+						"Lng: " + numeral(latlon[now].lng).format('0.0000') + "&deg;" + cardinal + "<br />" +
+						"Alt: " + numeral(orbitdata[now].alt).format('0,0.000') + "km" + "<br />" +
+						"Vel: " + numeral(orbitdata[now].vel).format('0,0.000') + "km/s" + "<br />" +
+						"Time to Ap: " + formatTime(apTime-now) + "<br />" +
+						"Time to Pe: " + formatTime(peTime-now));
 				}
-				if (now > peTime && peTime >= 0) {
-					peTime += Math.round(period);
-					if (peTime <= latlon.length) {
-						peMark.setLatLng(latlon[peTime]);
-					} else {
-						map.removeLayer(peMark);
-						peTime = -1; 
+
+				// update our Ap/Pe times if we've passed one by just adding on the orbital period
+				// remove the marker entirely if it's past the end of the current plot
+				if (bDrawMap) {
+					if (now > apTime && apTime >= 0) {
+						apTime += Math.round(period);
+						if (apTime <= latlon.length) {
+							apMark.setLatLng(latlon[apTime]);
+						} else {
+							map.removeLayer(apMark);
+							apTime = -1; 
+						}
+					}
+					if (now > peTime && peTime >= 0) {
+						peTime += Math.round(period);
+						if (peTime <= latlon.length) {
+							peMark.setLatLng(latlon[peTime]);
+						} else {
+							map.removeLayer(peMark);
+							peTime = -1; 
+						}
 					}
 				}
 			}
@@ -2018,8 +2057,7 @@ rsMoons.movefirst
 		
 		// update the estimated distance if needed
 		if (bEstDst) {
-			dstTraveled += Math.round(now * avgSpeed);
-			$("#distance").html(strAccDst + "<br />Estimated Current Total Distance Traveled: " + numeral(dstTraveled).format('0,0') + "km");
+			$("#distance").html(strAccDst + "<br />Estimated Current Total Distance Traveled: " + numeral(dstTraveled + (now * avgSpeed)).format('0,0') + "km");
 		}
 		
 		// update all dynamic tooltips
