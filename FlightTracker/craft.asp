@@ -178,6 +178,7 @@ Flight Data recordset contains orbital information for when the craft is in spac
 Crew Manifest recordset contains information on any astronauts currently aboard.
 Craft Comms recordset contains information on any communications equipment aboard.
 Ascent Data recordset contains telemetry information for vessel ascent to orbit after launch. (usage not required)
+Flighplan recordset contains maneuver node data that can be displayed on the dynamic map if it occurs within 100,000s of the current time (usage not required)
 
 All recordsets can be updated independently. If you add a record to Craft Data, you do not have to add a corresponding UT record to all the other recordsets
 
@@ -203,6 +204,7 @@ set rsCrew = Server.CreateObject("ADODB.recordset")
 set rsResources = Server.CreateObject("ADODB.recordset")
 set rsComms = Server.CreateObject("ADODB.recordset")
 set rsAscent = Server.CreateObject("ADODB.recordset")
+set rsFlightplan = Server.CreateObject("ADODB.recordset")
 
 'query the data
 rsCraft.open "select * from [craft data]", connCraft, 2
@@ -211,19 +213,22 @@ rsOrbit.open "select * from [flight data]", connCraft, 2
 rsCrew.open "select * from [crew manifest]", connCraft, 2
 rsComms.open "select * from [craft comms]", connCraft, 2
 
-'determine if this DB has ascent information, older databases may not contain this table
+'determine if this DB has ascent and/or flightplan information, older databases may not contain these tables
 set adoxConn = CreateObject("ADOX.Catalog")  
 adoxConn.activeConnection = connCraft  
 bAscentData = false 
+bFlightplan = false 
 for each table in adoxConn.tables 
-		if lcase(table.name) = "ascent data" then 
-				bAscentData = true 
-				exit for 
-		end if 
-next 
+  if lcase(table.name) = "ascent data" then 
+    bAscentData = true 
+  elseif lcase(table.name) = "flightplan" then 
+    bFlightplan = true 
+  end if 
+next
 
 'trying to open a recordset that does not exist will kill the page
 if bAscentData then rsAscent.open "select * from [ascent data]", connCraft, 2
+if bFlightplan then rsFlightplan.open "select * from flightplan", connCraft, 2
 
 'calculate the time in seconds since epoch 0 when the game started
 fromDate = "16-Feb-2014 00:00:00"
@@ -239,6 +244,11 @@ if request.querystring("ut") then
   'convert the text string into a number
 	dbUT = request.querystring("ut") * 1
 	
+	'make note so we do not auto-update the page
+	response.write("<script>")
+	response.write("var bPastUT = true;")
+	response.write("</script>")
+	
 	'do not allow people to abuse the UT query to peek ahead 
 	'a passcode query is required when requesting a UT entry later than the current UT
 	if dbUT > UT then
@@ -249,6 +259,9 @@ if request.querystring("ut") then
 	end if
 else
 	dbUT = UT
+	response.write("<script>")
+	response.write("var bPastUT = false;")
+	response.write("</script>")
 end if
 'regardless of previous outcomes, moving forward all recordset quieries should be made via dbUT
 
@@ -275,6 +288,14 @@ if not rsCraft.eof then
   'remember "id" is the UT
 	nextevent = rsCraft.fields.item("id")
 	nexteventdesc = rsCraft.fields.item("CraftDescTitle")
+	
+	'save to js so page will auto-update when next event arrives
+	response.write("<script>")
+	response.write("var bNextEventRefresh = true;")
+	response.write("var nextEventUT = " & rsCraft.fields.item("id") & ";")
+	response.write("</script>")
+else
+  response.write("<script>var bNextEventRefresh = false;</script>")
 end if
 rsCraft.moveprevious
 'done looking ahead, now look behind then reset pointer again to current record
@@ -284,26 +305,6 @@ if not rsCraft.bof then
 	preveventdesc = rsCraft.fields.item("CraftDescTitle")
 end if
 rsCraft.movenext
-
-'are we auto-refreshing the page?
-'this feature will become fully deprecated once real-time launch telemetry is implemented
-if request.QueryString("r") then
-	'reset all 60s pages to 5min
-	if isnull(rsCraft.fields.item("RefreshRate")) then
-		refreshrate = 300
-	elseif rsCraft.fields.item("RefreshRate") = "60" then 
-		refreshrate = 300
-	else
-		refreshrate = rsCraft.fields.item("RefreshRate")
-	end if
-	
-	'if there is a future event, go to it on refresh. Otherwise, refresh the page normally
-	if nextevent and UT > nextevent then
-		Response.AddHeader "Refresh", refreshrate & ";URL=http://" & Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL") & "?db=" & request.querystring("db") & "&r=true" & "&ut=" & nextevent
-	else
-		Response.AddHeader "Refresh", refreshrate & ";URL=http://" & Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL") & "?" & request.querystring()
-	end if
-end if
 
 'assign the launch date, but - 
 'if we are viewing this record as a past event and the launch for this record was scrubbed,
@@ -403,7 +404,47 @@ end if
 'note also we should not update if there is no time to update
 bUpdateMET = true
 if not isnull(rsCraft.fields.item("EndTime")) or launchmsg = "To Be Determined" or not tzero then bUpdateMET = false
+%>
 
+<!-- 
+FLIGHTPLAN FIELDS
+=================
+
+UT - the time in seconds from 0 epoch at which this maneuver node occurs
+Prograde - m/s movement along the prograde vector
+Normal - m/s movement along the normal vector
+Radial - m/s movement along the radial vector
+Total - total amount of Δv required for maneuver
+-->
+
+<%
+'determine if we have an upcoming maneuver node and save that data to js
+if bFlightplan then 
+  do until rsFlightplan.eof
+    if rsFlightplan.fields.item("ut") > dbUT then exit do
+    rsFlightplan.MoveNext
+  Loop
+  
+  if not rsFlightplan.eof then
+    response.write("<script>")
+    response.write("var bUpcomingNode = true;")
+    response.write("var nodeUT = " & rsFlightplan.fields.item("ut") & ";")
+    response.write("var nodePrograde = " & rsFlightplan.fields.item("prograde") & ";")
+    response.write("var nodeNormal = " & rsFlightplan.fields.item("normal") & ";")
+    response.write("var nodeRadial = " & rsFlightplan.fields.item("radial") & ";")
+    response.write("var nodeTotal = " & rsFlightplan.fields.item("total") & ";")
+    response.write("</script>")
+  else
+    response.write("<script>")
+    response.write("var bUpcomingNode = false;")
+    response.write("</script>")
+  end if
+else
+  response.write("<script>")
+  response.write("var bUpcomingNode = false;")
+  response.write("</script>")
+end if
+  
 'depending on whether we are in a pop-out window or normal page decides how page is formatted
 if request.querystring("popout") then
 	response.write("<div style='width: 100%; overflow: hidden;'>")
@@ -431,27 +472,27 @@ end if
 
       <!-- 
       CRAFT DATA FIELDS
-			=================
+      =================
 
-			ID - the time in seconds from 0 epoch at which this update occurs (UT)
-			RefreshRate - how often, in seconds, to refresh the page to possibly display new data
-			LaunchDateTerm - The text that will appear before the launch date UTC time (too many characters will cause text wrap)
-			[launchDate] - the date/time of the launch in VBScript date expression format: dd-mmm-yyyy hh:mm:ss (local time)
-			Scrub - whether this date will be invalidated by a scrubbed launch (True) or not (False). Consecutive scrubs okay
-			[EndTime] - time in UT the mission ends (if included, must be included in every record)
-			[EndDate] - time in VBScript date expression the mission ends (if included, must be included in every record)
-			[EndMsg] - message to display in pop-up text over launch time to explain mission ending (if included, must be included in every record)
-			CraftName - name of the craft to display at the top of the page
-			CraftImg - URL that points to the 525x380 image of the craft showing its current state (configuration, SOI)
-			CraftDescTitle - a short event description that will appear at the bottom of the craft image, at the top of the rollup text
-			CraftDescContent - HTML code to fill in the rollup text box that appears when user hovers over the craft image
-			LaunchDateUTC - the text that will appear for craft launch time, given in UTC with format mm/dd/yy @ hh:mm:ss
-			LastUpdate - the text that will appear for most recent update, given in UTC with format mm/dd/yy @ hh:mm:ss
-			[MissionReport] - URL link to the mission report (if included, must be included in every record)
-			[MissionReportTitle] - text describing mission that appears in pop-up when hovered over link (if included, must be included in every record)
-			[NextEventTitle] - text that appears over Next image if a future event is scheduled
-			[ImgDataCode] - HTML that shows an image infographic below the craft information in an area of 760x380. Special formatting is also recognized
-			[DistanceTraveled] - the total (not change in) distance (in km) the spacecraft has traveled since launch
+      ID - the time in seconds from 0 epoch at which this update occurs (UT)
+      RefreshRate - how often, in seconds, to refresh the page to possibly display new data
+      LaunchDateTerm - The text that will appear before the launch date UTC time (too many characters will cause text wrap)
+      [launchDate] - the date/time of the launch in VBScript date expression format: dd-mmm-yyyy hh:mm:ss (local time)
+      Scrub - whether this date will be invalidated by a scrubbed launch (True) or not (False). Consecutive scrubs okay
+      [EndTime] - time in UT the mission ends (if included, must be included in every record)
+      [EndDate] - time in VBScript date expression the mission ends (if included, must be included in every record)
+      [EndMsg] - message to display in pop-up text over launch time to explain mission ending (if included, must be included in every record)
+      CraftName - name of the craft to display at the top of the page
+      CraftImg - URL that points to the 525x380 image of the craft showing its current state (configuration, SOI)
+      CraftDescTitle - a short event description that will appear at the bottom of the craft image, at the top of the rollup text
+      CraftDescContent - HTML code to fill in the rollup text box that appears when user hovers over the craft image
+      LaunchDateUTC - the text that will appear for craft launch time, given in UTC with format mm/dd/yy @ hh:mm:ss
+      LastUpdate - the text that will appear for most recent update, given in UTC with format mm/dd/yy @ hh:mm:ss
+      [MissionReport] - URL link to the mission report (if included, must be included in every record)
+      [MissionReportTitle] - text describing mission that appears in pop-up when hovered over link (if included, must be included in every record)
+      [NextEventTitle] - text that appears over Next image if a future event is scheduled
+      [ImgDataCode] - HTML that shows an image infographic below the craft information in an area of 760x380. Special formatting is also recognized
+      [DistanceTraveled] - the total (not change in) distance (in km) the spacecraft has traveled since launch
       -->
       
       <!-- CSS slide-up caption image box -->
@@ -1140,18 +1181,8 @@ if request.querystring("ut") then vars = vars & "&ut=" & request.querystring("ut
 if request.querystring("pass") then vars = vars & "&pass=" & request.querystring("ut")
 
 closemsg = ""
-if request.querystring("r") then
-	refreshmsg = "Disable auto-refresh (" & refreshrate & "s)"
-else
-	'allow popout window to close if user has not switched on refresh
-	if request.querystring("popout") then	closemsg = "onclick='window.close()'"
-	refreshmsg = "Enable auto-refresh"
-	vars = vars & "&r=true"
-end if
-
+if request.querystring("popout") then	closemsg = "onclick='window.close()'"
 response.write("<a " & closemsg & " target='_blank' href='http://bit.ly/KSAHomePage'>KSA Historical Archives</a>")
-response.write(" | ")
-response.write("<a href='" & url & vars & "'>" & refreshmsg & "</a>")
 
 'creates a pop-out window the user can move around
 if not request.querystring("popout") then
@@ -1915,6 +1946,30 @@ rsMoons.movefirst
 				// check if we have completed an orbit, not just hit the end of the map
 				if (coord/(pathNum+1) > period) {	pathNum++; }
 			}
+			
+			// if we have an upcoming maneuver node, check that it can be drawn along our orbit and do so if possible
+			if (bUpcomingNode) {
+        if (nodeUT - UT < latlon.length) {
+          var bNodeRefreshCheck = false;
+          var nodeIcon = L.icon({
+            iconUrl: 'node.png',
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+          });
+          var nodeMark = L.marker(latlon[nodeUT - UT], {icon: nodeIcon}).addTo(map);
+          nodeMark.bindPopup("<center><span id='nodeTime'>Time to Maneuver<br />" + formatTime(nodeUT - UT) + "</span></center><br />Prograde &Delta;v: " + numeral(nodePrograde).format('0.000') + "<br />Normal &Delta;v: " + numeral(nodeNormal).format('0.000') + "<br />Radial &Delta;v: " + numeral(nodeRadial).format('0.000') + "<br />Total &Delta;v: " + numeral(nodeTotal).format('0.000'), {closeButton: false});
+          nodeMark.on('click', function(e) {
+            var dd = new Date();
+            var currDate = Math.floor(dd.getTime() / 1000);
+            var now = currDate - startDate;
+            $('#nodeTime').html("Time to maneuver<br />" + formatTime((nodeUT - UT)-now));
+          });
+        }
+        // if we can't yet draw the node, refresh the page when we can
+        else {
+          var bNodeRefreshCheck = true;
+        }
+			}
 		}
 		
 		// find the times to Apoapsis and Periapsis
@@ -1974,79 +2029,75 @@ rsMoons.movefirst
 		end if
 	%>
 	setInterval(function () {
-	
+    // get the difference in time since the page load and use that to find the right coords
+    var dd = new Date();
+    var currDate = Math.floor(dd.getTime() / 1000);
+    var now = currDate - startDate;
+
 		// update map if there was one drawn
 		if (drawMap.charAt(0) == "!" && $("#map").length) {
 
-			// get the difference in time since the page load and use that to find the right coords
-			var dd = new Date();
-			var currDate = Math.floor(dd.getTime() / 1000);
+      // update the position of the vessel marker
+      if (bDrawMap) {	craft.setLatLng(latlon[now]);	}
+      
+      // update the popup content with JQuery, because once again I can't seem to get them to cooperate
+      // or update the static display data
+      // number formatting done with Numeral.js - http://numeraljs.com/
+      if (latlon[now].lat < 0) {
+        cardinal = "S";
+      } else {
+        cardinal = "N";
+      }
+      $('#lat').html(numeral(latlon[now].lat).format('0.0000') + "&deg;" + cardinal);
+      if (latlon[now].lng < 0) {
+        cardinal = "W";
+      } else {
+        cardinal = "E";
+      }
+      if (bDrawMap) {
+        $('#lng').html(numeral(latlon[now].lng).format('0.0000') + "&deg;" + cardinal);
+        $('#alt').html(numeral(orbitdata[now].alt).format('0,0.000') + "km");
+        $('#vel').html(numeral(orbitdata[now].vel).format('0,0.000') + "km/s");
+        
+        // update the Ap/Pe marker popup content
+        $('#apTime').html("Time to Apoapsis<br />" + formatTime(apTime-now));
+        $('#peTime').html("Time to Periapsis<br />" + formatTime(peTime-now));
+        
+        // update maneuver node popup content
+        if (bUpcomingNode) { $('#nodeTime').html("Time to maneuver<br />" + formatTime((nodeUT - UT)-now)); }
+      } else if ($("#orbData").length) {
+        if ($('#orbData').css("visibility") == "hidden") { $('#orbData').css("visibility", "visible"); }
+        $('#orbData').html(
+          "Lat: " + numeral(latlon[now].lat).format('0.0000') + "&deg;" + cardinal + "<br />" +
+          "Lng: " + numeral(latlon[now].lng).format('0.0000') + "&deg;" + cardinal + "<br />" +
+          "Alt: " + numeral(orbitdata[now].alt).format('0,0.000') + "km" + "<br />" +
+          "Vel: " + numeral(orbitdata[now].vel).format('0,0.000') + "km/s" + "<br />" +
+          "Time to Ap: " + formatTime(apTime-now) + "<br />" +
+          "Time to Pe: " + formatTime(peTime-now));
+      }
 
-			// if the difference is past the end of the array, then reload the page
-			if (currDate - startDate >= latlon.length) {
-				location.reload(true); 
-			} else {
-				var now = currDate - startDate;
-
-				// update the position of the vessel marker
-				if (bDrawMap) {	craft.setLatLng(latlon[now]);	}
-				
-				// update the popup content with JQuery, because once again I can't seem to get them to cooperate
-				// or update the static display data
-				// number formatting done with Numeral.js - http://numeraljs.com/
-				if (latlon[now].lat < 0) {
-					cardinal = "S";
-				} else {
-					cardinal = "N";
-				}
-				$('#lat').html(numeral(latlon[now].lat).format('0.0000') + "&deg;" + cardinal);
-				if (latlon[now].lng < 0) {
-					cardinal = "W";
-				} else {
-					cardinal = "E";
-				}
-				if (bDrawMap) {
-					$('#lng').html(numeral(latlon[now].lng).format('0.0000') + "&deg;" + cardinal);
-					$('#alt').html(numeral(orbitdata[now].alt).format('0,0.000') + "km");
-					$('#vel').html(numeral(orbitdata[now].vel).format('0,0.000') + "km/s");
-					
-					// update the Ap/Pe marker popup content
-					$('#apTime').html("Time to Apoapsis<br />" + formatTime(apTime-now));
-					$('#peTime').html("Time to Periapsis<br />" + formatTime(peTime-now));
-				} else if ($("#orbData").length) {
-					if ($('#orbData').css("visibility") == "hidden") { $('#orbData').css("visibility", "visible"); }
-					$('#orbData').html(
-						"Lat: " + numeral(latlon[now].lat).format('0.0000') + "&deg;" + cardinal + "<br />" +
-						"Lng: " + numeral(latlon[now].lng).format('0.0000') + "&deg;" + cardinal + "<br />" +
-						"Alt: " + numeral(orbitdata[now].alt).format('0,0.000') + "km" + "<br />" +
-						"Vel: " + numeral(orbitdata[now].vel).format('0,0.000') + "km/s" + "<br />" +
-						"Time to Ap: " + formatTime(apTime-now) + "<br />" +
-						"Time to Pe: " + formatTime(peTime-now));
-				}
-
-				// update our Ap/Pe times if we've passed one by just adding on the orbital period
-				// remove the marker entirely if it's past the end of the current plot
-				if (bDrawMap) {
-					if (now > apTime && apTime >= 0) {
-						apTime += Math.round(period);
-						if (apTime <= latlon.length) {
-							apMark.setLatLng(latlon[apTime]);
-						} else {
-							map.removeLayer(apMark);
-							apTime = -1; 
-						}
-					}
-					if (now > peTime && peTime >= 0) {
-						peTime += Math.round(period);
-						if (peTime <= latlon.length) {
-							peMark.setLatLng(latlon[peTime]);
-						} else {
-							map.removeLayer(peMark);
-							peTime = -1; 
-						}
-					}
-				}
-			}
+      // update our Ap/Pe times if we've passed one by just adding on the orbital period
+      // remove the marker entirely if it's past the end of the current plot
+      if (bDrawMap) {
+        if (now > apTime && apTime >= 0) {
+          apTime += Math.round(period);
+          if (apTime <= latlon.length) {
+            apMark.setLatLng(latlon[apTime]);
+          } else {
+            map.removeLayer(apMark);
+            apTime = -1; 
+          }
+        }
+        if (now > peTime && peTime >= 0) {
+          peTime += Math.round(period);
+          if (peTime <= latlon.length) {
+            peMark.setLatLng(latlon[peTime]);
+          } else {
+            map.removeLayer(peMark);
+            peTime = -1; 
+          }
+        }
+      }
 		}	
 
 		// update MET/countdown clock if needed
@@ -2062,6 +2113,23 @@ rsMoons.movefirst
 		
 		// update all dynamic tooltips
 		Tipped.refresh(".tip-update");
+		
+		// check if we need to refresh the page
+		// did our orbital plot run out?
+		if (bDrawMap && now >= latlon.length) {
+      location.reload(true);
+    }
+    // can we now draw our maneuver node?
+    else if (bDrawMap && bNodeRefreshCheck && nodeUT - UT < 100000) {
+      location.reload(true);
+    }
+    // have we reached the next update? Only check if viewing the present record
+    else if (bNextEventRefresh && !bPastUT && UT >= nextEventUT) {
+      location.reload(true);
+    }
+    
+    // update the UT now that no other calculations depend on it being static
+    UT++;
 	},
 	1000);
 </script>
