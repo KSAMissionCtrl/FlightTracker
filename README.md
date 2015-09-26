@@ -32,7 +32,7 @@ None
 
 ### Future Additions
 
-* [FT] Further KSP.Leaflet integration (maneuver nodes, terminator view, etc)
+* [FT] Further KSP.Leaflet integration (terminator view, etc)
 * [FT] Hyperbolic orbital plotting
 * [FT] Some form of integration with [OrbitViewer](http://www.astroarts.com/products/orbitviewer/index.html)?
 * [FT] Interpolation/streaming of ascent data to allow for continuous updates rather than 15s intervals
@@ -41,6 +41,21 @@ None
 * [CR] Menu for easier browsing between astronaut profiles
 
 ### Change Log
+
+**v2.2** (9/26/15)
+
+Fixes:
+- Incorrect path for popout link called an old orbital test script instead of the current craft page
+
+Changes:
+- Moved `now` and `currDate` outside of the map-loaded-only code so anything can access them in the update function
+- URL query string refresh code completely removed (breaks auto-refresh of ascent data but future launches will use js update anyways)
+- Auto-refresh enable/disable link removed
+
+Additions:
+- Documentation for the new Flightplan recordset that contains maneuver node information
+- Maneuver nodes can now be displayed on the dynamic map, will only show up if visible along the currently-drawn orbit(s)
+- Instead of a preset timer to refresh the page, smart page refresh will now reload the page when either [1] the craft marker reaches the end of the currently-drawn orbit(s)  [2] a maneuver node becomes visible along the orbit(s)  [3] the next scheduled event occurs
 
 **v2.1** (9/22/15)
 
