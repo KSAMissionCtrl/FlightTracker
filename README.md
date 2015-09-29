@@ -46,7 +46,6 @@ Simply install the folders to your server and feed them a database to reference 
 **v2.3** (9/29/15)
 
 Fixes:
-- [FT] Bad link in redirect.asp for popout windows was loading an older test version of craft.asp
 - [FT] Maneuver node update code now tracks time & counts down properly
 - [FT] The JQuery code to update the map craft marker was left outside the `if` case testing whether the map was even drawn on the page
 
