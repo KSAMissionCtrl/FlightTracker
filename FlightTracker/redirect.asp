@@ -18,23 +18,23 @@ if request.querystring("ut") then	queryString = queryString & "&ut=" & request.q
 if request.querystring("pass") then	queryString = queryString & "&pass=" & request.querystring("pass")
 
 if request.querystring("popout") then
-	response.write("<body onload=""centeredPopup(")
-	response.write("'http://www.blade-edge.com/images/KSA/Flights/craftorbitplot.asp?popout=true&db=" & querystring & "','myWindow','1160','890','no')")
-	response.write(""">")
+  response.write("<body onload=""centeredPopup(")
+  response.write("'http://www.blade-edge.com/images/KSA/Flights/craft.asp?popout=true&db=" & querystring & "','myWindow','1160','890','no')")
+  response.write(""">")
 else
-	response.redirect "http://www.blade-edge.com/images/KSA/Flights/craft.asp?popout=false&db=" & querystring
+  response.redirect "http://www.blade-edge.com/images/KSA/Flights/craft.asp?popout=false&db=" & querystring
 end if 
 %>
 <center>
 <table width="250px">
 <tr>
-	<td>
-		<center><h2>Mobile User?</h2></center>
-		<p>If the flight tracker did not load, then you are likely on a mobile device that could not load the pop-up window. If this is the case, you can still access the flight tracker as a regular page.</p>
-		<p><center><%response.write("<a href='http://www.blade-edge.com/images/KSA/Flights/craft.asp?popout=true&r=true&db=" & request.querystring("db") & "'>")%><b>Click/Tap Here</b></a></center></p>
-		<p>Please note that touchscreen users will not have full capability of the tracker, which uses pop-up text info boxes when a mouse cursor is hovered over some elements. However, you can still tap to display craft information, and tap/hold to bring up image text with additional information.</p>
-		</td>
-	</tr>
+  <td>
+    <center><h2>Mobile User?</h2></center>
+    <p>If the flight tracker did not load, then you are likely on a mobile device that could not load the pop-up window. If this is the case, you can still access the flight tracker as a regular page.</p>
+    <p><center><%response.write("<a href='http://www.blade-edge.com/images/KSA/Flights/craft.asp?popout=true&r=true&db=" & request.querystring("db") & "'>")%><b>Click/Tap Here</b></a></center></p>
+    <p>Please note that touchscreen users will not have full capability of the tracker, which uses pop-up text info boxes when a mouse cursor is hovered over some elements. However, you can still tap to display craft information, and tap/hold to bring up image text with additional information.</p>
+    </td>
+  </tr>
 </table>
 </center>
 </body>
