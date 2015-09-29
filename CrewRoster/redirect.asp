@@ -1,6 +1,4 @@
 <!DOCTYPE html>
-<!-- Use this file to allow users to create a pop-up window version of the crew roster to move around their screen -->
-
 <html>
 <head>
 <script>
@@ -14,13 +12,9 @@ window.close()
 }
 </script>
 </head>
-<%
-response.write("<body onload=""centeredPopup(")
+<%response.write("<body onload=""centeredPopup(")
 response.write("'http://www.blade-edge.com/images/KSA/Roster/roster.asp?db=" & request.querystring("db") & "','myWindow','800','625','no')")
-response.write(""">")
-%>
-
-<!-- mobile users can't see a pop-up window so inform them they can view the page normally -->
+response.write(""">")%>
 <center>
 <table width="250px">
 <tr>
@@ -33,6 +27,5 @@ response.write(""">")
 	</tr>
 </table>
 </center>
-
 </body>
 </html>

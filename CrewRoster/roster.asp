@@ -21,7 +21,7 @@
      
      Kerbal Stats recordset contains information about the kerbal's service history and current assignment
      Mission recordset contains links to previous missions (that have been written up and posted online)
-     Ribbons recordset contains all ribbons awarded via Final Frontier
+     Ribbons recordset contains all ribbons awarded via Final Frontier. Ribbons do not have to be awarded upon initial recordset creation
      
      All recordsets can be updated independently.
      
@@ -139,31 +139,37 @@ rsRibbons.open "select * from ribbons", conn, 1, 1
 		-->
 		
 		<%
-			do while rsRibbons.fields.item("UT") <= dbUT
-				bOverride = true
-				do while bOverride
-					if not isnull(rsRibbons.fields.item("Override")) then
-						if rsRibbons.fields.item("Override")*1 <= dbUT then 
-							rsRibbons.MoveNext
-						else 
-							bOverride = false
-						end if
-					else
-						bOverride = false
-					end if
-				loop
-				response.Write "<img src='http://www.blade-edge.com/images/KSA/Roster/Ribbons/"
-				response.write rsRibbons.fields.item("Ribbon")
-				response.write ".png' title='"
-				response.write rsRibbons.fields.item("Title")
-				response.write "'>"
-				rsRibbons.MoveNext
-				if rsRibbons.eof then exit do
-			loop
+      if rsRibbons.eof then
+          response.write("<center>None Yet Awarded</center>")
+      else
+        do while rsRibbons.fields.item("UT") <= dbUT
+          bOverride = true
+          do while bOverride
+            if not isnull(rsRibbons.fields.item("Override")) then
+              if rsRibbons.fields.item("Override")*1 <= dbUT then 
+                rsRibbons.MoveNext
+              else 
+                bOverride = false
+              end if
+            else
+              bOverride = false
+            end if
+          loop
+          response.Write "<img src='http://www.blade-edge.com/images/KSA/Roster/Ribbons/"
+          response.write rsRibbons.fields.item("Ribbon")
+          response.write ".png' title='"
+          response.write rsRibbons.fields.item("Title")
+          response.write "'>"
+          rsRibbons.MoveNext
+          if rsRibbons.eof then exit do
+        loop
+      end if
 		%>
 		</td></tr>
 	</table>
-	<center>(mouse over ribbons for name and date awarded)</center>
+  <%
+    if not rsRibbons.eof then	response.write("<center>(mouse over ribbons for name and date awarded)</center>")
+  %>
 	</td>
 </tr>
 </table>

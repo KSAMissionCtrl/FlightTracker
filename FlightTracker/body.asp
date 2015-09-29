@@ -37,8 +37,15 @@
 
 		// JQuery setup
 		$(document).ready(function(){
-			// create all the tooltips
-			Tipped.create('.tip');
+			// behavior of the tooltip depends on the device
+			if (is_touch_device()) {
+				var showOpt = 'click';
+			} else {
+				var showOpt = 'mouseenter';
+			}
+			
+			// create all the tooltips using Tipped.js - http://www.tippedjs.com/
+			Tipped.create('.tip', {size: 'small', showOn: showOpt, hideOnClickOutside: is_touch_device()});
 			
 			// determines whether the flag icon on the image map was clicked
 			// hides elements as appropriate
@@ -316,7 +323,7 @@ end if
 <span style="font-family:arial;color:black;font-size:12px;">
 <p>Hover over dots to view & click to load, or expand the menu on the right</p>
 <p>
-<a target='_blank' href='http://bit.ly/KSAHomePage'>KSA Historical Archives</a> | Orbits rendered with <a target='_blank' href="http://forum.kerbalspaceprogram.com/threads/36476-WIN-MAC-KSP-Trajectory-Optimization-Tool-v1-3-0-Update-for-KSP-1-0!">KSPTOT</a> | Image mapping via <a target='_blank' href="http://summerstyle.github.io/summer/">Summer Image Map Creator</a>
+<a target='_blank' href='http://bit.ly/KSAHomePage'>KSA Historical Archives</a> | <a target='_blank' href='http://bit.ly/-FltTrk'>Flight Tracker Source on Github</a> | Orbits rendered with <a target='_blank' href="http://bit.ly/KSPTOT">KSPTOT</a> | Image mapping via <a target='_blank' href="http://summerstyle.github.io/summer/">Summer Image Map Creator</a>
 </p>
 </span>
 </center>
@@ -449,9 +456,9 @@ if request.querystring("filter") = "inactive" then
 					
 					'if there is no database then we need to resort to the popout or external link
 					if isnull(rsCrafts.fields.item("db")) then
-						response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""position: 'topleft', behavior: 'hide'"" title='" & rsCrafts.fields.item("desc") & "'target='_blank' href='"& rsCrafts.fields.item("popout") & "'>" & rsCrafts.fields.item("vessel") & "</a></li>")
+						response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "'target='_blank' href='"& rsCrafts.fields.item("popout") & "'>" & rsCrafts.fields.item("vessel") & "</a></li>")
 					else
-						response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""position: 'topleft', behavior: 'hide'"" title='" & rsCrafts.fields.item("desc") & "' href='http://www.blade-edge.com/images/KSA/Flights/craft.asp?db=" & rsCrafts.fields.item("db") & "&filter=inactive'>" & rsCrafts.fields.item("vessel") & "</a></li>")
+						response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "' href='http://www.blade-edge.com/images/KSA/Flights/craft.asp?db=" & rsCrafts.fields.item("db") & "&filter=inactive'>" & rsCrafts.fields.item("vessel") & "</a></li>")
 					end if
 				end if
 			end if
@@ -505,20 +512,20 @@ else
 								if not bPlanet then
 									url = "http://www.blade-edge.com/images/KSA/Flights/body.asp?db=bodies&body=" & rsPlanets.fields.item("body") & "-System"
 									if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
-									response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'topleft', behavior: 'hide'"" title='Show body overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a></label> <input type='checkbox' id='' /> <ol>")
+									response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show body overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a></label> <input type='checkbox' id='' /> <ol>")
 									bPlanet = true
 								end if
 								
 								url = "http://www.blade-edge.com/images/KSA/Flights/body.asp?db=bodies&body=" & rsMoons.fields.item("body")
 								if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
-								response.write("<li><label for='" & rsMoons.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'topleft', behavior: 'hide'"" title='Show body overview' href='" & url & "'>" & rsMoons.fields.item("body") & "</a></label> <input type='checkbox' id='' /> <ol>")
+								response.write("<li><label for='" & rsMoons.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show body overview' href='" & url & "'>" & rsMoons.fields.item("body") & "</a></label> <input type='checkbox' id='' /> <ol>")
 								bVessels = true
 							end if
 							
 							'include the craft as a child of the moon
 							url = "http://www.blade-edge.com/images/KSA/Flights/craft.asp?db=" & rsCrafts.fields.item("db")
 							if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
-							response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""position: 'topleft', behavior: 'hide'"" title='" & rsCrafts.fields.item("desc") & "' href='" & url & "'>" & rsCrafts.fields.item("vessel") & "</a></li>")
+							response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 255, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "' href='" & url & "'>" & rsCrafts.fields.item("vessel") & "</a></li>")
 							bEntry = true
 						end if
 					end if
@@ -569,14 +576,14 @@ else
 					if not bPlanet then
 						url = "http://www.blade-edge.com/images/KSA/Flights/body.asp?db=bodies&body=" & rsPlanets.fields.item("body") & "-System"
 						if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
-						response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'topleft', behavior: 'hide'"" title='Show body overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a></label> <input type='checkbox' id='' /> <ol>")
+						response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show body overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a></label> <input type='checkbox' id='' /> <ol>")
 						bPlanet = true
 					end if
 					
 					'include the craft as a child of the planet
 					url = "' href='http://www.blade-edge.com/images/KSA/Flights/craft.asp?db=" & rsCrafts.fields.item("db")
 					if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
-					response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""position: 'topleft', behavior: 'hide'"" title='" & rsCrafts.fields.item("desc") & url & "'>" & rsCrafts.fields.item("vessel") & "</a></li>")
+					response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & url & "'>" & rsCrafts.fields.item("vessel") & "</a></li>")
 					bEntry = true
 				end if
 			end if

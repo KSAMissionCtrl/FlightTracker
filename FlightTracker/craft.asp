@@ -83,17 +83,22 @@
 		$(document).ready(function(){
 			// shows the map again after it is hidden to show static orbits
 			$("#img").click(function(){
-					if (bDrawMap) { $("#map").css("visibility", "visible"); }
+        if (bDrawMap) { $("#map").css("visibility", "visible"); }
 			});
 			
 			// does away with the notification for orbital plot length
 			$("#msg").click(function(){
-					$("#msg").css("visibility", "hidden");
+        $("#msg").css("visibility", "hidden");
 			});
 			
 			// does away with the information box presented to redditor visitors
 			$("#close").click(function(){
-					$("#intro").css("visibility", "hidden");
+        $("#intro").css("visibility", "hidden");
+			});
+			
+			// pops up the maneuver node information
+			$("#next").click(function(){
+        nodeMark.openPopup();
 			});
 			
 			// behavior of the tooltip depends on the device
@@ -109,15 +114,6 @@
 			Tipped.create('.tip-update', {size: 'small', showOn: showOpt, hideOnClickOutside: is_touch_device()});
 		});
 		
-		// purposefully delay the display of the map (and orbital plot message if need)
-		// this is so users can see the static plot exists first
-		setTimeout(function () { 
-			if (bDrawMap) { 
-				$("#map").css("visibility", "visible");
-				if (showMsg) { $("#msg").css("visibility", "visible"); }
-			}
-		}, 2500);
-			
 		// for retrieving URL query strings
 		// http://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
 		function getParameterByName(name) {
@@ -213,7 +209,7 @@ rsOrbit.open "select * from [flight data]", connCraft, 2
 rsCrew.open "select * from [crew manifest]", connCraft, 2
 rsComms.open "select * from [craft comms]", connCraft, 2
 
-'determine if this DB has ascent and/or flightplan information, older databases may not contain these tables
+'determine if this DB has tables older databases may not contain
 set adoxConn = CreateObject("ADOX.Catalog")  
 adoxConn.activeConnection = connCraft  
 bAscentData = false 
@@ -273,11 +269,21 @@ if not rsCraft.eof then
 	Loop
 end if
 
-'check to see if this database supports distance traveled field, not found in older databases
-bDstTraveled = false
-if rsCraft.fields.count > 18 then
-	if rsCraft.fields(18).name = "DistanceTraveled" then bDstTraveled = true
-end if
+'check to see if this database supports fields not found in older databases
+'godammit I forgot all about On Error from my vb days - although that was 20 years ago
+'http://stackoverflow.com/questions/16474210/detect-if-a-names-field-exists-in-a-record-set
+bDstTraveled = true
+bNodeLink = true
+
+on error resume next
+test = rsCraft.fields("DistanceTraveled").name
+If Err <> 0 Then bDstTraveled = false
+Err.Clear
+
+on error resume next
+test = rsCraft.fields("NodeLink").name
+If Err <> 0 Then bNodeLink = false
+Err.Clear
 
 'get the next and previous event times/descriptions
 'by looking forward and backwards from the current record
@@ -475,7 +481,7 @@ end if
       =================
 
       ID - the time in seconds from 0 epoch at which this update occurs (UT)
-      RefreshRate - how often, in seconds, to refresh the page to possibly display new data
+      [RefreshRate] - Deprecated, js refresh-detection used instead
       LaunchDateTerm - The text that will appear before the launch date UTC time (too many characters will cause text wrap)
       [launchDate] - the date/time of the launch in VBScript date expression format: dd-mmm-yyyy hh:mm:ss (local time)
       Scrub - whether this date will be invalidated by a scrubbed launch (True) or not (False). Consecutive scrubs okay
@@ -1066,36 +1072,45 @@ end if
 						response.write("<b><span class='tip' title='Updates on twitter'><a" & close & "target='_blank' href='https://twitter.com/KSA_MissionCtrl'>Mission Ongoing</a></span></b> ")
 					end if
 					
-					'is there a future event?
-					if nextevent then
-            'if we have passed that event time we can let people go to it
-						if UT >= nextevent then
-							response.write("<span class='tip' title='")
-							response.write nexteventdesc
-							response.write("'><a href='http://")
-							response.write(Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL"))
-							response.write("?db=" & request.querystring("db") & "&ut=" & nextevent)
-							if len(request.querystring("filter")) then response.write("&filter=" & request.querystring("filter"))
-							response.write("'><img src='http://www.blade-edge.com/images/KSA/Flights/next.png'></a></span> ")
-						'otherwise do not link to next event
-						else
-							response.write("<span style='cursor:help' class='tip' title='")
-							if not isnull(rsCraft.fields.item("NextEventTitle")) then
-								response.write rsCraft.fields.item("NextEventTitle")
-							else
-								response.write "No future events"
-							end if
-							response.write("'><img src='http://www.blade-edge.com/images/KSA/Flights/next.png'></span>")
-						end if
+					'is there a future event we can click to?
+					if nextevent and UT >= nextevent then
+            response.write("<span class='tip' title='")
+            response.write nexteventdesc
+            response.write("'><a href='http://")
+            response.write(Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL"))
+            response.write("?db=" & request.querystring("db") & "&ut=" & nextevent)
+            if len(request.querystring("filter")) then response.write("&filter=" & request.querystring("filter"))
+            response.write("'><img src='http://www.blade-edge.com/images/KSA/Flights/next.png'></a></span> ")
+            
+					'no future event record we can go to but maybe a description of a future event
 					else
 						if not isnull(rsCraft.fields.item("NextEventTitle")) then
-							response.write("<span style='cursor:help'><img src='http://www.blade-edge.com/images/KSA/Flights/next.png' class='tip' title='")
-							response.write rsCraft.fields.item("NextEventTitle")
-							response.write("'></span>")
+
+              'is there a maneuver node link field and an upcoming node?
+              if bNodeLink and not rsFlightplan.eof then 
+
+                'check if this event description is tied to the node
+                if rsCraft.fields.item("NodeLink") = rsFlightplan.fields.item("UT") then
+                
+                  'finally, check that the node is visible on the dynamic map
+                  'if it is, let user know and enable click event, otherwise regular title string
+                  if (rsFlightplan.fields.item("UT") - UT) <= 100000 then
+                    response.write("<span id='next' style='cursor:pointer'><img src='http://www.blade-edge.com/images/KSA/Flights/next.png' class='tip' title='")
+                    response.write rsCraft.fields.item("NextEventTitle")
+                    response.write("<br />Click to view Maneuver Node")
+                    response.write("'></span>")
+                  else
+                    response.write("<span style='cursor:help'><img src='http://www.blade-edge.com/images/KSA/Flights/next.png' class='tip' title='")
+                    response.write rsCraft.fields.item("NextEventTitle")
+                    response.write("'></span>")
+                  end if
+                end if
+              end if
 						else
 							response.write("<span style='cursor:help' class='tip' title='No future events'><img src='http://www.blade-edge.com/images/KSA/Flights/next.png'></span>")
 						end if
 					end if
+					
 					%>
 					</center></td></tr>
 				</table>
@@ -1183,6 +1198,7 @@ if request.querystring("pass") then vars = vars & "&pass=" & request.querystring
 closemsg = ""
 if request.querystring("popout") then	closemsg = "onclick='window.close()'"
 response.write("<a " & closemsg & " target='_blank' href='http://bit.ly/KSAHomePage'>KSA Historical Archives</a>")
+response.write(" | <a target='_blank' href='http://bit.ly/-FltTrk'>Flight Tracker Source on Github</a>")
 
 'creates a pop-out window the user can move around
 if not request.querystring("popout") then
@@ -1289,9 +1305,9 @@ if request.querystring("filter") = "inactive" then
 					
 					'if there is no database then we need to resort to the popout or external link
 					if isnull(rsCrafts.fields.item("db")) then
-						response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "'target='_blank' href='"& rsCrafts.fields.item("popout") & "'>" & rsCrafts.fields.item("vessel") & "</a></li>")
+						response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "'target='_blank' href='"& rsCrafts.fields.item("popout") & "'>" & rsCrafts.fields.item("vessel") & "</a></li>")
 					else
-						response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "' href='http://www.blade-edge.com/images/KSA/Flights/craft.asp?db=" & rsCrafts.fields.item("db") & "&filter=inactive'>" & rsCrafts.fields.item("vessel") & "</a></li>")
+						response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "' href='http://www.blade-edge.com/images/KSA/Flights/craft.asp?db=" & rsCrafts.fields.item("db") & "&filter=inactive'>" & rsCrafts.fields.item("vessel") & "</a></li>")
 					end if
 				end if
 			end if
@@ -1345,20 +1361,20 @@ else
 								if not bPlanet then
 									url = "http://www.blade-edge.com/images/KSA/Flights/body.asp?db=bodies&body=" & rsPlanets.fields.item("body") & "-System"
 									if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
-									response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'topleft'"" title='Show body overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a></label> <input type='checkbox' id='' /> <ol>")
+									response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show body overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a></label> <input type='checkbox' id='' /> <ol>")
 									bPlanet = true
 								end if
 								
 								url = "http://www.blade-edge.com/images/KSA/Flights/body.asp?db=bodies&body=" & rsMoons.fields.item("body")
 								if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
-								response.write("<li><label for='" & rsMoons.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'topleft'"" title='Show body overview' href='" & url & "'>" & rsMoons.fields.item("body") & "</a></label> <input type='checkbox' id='' /> <ol>")
+								response.write("<li><label for='" & rsMoons.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show body overview' href='" & url & "'>" & rsMoons.fields.item("body") & "</a></label> <input type='checkbox' id='' /> <ol>")
 								bVessels = true
 							end if
 							
 							'include the craft as a child of the moon
 							url = "http://www.blade-edge.com/images/KSA/Flights/craft.asp?db=" & rsCrafts.fields.item("db")
 							if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
-							response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "' href='" & url & "'>" & rsCrafts.fields.item("vessel") & "</a></li>")
+							response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 255, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "' href='" & url & "'>" & rsCrafts.fields.item("vessel") & "</a></li>")
 							bEntry = true
 						end if
 					end if
@@ -1409,14 +1425,14 @@ else
 					if not bPlanet then
 						url = "http://www.blade-edge.com/images/KSA/Flights/body.asp?db=bodies&body=" & rsPlanets.fields.item("body") & "-System"
 						if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
-						response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'topleft'"" title='Show body overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a></label> <input type='checkbox' id='' /> <ol>")
+						response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show body overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a></label> <input type='checkbox' id='' /> <ol>")
 						bPlanet = true
 					end if
 					
 					'include the craft as a child of the planet
 					url = "' href='http://www.blade-edge.com/images/KSA/Flights/craft.asp?db=" & rsCrafts.fields.item("db")
 					if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
-					response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & url & "'>" & rsCrafts.fields.item("vessel") & "</a></li>")
+					response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & url & "'>" & rsCrafts.fields.item("vessel") & "</a></li>")
 					bEntry = true
 				end if
 			end if
@@ -1856,6 +1872,9 @@ rsMoons.movefirst
 		if (bDrawMap) {
 			var craft = L.marker(latlon[0], {icon: ship, zIndexOffset: 100}).addTo(map);
 			craft.bindPopup("Lat: <span id='lat'>-000.0000&deg;S</span><br />Lng: <span id='lng'>-000.0000&deg;W</span><br />Alt: <span id='alt'>000,000.000km</span><br />Vel: <span id='vel'>000,000.000km/s</span>", {closeButton: false});
+      
+      // show the craft info box. This lets people know it exists and also serves to bring the craft into view
+      craft.openPopup(); 
 
 			// set up a listener for click events so we can immediately update the information and not have to wait for the next timer event
 			var cardinal = "";
@@ -1875,11 +1894,6 @@ rsMoons.movefirst
 				$('#alt').html(numeral(orbitdata[0].alt).format('0,0.000') + "km");
 				$('#vel').html(numeral(orbitdata[0].vel).format('0,0.000') + "km/s");
 			});
-			
-			// show the craft info box. This lets people know it exists and also serves to bring the craft into view
-			// after 10 seconds close the box, user can re-open it if they want to
-			craft.openPopup();
-			setTimeout(function () { craft.closePopup(); }, 10000);
 			
 			// draw the orbital paths
 			var coord = 0;
@@ -1907,6 +1921,9 @@ rsMoons.movefirst
 						
 						// cut the path if we've reached the end of an orbit
 						if (coord/(pathNum+1) > period) {	break; }
+						
+						// cut the path if there's an upcoming maneuver node somewhere on this plot and we've reached it
+						if (bUpcomingNode && nodeUT - UT < latlon.length && coord == nodeUT - UT) { break; }
 
 						// create a new array entry for this location, then advance the array counter
 						path.push(latlon[coord]);
@@ -1927,6 +1944,9 @@ rsMoons.movefirst
 						// cut the path if we've reached the end of an orbit
 						if (coord/(pathNum+1) > period) {	break; }
 						
+						// cut the path if there's an upcoming maneuver node somewhere on this plot and we've reached it
+						if (bUpcomingNode && nodeUT - UT < latlon.length && coord == nodeUT - UT) { break; }
+
 						// create a new array entry for this location, then advance the array counter
 						path.push(latlon[coord]);
 						coord++;
@@ -1945,9 +1965,13 @@ rsMoons.movefirst
 				
 				// check if we have completed an orbit, not just hit the end of the map
 				if (coord/(pathNum+1) > period) {	pathNum++; }
+			
+        // don't draw any more paths if there's an upcoming maneuver node somewhere on this plot and we've reached it
+        if (bUpcomingNode && nodeUT - UT < latlon.length && coord == nodeUT - UT) { break; }
 			}
 			
 			// if we have an upcoming maneuver node, check that it can be drawn along our orbit and do so if possible
+      var bNodeExecution = false;
 			if (bUpcomingNode) {
         if (nodeUT - UT < latlon.length) {
           var bNodeRefreshCheck = false;
@@ -1962,7 +1986,13 @@ rsMoons.movefirst
             var dd = new Date();
             var currDate = Math.floor(dd.getTime() / 1000);
             var now = currDate - startDate;
-            $('#nodeTime').html("Time to maneuver<br />" + formatTime((nodeUT - UT)-now));
+            $('#nodeTime').html("Time to Maneuver<br />" + formatTime((nodeUT - currUT)-now));
+          });
+          nodeMark.on('popupopen', function(e) {
+            var dd = new Date();
+            var currDate = Math.floor(dd.getTime() / 1000);
+            var now = currDate - startDate;
+            $('#nodeTime').html("Time to Maneuver<br />" + formatTime((nodeUT - currUT)-now));
           });
         }
         // if we can't yet draw the node, refresh the page when we can
@@ -1970,6 +2000,15 @@ rsMoons.movefirst
           var bNodeRefreshCheck = true;
         }
 			}
+
+      // purposefully delay the display of the map (and orbital plot message if needed)
+      // this is so users can see the static plot exists first
+      // remove the popup box for the craft position after 5 seconds, user can re-open it if they want to
+      setTimeout(function () { 
+        setTimeout(function () { craft.closePopup(); }, 5000);
+        $("#map").css("visibility", "visible");
+        if (showMsg) { $("#msg").css("visibility", "visible"); }
+      }, 2500);
 		}
 		
 		// find the times to Apoapsis and Periapsis
@@ -2021,6 +2060,7 @@ rsMoons.movefirst
 	var bEstDst = <%response.write lcase(bEstDst)%>;
 	var strAccDst = "<%response.write strAccDst%>";
 	var dstTraveled = <%response.write dstTraveled%>;
+	var currUT = UT;
 	<%
 		if not isnull(rsOrbit.fields.item("Avg Velocity")) and not rsOrbit.bof then
 			response.write("var avgSpeed = " & rsOrbit.fields.item("Avg Velocity") & ";")
@@ -2037,9 +2077,6 @@ rsMoons.movefirst
 		// update map if there was one drawn
 		if (drawMap.charAt(0) == "!" && $("#map").length) {
 
-      // update the position of the vessel marker
-      if (bDrawMap) {	craft.setLatLng(latlon[now]);	}
-      
       // update the popup content with JQuery, because once again I can't seem to get them to cooperate
       // or update the static display data
       // number formatting done with Numeral.js - http://numeraljs.com/
@@ -2048,23 +2085,28 @@ rsMoons.movefirst
       } else {
         cardinal = "N";
       }
-      $('#lat').html(numeral(latlon[now].lat).format('0.0000') + "&deg;" + cardinal);
       if (latlon[now].lng < 0) {
         cardinal = "W";
       } else {
         cardinal = "E";
       }
       if (bDrawMap) {
-        $('#lng').html(numeral(latlon[now].lng).format('0.0000') + "&deg;" + cardinal);
-        $('#alt').html(numeral(orbitdata[now].alt).format('0,0.000') + "km");
-        $('#vel').html(numeral(orbitdata[now].vel).format('0,0.000') + "km/s");
-        
-        // update the Ap/Pe marker popup content
-        $('#apTime').html("Time to Apoapsis<br />" + formatTime(apTime-now));
-        $('#peTime').html("Time to Periapsis<br />" + formatTime(peTime-now));
-        
-        // update maneuver node popup content
-        if (bUpcomingNode) { $('#nodeTime').html("Time to maneuver<br />" + formatTime((nodeUT - UT)-now)); }
+
+        // only update if a maneuver node hasn't executed and rendered all this invalid
+        if (!bNodeExecution) {
+          craft.setLatLng(latlon[now]);
+          $('#lat').html(numeral(latlon[now].lat).format('0.0000') + "&deg;" + cardinal);
+          $('#lng').html(numeral(latlon[now].lng).format('0.0000') + "&deg;" + cardinal);
+          $('#alt').html(numeral(orbitdata[now].alt).format('0,0.000') + "km");
+          $('#vel').html(numeral(orbitdata[now].vel).format('0,0.000') + "km/s");
+          
+          // update the Ap/Pe marker popup content
+          $('#apTime').html("Time to Apoapsis<br />" + formatTime(apTime-now));
+          $('#peTime').html("Time to Periapsis<br />" + formatTime(peTime-now));
+          
+          // update maneuver node popup content
+          if (bUpcomingNode) { $('#nodeTime').html("Time to Maneuver<br />" + formatTime((nodeUT - currUT)-now)); }
+        }
       } else if ($("#orbData").length) {
         if ($('#orbData').css("visibility") == "hidden") { $('#orbData').css("visibility", "visible"); }
         $('#orbData').html(
@@ -2098,8 +2140,18 @@ rsMoons.movefirst
           }
         }
       }
-		}	
-
+      
+      // check if there was a maneuver node that went off
+      // if it did, remove the node, stop updating the craft marker & show/update the popup
+      if (bUpcomingNode && !bNodeExecution && (nodeUT - currUT)-now <= 0) {
+        map.removeLayer(nodeMark);
+        bNodeExecution = true;
+        craft.unbindPopup();
+        craft.bindPopup("<center>Maneuver node executed<br />Awaiting new orbital data<br />Standy, page will auto update</center>", {closeButton: false});
+        craft.openPopup();
+      }	
+    }
+    
 		// update MET/countdown clock if needed
 		if (bUpdateMET) {
 			MET++;
