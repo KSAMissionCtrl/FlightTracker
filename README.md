@@ -24,7 +24,9 @@ The following JavaScript libraries are used:
 
 Blank template MDB Access files are included for both crafts and rosters, as well as filled-in example databases.
 
-Simply install the folders to your server and feed them a database to reference with `?db=[name]` appended to the URL pointing to either craft.asp or roster.asp
+### Getting Started
+
+Basically you need to install the folders to your server and feed them a database to reference with `?db=[name]` appended to the URL pointing to either craft.asp, body.asp or roster.asp. The databases included in the Flight Tracker that are not labeled as examples are required to be present for the pages to load. Search the files for `db =` which is where the databases are opened and change the relative path to point to where you store your database tables if you don't want to keep them in the public directory. See the [current KSA Flight Tracker](http://bit.ly/FltTracker) to get an idea of how things work together.
 
 ### Known Issues
 
