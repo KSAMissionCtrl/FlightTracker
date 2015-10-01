@@ -43,6 +43,66 @@
           || (navigator.msMaxTouchPoints > 0));
     }
     
+    // convert the current UTC to a certain time zone
+    // http://stackoverflow.com/questions/9669294/current-date-time-in-et
+    Date.toTZString= function(d, tzp){
+      var short_months= ['Jan', 'Feb', 'Mar', 'Apr', 'May',
+       'Jun', 'Jul','Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      var h, m, pm= 'pm', off, label, str,
+      d= d? new Date(d):new Date();
+
+      var tz={
+        AK:['Alaska', -540],
+        A:['Atlantic', -240],
+        C:['Central', -360],
+        E:['Eastern', -300],
+        HA:['Hawaii-Aleutian', -600],
+        M:['Mountain', -420],
+        N:['Newfoundland', -210],
+        P:['Pacific', -480]
+      }[tzp.toUpperCase()];
+
+      //get the selected offset from the object:
+      if(!tz) return d.toUTCString();
+      off= tz[1];
+
+      //get the start and end dates for dst:(these rules are US only)
+      var y= d.getUTCFullYear(), countstart= 8, countend= 1,
+      dstart= new Date(Date.UTC(y, 2, 8, 2, 0, 0, 0)),
+      dend= new Date(Date.UTC(y, 10, 1, 2, 0, 0, 0));
+      while(dstart.getUTCDay()!== 0) dstart.setUTCDate(++countstart);
+      while(dend.getUTCDay()!== 0) dend.setUTCDate(++countend);
+
+      //get the GMT time for the localized dst start and end times:
+      dstart.setUTCMinutes(off);
+      dend.setUTCMinutes(off);
+
+      // if the date passed in is between dst start and dst end, adjust the offset and label:
+      if(dstart<= d && dend>= d){
+        off+= 60;
+        label= '4';
+      }
+      else label= '5';
+
+      //add the adjusted offset to the date and get the hours and minutes:
+      d.setUTCMinutes(d.getUTCMinutes()+off);
+      h= d.getUTCHours();
+      m= d.getUTCMinutes();
+      if(h> 12) h-= 12;
+      else if(h!== 12) pm= 'am';
+      if(h== 0) h= 12;
+      if(m<10) m= '0'+m;
+      
+      s = d.getUTCSeconds();
+      if (d.getUTCSeconds() < 10) {
+        s = "0" + s;
+      }
+
+      //return a string:
+      var str= short_months[d.getUTCMonth()]+' '+d.getUTCDate()+', ';
+      return h+':'+m+':' +s+ ' '+pm.toUpperCase() + ' ' + "(UTC -" + label + ")";
+    }
+
     // take an amount of time in seconds and convert it to years, days, hours, minutes and seconds
     // leave out any values that are not necessary (0y, 0d won't show, for example)
     function formatTime(time) {
@@ -50,6 +110,7 @@
       var days = 0;
       var hours = 0;
       var minutes = 0;
+      var seconds = "";
       var ydhms = "";
 
       if (time >= 86400) {
@@ -75,8 +136,13 @@
         time -= minutes * 60;
         ydhms += minutes + "m ";
       }
+      
+      if (Math.floor(time) < 10) {
+        seconds = "0" + Math.floor(time);
+      }
+      else seconds = Math.floor(time);
 
-      return ydhms += Math.floor(time) + "s";
+      return ydhms += seconds + "s";
     }
 
     // JQuery setup
@@ -340,7 +406,11 @@ end if
     
 'calculate the time since the start of the mission
 'this field could be blank if a new entry was created in Craft Data after a scrub with no new launch time
-if not isnull(rsCraft.fields.item("LaunchDate")) then origMET = datediff("s", fromdate, now())
+if not isnull(rsCraft.fields.item("LaunchDate")) then 
+  origMET = datediff("s", fromdate, now())
+else
+  origMET = 0
+end if
 
 'is it prior to or after launch?
 'save the original MET for use with JS update
@@ -1088,24 +1158,32 @@ end if
             if not isnull(rsCraft.fields.item("NextEventTitle")) then
 
               'is there a maneuver node link field and an upcoming node?
-              if bNodeLink and not rsFlightplan.eof then 
-
-                'check if this event description is tied to the node
-                if rsCraft.fields.item("NodeLink") = rsFlightplan.fields.item("UT") then
+              if bNodeLink then 
                 
-                  'finally, check that the node is visible on the dynamic map
-                  'if it is, let user know and enable click event, otherwise regular title string
-                  if (rsFlightplan.fields.item("UT") - UT) <= 100000 then
-                    response.write("<span id='next' style='cursor:pointer'><img src='http://www.blade-edge.com/images/KSA/Flights/next.png' class='tip' title='")
-                    response.write rsCraft.fields.item("NextEventTitle")
-                    response.write("<br />Click to view Maneuver Node")
-                    response.write("'></span>")
-                  else
-                    response.write("<span style='cursor:help'><img src='http://www.blade-edge.com/images/KSA/Flights/next.png' class='tip' title='")
-                    response.write rsCraft.fields.item("NextEventTitle")
-                    response.write("'></span>")
+                'thanks to lack of short-circuit logic we cannot put this test in the above if statement
+                if not rsFlightplan.eof then
+                
+                  'check if this event description is tied to the node
+                  if rsCraft.fields.item("NodeLink") = rsFlightplan.fields.item("UT") then
+                  
+                    'finally, check that the node is visible on the dynamic map
+                    'if it is, let user know and enable click event, otherwise regular title string
+                    if (rsFlightplan.fields.item("UT") - UT) <= 100000 then
+                      response.write("<span id='next' style='cursor:pointer'><img src='http://www.blade-edge.com/images/KSA/Flights/next.png' class='tip' title='")
+                      response.write rsCraft.fields.item("NextEventTitle")
+                      response.write("<br />Click to view Maneuver Node")
+                      response.write("'></span>")
+                    else
+                      response.write("<span style='cursor:help'><img src='http://www.blade-edge.com/images/KSA/Flights/next.png' class='tip' title='")
+                      response.write rsCraft.fields.item("NextEventTitle")
+                      response.write("'></span>")
+                    end if
                   end if
                 end if
+              else
+                response.write("<span style='cursor:help'><img src='http://www.blade-edge.com/images/KSA/Flights/next.png' class='tip' title='")
+                response.write rsCraft.fields.item("NextEventTitle")
+                response.write("'></span>")
               end if
             else
               response.write("<span style='cursor:help' class='tip' title='No future events'><img src='http://www.blade-edge.com/images/KSA/Flights/next.png'></span>")
@@ -1126,6 +1204,7 @@ end if
   str = rsCraft.fields.item("ImgDataCode")
   'if there is no code then this is an ascent state
   if isnull(str) then
+    MapState = "ascent"
     response.write("<tr> <td> <div id='map' class='map' style='padding: 0; margin: 0; height: 380px; width: 835px;'></div> </td> </tr>")
     bMapOrbit = false
   'if there is a @ symbol this is a pre-launch state
@@ -1136,6 +1215,8 @@ end if
     
   'if there is a ! symbol this is an orbital state
   elseif left(str,1) = "!" then
+    MapState = "orbit"
+    
     'do not create the real-time map if current orbital data is out of date
     'this means we are either at the last record or the next record has a UT greater than the present
     bMapOrbit = false
@@ -1182,6 +1263,7 @@ end if
   'old data, just spit it out
   'but make any titles compatible with new Tipped tooltips
   else
+    MapState = "none"
     response.write replace(replace(rsCraft.fields.item("ImgDataCode"), "title", "class='tip' data-tipped-options=""target: 'mouse'"" title"), "&#013;", "<br />")
   end if
   %>
@@ -1487,6 +1569,100 @@ else
 end if
 %>
 
+<!-- Launch clock --> 
+<!-- 
+LAUNCHES DATABASE INFORMATION
+=============================
+
+Schedule recordset contains a list of all future launches that will be displayed on the clock
+
+SCHEDULE FIELDS
+===============
+
+UT - the date at which this scheduled launch will appear on the clock
+CraftName - the name of the craft that will be launching
+CraftLink - link to the craft page
+LaunchDate - date string in VBScript date format for the time of the launch (in local time!)
+--> 
+
+<%
+'open database. "db" was prepended because without it for some reason I had trouble connecting
+db = "..\..\..\..\database\dbLaunches.mdb"
+Dim connLaunch
+Set connLaunch = Server.CreateObject("ADODB.Connection")
+sConnection = "Provider=Microsoft.Jet.OLEDB.4.0;" & _
+
+              "Data Source=" & server.mappath(db) &";" & _
+
+              "Persist Security Info=False"
+connLaunch.Open(sConnection)
+
+'create the table
+set rsLaunch = Server.CreateObject("ADODB.recordset")
+
+'query the data and pull up the UT closest to this one 
+'check if recordset is empty first
+rsLaunch.open "select * from Schedule", connLaunch, 1, 1
+if not rsLaunch.eof then
+  rsLaunch.find ("ut>" & dbUT)
+  rsLaunch.moveprevious
+end if
+%>
+
+<p>
+<table style="width: 100%; border: 1px solid #007FDB;	border-collapse: collapse; background-color: #77C6FF;">
+  <tr>
+    <td>
+      <center>
+      <b>Current Time @ KSC</b><br />
+      <span id='ksctime' style="font-size: 16px"></span>
+      <br /><br />
+      <b>Next Launch</b><br />
+      <%
+      'if we are at EOF there are no records yet, if we are at BOF there are records but the first one is still beyond our current UT and inaccessible
+      if rsLaunch.bof or rsLaunch.eof then
+        response.write("<script>")
+        response.write("var bLaunchCountdown = true;")
+        response.write("var bFutureLaunch = false;")
+        response.write("var nextLaunchSched = 0;")
+        response.write("</script>")
+        response.write("None Scheduled")
+      else
+        
+        'if this launch has already gone off, then there are no more scheduled or they are too far ahead
+        if datediff("s", rsLaunch.fields.item("LaunchDate"), now()) >= 0 then
+          response.write("<script>")
+          response.write("var bLaunchCountdown = true;")
+
+          'let js know if there is a future one to look for and update when it hits
+          rsLaunch.movenext()
+          if not rsLaunch.eof then
+            response.write("var bFutureLaunch = true;")
+            response.write("var nextLaunchSched = " & rsLaunch.fields.item("UT") & ";")
+          else
+            response.write("var bFutureLaunch = false;")
+            response.write("var nextLaunchSched = 0;")
+          end if
+          response.write("</script>")
+        else
+          response.write("<script>")
+          response.write("var bLaunchCountdown = true;")
+          response.write("var bFutureLaunch = false;")
+          response.write("var nextLaunchSched = 0;")
+          response.write("var launchUT = " & datediff("s", rsLaunch.fields.item("LaunchDate"), now()) & ";")
+          response.write("</script>")
+          response.write("<a href='" & rsLaunch.fields.item("CraftLink") & "'>" & rsLaunch.fields.item("CraftName") & "</a><br />")
+          response.write(formatdatetime(rsLaunch.fields.item("LaunchDate")) & "<br />")
+          response.write("<span id='tminus'></span>")
+        end if
+      end if
+      %>
+      </center>
+    </td>
+  </tr>
+</table>
+</p>
+
 <!-- this will either display a mission timeline if the craft has one, or the recent tweets from @KSA_MissionCtrl --> 
 <%
 rsCrafts.movefirst
@@ -1509,9 +1685,10 @@ rsMoons.movefirst
 
 <!-- this script controls the real-time page elements, including the Leaflet map -->
 <script>
-  var drawMap = "<%response.write rsCraft.fields.item("ImgDataCode")%>";
+  var mapState = "<%response.write MapState%>";
   var latlon = [];
   var orbitdata = [];
+  <%response.write("var UT = " & UT & ";")%>
   
   // don't show until the mouse is over the map as otherwise it will just come up as undefined
   function showCursorData(e) {
@@ -1519,8 +1696,7 @@ rsMoons.movefirst
     map.off('mouseover', showCursorData);
   }
 
-  // if string is empty, this is an ascent event
-  if (drawMap.length == 0) {
+  if (mapState == "ascent") {
   
     // create the map with some custom options
     // details on Leaflet API can be found here - http://leafletjs.com/reference.html
@@ -1590,8 +1766,8 @@ rsMoons.movefirst
     end if
     %>
   
-  // we can have an ! denoting an orbital state that doesn't require a map, so check that the element was created
-  } else if (drawMap.charAt(0) == "!" && $("#map").length) {
+  // we can have an orbital state that doesn't require a map, so check that the element was created
+  } else if (mapState == "orbit" && $("#map").length) {
   
     // just dummy values in case the real values are not available to retrieved from the database
     var gmu = 301.363211975;
@@ -1603,7 +1779,6 @@ rsMoons.movefirst
     var mean = 6.15350210776865;
     var eph = 37819923.931;
     var period = 17759.7;
-    var UT = 40117725;
     var ap = 0;
     var pe = 0;
 
@@ -1653,7 +1828,6 @@ rsMoons.movefirst
       response.write("var mean = " & rsOrbit.fields.item("Mean") * .017453292519943295 & ";")
       response.write("var eph = " & rsOrbit.fields.item("Eph") & ";")
       response.write("var period = " & rsOrbit.fields.item("Orbital Period") & ";")
-      response.write("var UT = " & UT & ";")
     end if
     %>
     
@@ -2051,7 +2225,7 @@ rsMoons.movefirst
       } else { peTime = -1; }
     }
   }
-  
+
   // keep various things updated by calling this function every second
   var d = new Date();
   var startDate = Math.floor(d.getTime() / 1000);
@@ -2075,8 +2249,8 @@ rsMoons.movefirst
     var currDate = Math.floor(dd.getTime() / 1000);
     var now = currDate - startDate;
 
-    // update map if there was one drawn
-    if (drawMap.charAt(0) == "!" && $("#map").length) {
+    // update orbital data if needed
+    if (mapState == "orbit") {
 
       // update the popup content with JQuery, because once again I can't seem to get them to cooperate
       // or update the static display data
@@ -2107,6 +2281,37 @@ rsMoons.movefirst
           
           // update maneuver node popup content
           if (bUpcomingNode) { $('#nodeTime').html("Time to Maneuver<br />" + formatTime((nodeUT - currUT)-now)); }
+
+          // update our Ap/Pe times if we've passed one by just adding on the orbital period
+          // remove the marker entirely if it's past the end of the current plot
+          if (now > apTime && apTime >= 0) {
+            apTime += Math.round(period);
+            if (apTime <= latlon.length) {
+              apMark.setLatLng(latlon[apTime]);
+            } else {
+              map.removeLayer(apMark);
+              apTime = -1; 
+            }
+          }
+          if (now > peTime && peTime >= 0) {
+            peTime += Math.round(period);
+            if (peTime <= latlon.length) {
+              peMark.setLatLng(latlon[peTime]);
+            } else {
+              map.removeLayer(peMark);
+              peTime = -1; 
+            }
+          }
+          
+          // check if there was a maneuver node that went off
+          // if it did, remove the node, stop updating the craft marker & show/update the popup
+          if (bUpcomingNode && !bNodeExecution && (nodeUT - currUT)-now <= 0) {
+            map.removeLayer(nodeMark);
+            bNodeExecution = true;
+            craft.unbindPopup();
+            craft.bindPopup("<center>Maneuver node executed<br />Awaiting new orbital data<br />Standy, page will auto update</center>", {closeButton: false});
+            craft.openPopup();
+          }	
         }
       } else if ($("#orbData").length) {
         if ($('#orbData').css("visibility") == "hidden") { $('#orbData').css("visibility", "visible"); }
@@ -2118,50 +2323,32 @@ rsMoons.movefirst
           "Time to Ap: " + formatTime(apTime-now) + "<br />" +
           "Time to Pe: " + formatTime(peTime-now));
       }
-
-      // update our Ap/Pe times if we've passed one by just adding on the orbital period
-      // remove the marker entirely if it's past the end of the current plot
-      if (bDrawMap) {
-        if (now > apTime && apTime >= 0) {
-          apTime += Math.round(period);
-          if (apTime <= latlon.length) {
-            apMark.setLatLng(latlon[apTime]);
-          } else {
-            map.removeLayer(apMark);
-            apTime = -1; 
-          }
-        }
-        if (now > peTime && peTime >= 0) {
-          peTime += Math.round(period);
-          if (peTime <= latlon.length) {
-            peMark.setLatLng(latlon[peTime]);
-          } else {
-            map.removeLayer(peMark);
-            peTime = -1; 
-          }
-        }
-      }
-      
-      // check if there was a maneuver node that went off
-      // if it did, remove the node, stop updating the craft marker & show/update the popup
-      if (bUpcomingNode && !bNodeExecution && (nodeUT - currUT)-now <= 0) {
-        map.removeLayer(nodeMark);
-        bNodeExecution = true;
-        craft.unbindPopup();
-        craft.bindPopup("<center>Maneuver node executed<br />Awaiting new orbital data<br />Standy, page will auto update</center>", {closeButton: false});
-        craft.openPopup();
-      }	
     }
     
     // update MET/countdown clock if needed
     if (bUpdateMET) {
       MET++;
-      $("#met").html(strMsg + formatTime(MET));
+      $("#met").html(strMsg + formatTime(Math.abs(MET)));
     }
     
     // update the estimated distance if needed
     if (bEstDst) {
       $("#distance").html(strAccDst + "<br />Estimated Current Total Distance Traveled: " + numeral(dstTraveled + (now * avgSpeed)).format('0,0') + "km");
+    }
+    
+    // update the clock and any accompanying launch countdown
+    $('#ksctime').html(dd.toLocaleDateString() + ' ' + Date.toTZString(dd, 'E'));
+    if (bLaunchCountdown) {
+      
+      // only count down if thete is something to countdown
+      if (launchUT < 0) {
+        $('#tminus').html(formatTime(Math.abs(launchUT)));
+        launchUT++;
+      }
+      else {
+        $('#tminus').html("LIFTOFF!!");
+        bLaunchCountdown = false;
+      }
     }
     
     // update all dynamic tooltips
@@ -2173,11 +2360,15 @@ rsMoons.movefirst
       location.reload(true);
     }
     // can we now draw our maneuver node?
-    else if (bDrawMap && bNodeRefreshCheck && nodeUT - UT < 100000) {
+    if (bDrawMap && bNodeRefreshCheck && nodeUT - UT < 100000) {
       location.reload(true);
     }
     // have we reached the next update? Only check if viewing the present record
-    else if (bNextEventRefresh && !bPastUT && UT >= nextEventUT) {
+    if (bNextEventRefresh && !bPastUT && UT >= nextEventUT) {
+      location.reload(true);
+    }
+    // have we reached a new scheduled launch posting?
+    if (bFutureLaunch && UT >= nextLaunchSched) {
       location.reload(true);
     }
     
@@ -2194,6 +2385,8 @@ Set connCraft = nothing
 connBodies.Close
 Set connBodies = nothing
 set adoxConn = nothing  
+connLaunch.Close
+Set connLaunch = nothing
 %>
 
 </body>

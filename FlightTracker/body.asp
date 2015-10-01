@@ -91,6 +91,102 @@
         $("#kscflagsmap").css("display", "block");
       });
     });
+
+    // convert the current UTC to a certain time zone
+    // http://stackoverflow.com/questions/9669294/current-date-time-in-et
+    Date.toTZString= function(d, tzp){
+      var short_months= ['Jan', 'Feb', 'Mar', 'Apr', 'May',
+       'Jun', 'Jul','Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      var h, m, pm= 'pm', off, label, str,
+      d= d? new Date(d):new Date();
+
+      var tz={
+        AK:['Alaska', -540],
+        A:['Atlantic', -240],
+        C:['Central', -360],
+        E:['Eastern', -300],
+        HA:['Hawaii-Aleutian', -600],
+        M:['Mountain', -420],
+        N:['Newfoundland', -210],
+        P:['Pacific', -480]
+      }[tzp.toUpperCase()];
+
+      //get the selected offset from the object:
+      if(!tz) return d.toUTCString();
+      off= tz[1];
+
+      //get the start and end dates for dst:(these rules are US only)
+      var y= d.getUTCFullYear(), countstart= 8, countend= 1,
+      dstart= new Date(Date.UTC(y, 2, 8, 2, 0, 0, 0)),
+      dend= new Date(Date.UTC(y, 10, 1, 2, 0, 0, 0));
+      while(dstart.getUTCDay()!== 0) dstart.setUTCDate(++countstart);
+      while(dend.getUTCDay()!== 0) dend.setUTCDate(++countend);
+
+      //get the GMT time for the localized dst start and end times:
+      dstart.setUTCMinutes(off);
+      dend.setUTCMinutes(off);
+
+      // if the date passed in is between dst start and dst end, adjust the offset and label:
+      if(dstart<= d && dend>= d){
+        off+= 60;
+        label= '4';
+      }
+      else label= '5';
+
+      //add the adjusted offset to the date and get the hours and minutes:
+      d.setUTCMinutes(d.getUTCMinutes()+off);
+      h= d.getUTCHours();
+      m= d.getUTCMinutes();
+      if(h> 12) h-= 12;
+      else if(h!== 12) pm= 'am';
+      if(h== 0) h= 12;
+      if(m<10) m= '0'+m;
+      
+      s = d.getUTCSeconds();
+      if (d.getUTCSeconds() < 10) {
+        s = "0" + s;
+      }
+
+      //return a string:
+      var str= short_months[d.getUTCMonth()]+' '+d.getUTCDate()+', ';
+      return h+':'+m+':' +s+ ' '+pm.toUpperCase() + ' ' + "(UTC -" + label + ")";
+    }
+
+    // take an amount of time in seconds and convert it to years, days, hours, minutes and seconds
+    // leave out any values that are not necessary (0y, 0d won't show, for example)
+    function formatTime(time) {
+      var years = 0;
+      var days = 0;
+      var hours = 0;
+      var minutes = 0;
+      var ydhms = "";
+
+      if (time >= 86400) {
+        days = Math.floor(time / 86400);
+        time -= days * 86400;
+        ydhms = days + "d, ";
+      }
+
+      if (days >= 365) {
+        years = Math.floor(days / 365);
+        days -= years * 365;
+        ydhms = years + "y " + days + "d, ";
+      }
+
+      if (time >= 3600) {
+        hours = Math.floor(time / 3600);
+        time -= hours * 3600;
+        ydhms += hours + "h ";
+      }
+
+      if (time >= 60) {
+        minutes = Math.floor(time / 60);
+        time -= minutes * 60;
+        ydhms += minutes + "m ";
+      }
+
+      return ydhms += Math.floor(time) + "s";
+    }
   </script>	
 </head>
 <body style="padding: 0; margin: 0;">
@@ -637,23 +733,204 @@ else
 end if
 %>
 
-<!-- Launch clock - COMING SOON(TM)
+<!-- 
+EVENTS DATABASE INFORMATION
+===========================
+
+Launches recordset contains a list of all future launches that will be displayed on the clock
+Maneuvers recordset contains a list of all future maneuvers that will be displayed on the clock
+
+EVENTS FIELDS
+=============
+
+UT - the date at which this scheduled event will appear on the clock
+CraftName - the name of the craft that will be performing this event
+CraftLink - link to the craft page
+EventDate - date string in VBScript date format for the time of the event (in local time!)
+--> 
+
+<%
+'open database. "db" was prepended because without it for some reason I had trouble connecting
+db = "..\..\..\..\database\dbEvents.mdb"
+Dim connEvent
+Set connEvent = Server.CreateObject("ADODB.Connection")
+sConnection = "Provider=Microsoft.Jet.OLEDB.4.0;" & _
+
+              "Data Source=" & server.mappath(db) &";" & _
+
+              "Persist Security Info=False"
+connEvent.Open(sConnection)
+
+'create the table
+set rsLaunch = Server.CreateObject("ADODB.recordset")
+set rsManeuver = Server.CreateObject("ADODB.recordset")
+
+'query the data and pull up the UT closest to this one 
+'check if recordset is empty first
+rsLaunch.open "select * from Launches", connEvent, 1, 1
+rsManeuver.open "select * from Maneuvers", connEvent, 1, 1
+
+if not rsLaunch.eof then
+  rsLaunch.find ("ut>" & dbUT)
+  rsLaunch.moveprevious
+end if
+
+if not rsManeuver.eof then
+  rsManeuver.find ("ut>" & dbUT)
+  rsManeuver.moveprevious
+end if
+%>
+
 <p>
-<table style="border: 1px solid #007FDB;	border-collapse: collapse; background-color: #77C6FF;">
+<table style="width: 100%; border: 1px solid #007FDB;	border-collapse: collapse; background-color: #77C6FF;">
   <tr>
     <td>
       <center>
-      <b>Current Time @ KSC</b>
-      <p style="font-size: 16px"><%response.write(formatdatetime(dateadd("s", UT, fromDate)))%></p>
+      <b>Current Time @ KSC</b><br />
+      <span id='ksctime' style="font-size: 16px"></span>
+      <br /><br />
+      <table border="0" style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="width: 50%; border-width: 1px; text-align: center; vertical-align: top; border-top-style: none; border-right-style: solid; border-bottom-style: none; border-left-style: none;">
+            <b>Next Launch</b><br />
+            <%
+            'if we are at EOF there are no records yet, if we are at BOF there are records but the first one is still beyond our current UT and inaccessible
+            if rsLaunch.bof or rsLaunch.eof then
+              response.write("<script>")
+              response.write("var bLaunchCountdown = true;")
+              response.write("var bFutureLaunch = false;")
+              response.write("var nextLaunchSched = 0;")
+              response.write("</script>")
+              response.write("None Scheduled")
+            else
+              
+              'if this launch was selected but has already gone off, then there are no more scheduled or they are too far ahead
+              if datediff("s", rsLaunch.fields.item("EventDate"), now()) >= 0 then
+                response.write("<script>")
+                response.write("var bLaunchCountdown = true;")
+
+                'if there is a future one to look for, let js know and update when it hits
+                rsLaunch.movenext()
+                if not rsLaunch.eof then
+                  response.write("var bFutureLaunch = true;")
+                  response.write("var nextLaunchSched = " & rsLaunch.fields.item("UT") & ";")
+                else
+                  response.write("var bFutureLaunch = false;")
+                  response.write("var nextLaunchSched = 0;")
+                end if
+                response.write("</script>")
+              else
+                response.write("<script>")
+                response.write("var bLaunchCountdown = true;")
+                response.write("var bFutureLaunch = false;")
+                response.write("var nextLaunchSched = 0;")
+                response.write("var launchUT = " & datediff("s", rsLaunch.fields.item("EventDate"), now()) & ";")
+                response.write("</script>")
+                response.write("<a href='" & rsLaunch.fields.item("CraftLink") & "'>" & rsLaunch.fields.item("CraftName") & "</a><br />")
+                response.write(formatdatetime(rsLaunch.fields.item("EventDate")) & "<br />")
+                response.write("<span id='tminuslaunch'></span>")
+              end if
+            end if
+            %>
+          </td>
+          <td style="width: 50%; vertical-align: top;	text-align: center;">
+            <b>Next Maneuver</b><br />
+            <%
+            'if we are at EOF there are no records yet, if we are at BOF there are records but the first one is still beyond our current UT and inaccessible
+            if rsManeuver.bof or rsManeuver.eof then
+              response.write("<script>")
+              response.write("var bManeuverCountdown = true;")
+              response.write("var bFutureManeuver = false;")
+              response.write("var nextManeuverSched = 0;")
+              response.write("</script>")
+              response.write("None Scheduled")
+            else
+              
+              'if this maneuver was selected but has already gone off, then there are no more scheduled or they are too far ahead
+              if datediff("s", rsManeuver.fields.item("EventDate"), now()) >= 0 then
+                response.write("<script>")
+                response.write("var bManeuverCountdown = true;")
+
+                'if there is a future one to look for, let js know and update when it hits
+                rsManeuver.movenext()
+                if not rsManeuver.eof then
+                  response.write("var bFutureManeuver = true;")
+                  response.write("var nextManeuverSched = " & rsManeuver.fields.item("UT") & ";")
+                else
+                  response.write("var bFutureManeuver = false;")
+                  response.write("var nextManeuverSched = 0;")
+                end if
+                response.write("</script>")
+              else
+                response.write("<script>")
+                response.write("var bManeuverCountdown = true;")
+                response.write("var bFutureManeuver = false;")
+                response.write("var nextManeuverSched = 0;")
+                response.write("var maneuverUT = " & datediff("s", rsManeuver.fields.item("EventDate"), now()) & ";")
+                response.write("</script>")
+                response.write("<a href='" & rsManeuver.fields.item("CraftLink") & "&node=true'>" & rsManeuver.fields.item("CraftName") & "</a><br />")
+                response.write(formatdatetime(rsManeuver.fields.item("EventDate")) & "<br />")
+                response.write("<span id='tminusmaneuver'></span>")
+              end if
+            end if
+            %>
+          </td>
+        </tr>
+      </table>
       </center>
     </td>
   </tr>
 </table>
-</p>--> 
+</p>
 
 <!-- this will display the recent tweets from @KSA_MissionCtrl --> 
 <p><a class="twitter-timeline" href="https://twitter.com/KSA_MissionCtrl" data-widget-id="598711760149852163">Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>  </p>
 </span></div> </div>
+
+<!-- update the clock, maybe the page -->
+<script>
+  setInterval(function () {
+    var d = new Date();
+    $('#ksctime').html(d.toLocaleDateString() + ' ' + Date.toTZString(d, 'E'));
+    
+    // update the clock and any accompanying countdowns
+    $('#ksctime').html(d.toLocaleDateString() + ' ' + Date.toTZString(d, 'E'));
+    if (bLaunchCountdown) {
+      
+      // only count down if thete is something to countdown
+      if (launchUT < 0) {
+        $('#tminuslaunch').html(formatTime(Math.abs(launchUT)));
+        launchUT++;
+      }
+      else {
+        $('#tminuslaunch').html("LIFTOFF!!");
+        bLaunchCountdown = false;
+      }
+    }
+    if (bManeuverCountdown) {
+      
+      // only count down if thete is something to countdown
+      if (maneuverUT < 0) {
+        $('#tminusmaneuver').html(formatTime(Math.abs(maneuverUT)));
+        maneuverUT++;
+      }
+      else {
+        $('#tminusmaneuver').html("LIFTOFF!!");
+        bManeuverCountdown = false;
+      }
+    }
+    
+    // have we reached a new scheduled launch posting?
+    if (bFutureLaunch && UT >= nextLaunchSched) {
+      location.reload(true);
+    }
+    // have we reached a new scheduled maneuver posting?
+    if (bFutureManeuver && UT >= nextManeuverSched) {
+      location.reload(true);
+    }
+  },
+  1000);
+</script>
 
 <%
 'clean up all previous connections
@@ -665,6 +942,8 @@ connCraft.Close
 Set connCraft = nothing
 connBodies.Close
 Set connBodies = nothing
+connEvent.Close
+Set connEvent = nothing
 %>
 
 </body>
