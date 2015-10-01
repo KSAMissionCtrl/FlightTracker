@@ -29,6 +29,7 @@ Simply install the folders to your server and feed them a database to reference 
 ### Known Issues
 
 * For some reason, in the `setTimeout` call that withholds display of the map, no code will execute past `if (showMsg) { $("#msg").css("visibility", "visible"); }` within the function
+* New event viewer hasn't been fully tested, will probably break under some scenarios I haven't thought of yet and maybe even some I have
 
 ### Future Additions
 
@@ -42,6 +43,27 @@ Simply install the folders to your server and feed them a database to reference 
 * [CR] Menu for easier browsing between astronaut profiles (with sort options for rank, status, mission)
 
 ### Change Log
+
+**v2.4** (9/30/15)
+
+Fixes:
+- [FT] `origMET` now always contains a value so it doesn't end up breaking js when it's assigned in situations where no launch time is defined (TBD launch dates)
+- [FT] Use of `on error resume next` was causing unintended fall-through of logic code such that future event description text was being accompanied by "Click to View Maneuver Node" even when no node was linked. Lack of short-circuit logic in VBScript necessitated a further nesting of the code logic. Also added an `else` branch that was missing for in the event of no future maneuver node
+- [FT] Sending the absolute value to `formatDate()` now for the case of updating countdown timers, which have negative `MET` values
+
+Changes:
+- [FT] Flight Template.mdb now contains the new `NodeLink` field introduced in v2.3
+- [FT] Removed "example" from databases that are required by body/craft.asp to actually function. Kept in all records to let people see what's doing what and hopefully not cause any horrendous errors out of the box when setting things up
+- [FT] body.asp now too contains and uses the `formatTime` routine, which has also been modified in craft.asp to display a leading 0 for single-digit seconds. This will prevent a small glitch where if the user is looking at an open tooltip that counts from single to double digits the tooltip will not expand and the seconds will wrap down below (outside) the tooltip
+- [FT] `drawMap` has been replaced by `MapState` which provides a much clearer understanding of what the area below the craft image and stats is being used for. Also removes the possibility of the HTML string that was before being plugged into `drawMap` contianing double quotes and breaking out early from the js assignment operation causing an end of line error
+- [FT] Pulled the js definition of `UT` out into the main body of the map drawing code because otherwise it was coming up undefined in sitautions that didn't involve orbital plotting and thus killing js execution
+- [FT] The check for whether the code should be updating map data every second was over complex and was simplified with the new `MapState` variable
+- [FT] Moved code checking the state of AP/PE and maneuver node markers every second inside the section that only runs if a dynamic map has been drawn
+
+Additions:
+- [FT] A new routine `toTZString` in body.asp will convert UTC time to a specified time zone so anyone visiting will see the same time displayed on the KSC clock
+- [FT] A clock now shows the local KSC time, auto-adjusts for daylight savings and updates every second
+- [FT] A new events database allows for displaying the next launch and/or maneuver on *every* craft/body page so that anyone visiting the flight tracker will see what is upcoming. These events link to the craft page in question. In the case of maneuvers, when the craft page is loaded if the node is visible on the map it will automatically be shown after the craft popup closes. Otherwise a notice will display to let the user know it's not yet visible. The page will also auto refresh if no launch or maneuver is currently available but a later-scheduled one comes up
 
 **v2.3** (9/29/15)
 
