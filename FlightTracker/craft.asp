@@ -153,8 +153,13 @@
       });
       
       // does away with the notification for orbital plot length
-      $("#msg").click(function(){
-        $("#msg").css("visibility", "hidden");
+      $("#msgObtPd").click(function(){
+        $("#msgObtPd").css("visibility", "hidden");
+      });
+      
+      // does away with the notification for future maneuver node
+      $("#msgNode").click(function(){
+        $("#msgNode").css("visibility", "hidden");
       });
       
       // does away with the information box presented to redditor visitors
@@ -1235,9 +1240,10 @@ end if
     if bMapOrbit then
       mapMsg = "<br />Click for dynamic view"
       
-      'creat the map area, also create the orbital period notice box but hide it until needed
+      'creat the map area, also create message boxes but hide them until needed
       response.write("<div id='map' class='map' style='padding: 0; margin: 0; height: 380px; width: 835px; position: absolute; top: 451px; left: 0px; visibility: hidden;'></div>")
-      response.write("<div id='msg' style='cursor: pointer; font-family: sans-serif; border-style: solid; border-width: 2px; height: 133px; width: 415px; padding: 0; margin: 0; position: absolute; top: 561px; left: 210px; visibility: hidden; background-color: gray;'><b>NOTICE</b><p>This craft's orbital period exceeds 100,000 seconds. For performance reasons, its full orbit was not rendered. Ap/Pe markings may be missing as a result.</p><p>Click to dismiss</p></div>")
+      response.write("<div id='msgObtPd' style='cursor: pointer; font-family: sans-serif; border-style: solid; border-width: 2px; height: 133px; width: 415px; padding: 0; margin: 0; position: absolute; top: 561px; left: 210px; visibility: hidden; background-color: gray;'><b>NOTICE</b><p>This craft's orbital period exceeds 100,000 seconds. For performance reasons, its full orbit was not rendered. Ap/Pe markings may be missing as a result.</p><p>Click to dismiss</p></div>")
+      response.write("<div id='msgNode' style='cursor: pointer; font-family: sans-serif; border-style: solid; border-width: 2px; height: 113px; width: 250px; padding: 0; margin: 0; position: absolute; top: 571px; left: 292px; visibility: hidden; background-color: gray;'><b>NOTICE</b><p>Future maneuver node is not yet visible along this orbital plot.</p><p>Click to dismiss</p></div>")
       
       'special notice box to be used when directing anyone here who possibly is unfamiliar with the concept of @KSA_MissionCtrl
       if request.querystring("intro") = "y" then
@@ -1569,43 +1575,51 @@ else
 end if
 %>
 
-<!-- Launch clock --> 
 <!-- 
-LAUNCHES DATABASE INFORMATION
-=============================
+EVENTS DATABASE INFORMATION
+===========================
 
-Schedule recordset contains a list of all future launches that will be displayed on the clock
+Launches recordset contains a list of all future launches that will be displayed on the clock
+Maneuvers recordset contains a list of all future maneuvers that will be displayed on the clock
 
-SCHEDULE FIELDS
-===============
+EVENTS FIELDS
+=============
 
-UT - the date at which this scheduled launch will appear on the clock
-CraftName - the name of the craft that will be launching
+UT - the date at which this scheduled event will appear on the clock
+CraftName - the name of the craft that will be performing this event
 CraftLink - link to the craft page
-LaunchDate - date string in VBScript date format for the time of the launch (in local time!)
+EventDate - date string in VBScript date format for the time of the event (in local time!)
 --> 
 
 <%
 'open database. "db" was prepended because without it for some reason I had trouble connecting
-db = "..\..\..\..\database\dbLaunches.mdb"
-Dim connLaunch
-Set connLaunch = Server.CreateObject("ADODB.Connection")
+db = "..\..\..\..\database\dbEvents.mdb"
+Dim connEvent
+Set connEvent = Server.CreateObject("ADODB.Connection")
 sConnection = "Provider=Microsoft.Jet.OLEDB.4.0;" & _
 
               "Data Source=" & server.mappath(db) &";" & _
 
               "Persist Security Info=False"
-connLaunch.Open(sConnection)
+connEvent.Open(sConnection)
 
 'create the table
 set rsLaunch = Server.CreateObject("ADODB.recordset")
+set rsManeuver = Server.CreateObject("ADODB.recordset")
 
 'query the data and pull up the UT closest to this one 
 'check if recordset is empty first
-rsLaunch.open "select * from Schedule", connLaunch, 1, 1
+rsLaunch.open "select * from Launches", connEvent, 1, 1
+rsManeuver.open "select * from Maneuvers", connEvent, 1, 1
+
 if not rsLaunch.eof then
   rsLaunch.find ("ut>" & dbUT)
   rsLaunch.moveprevious
+end if
+
+if not rsManeuver.eof then
+  rsManeuver.find ("ut>" & dbUT)
+  rsManeuver.moveprevious
 end if
 %>
 
@@ -1617,46 +1631,94 @@ end if
       <b>Current Time @ KSC</b><br />
       <span id='ksctime' style="font-size: 16px"></span>
       <br /><br />
-      <b>Next Launch</b><br />
-      <%
-      'if we are at EOF there are no records yet, if we are at BOF there are records but the first one is still beyond our current UT and inaccessible
-      if rsLaunch.bof or rsLaunch.eof then
-        response.write("<script>")
-        response.write("var bLaunchCountdown = true;")
-        response.write("var bFutureLaunch = false;")
-        response.write("var nextLaunchSched = 0;")
-        response.write("</script>")
-        response.write("None Scheduled")
-      else
-        
-        'if this launch has already gone off, then there are no more scheduled or they are too far ahead
-        if datediff("s", rsLaunch.fields.item("LaunchDate"), now()) >= 0 then
-          response.write("<script>")
-          response.write("var bLaunchCountdown = true;")
+      <table border="0" style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="width: 50%; border-width: 1px; text-align: center; vertical-align: top; border-top-style: none; border-right-style: solid; border-bottom-style: none; border-left-style: none;">
+            <b>Next Launch</b><br />
+            <%
+            'if we are at EOF there are no records yet, if we are at BOF there are records but the first one is still beyond our current UT and inaccessible
+            if rsLaunch.bof or rsLaunch.eof then
+              response.write("<script>")
+              response.write("var bLaunchCountdown = true;")
+              response.write("var bFutureLaunch = false;")
+              response.write("var nextLaunchSched = 0;")
+              response.write("</script>")
+              response.write("None Scheduled")
+            else
+              
+              'if this launch was selected but has already gone off, then there are no more scheduled or they are too far ahead
+              if datediff("s", rsLaunch.fields.item("EventDate"), now()) >= 0 then
+                response.write("<script>")
+                response.write("var bLaunchCountdown = true;")
 
-          'let js know if there is a future one to look for and update when it hits
-          rsLaunch.movenext()
-          if not rsLaunch.eof then
-            response.write("var bFutureLaunch = true;")
-            response.write("var nextLaunchSched = " & rsLaunch.fields.item("UT") & ";")
-          else
-            response.write("var bFutureLaunch = false;")
-            response.write("var nextLaunchSched = 0;")
-          end if
-          response.write("</script>")
-        else
-          response.write("<script>")
-          response.write("var bLaunchCountdown = true;")
-          response.write("var bFutureLaunch = false;")
-          response.write("var nextLaunchSched = 0;")
-          response.write("var launchUT = " & datediff("s", rsLaunch.fields.item("LaunchDate"), now()) & ";")
-          response.write("</script>")
-          response.write("<a href='" & rsLaunch.fields.item("CraftLink") & "'>" & rsLaunch.fields.item("CraftName") & "</a><br />")
-          response.write(formatdatetime(rsLaunch.fields.item("LaunchDate")) & "<br />")
-          response.write("<span id='tminus'></span>")
-        end if
-      end if
-      %>
+                'if there is a future one to look for, let js know and update when it hits
+                rsLaunch.movenext()
+                if not rsLaunch.eof then
+                  response.write("var bFutureLaunch = true;")
+                  response.write("var nextLaunchSched = " & rsLaunch.fields.item("UT") & ";")
+                else
+                  response.write("var bFutureLaunch = false;")
+                  response.write("var nextLaunchSched = 0;")
+                end if
+                response.write("</script>")
+              else
+                response.write("<script>")
+                response.write("var bLaunchCountdown = true;")
+                response.write("var bFutureLaunch = false;")
+                response.write("var nextLaunchSched = 0;")
+                response.write("var launchUT = " & datediff("s", rsLaunch.fields.item("EventDate"), now()) & ";")
+                response.write("</script>")
+                response.write("<a href='" & rsLaunch.fields.item("CraftLink") & "'>" & rsLaunch.fields.item("CraftName") & "</a><br />")
+                response.write(formatdatetime(rsLaunch.fields.item("EventDate")) & "<br />")
+                response.write("<span id='tminuslaunch'></span>")
+              end if
+            end if
+            %>
+          </td>
+          <td style="width: 50%; vertical-align: top;	text-align: center;">
+            <b>Next Maneuver</b><br />
+            <%
+            'if we are at EOF there are no records yet, if we are at BOF there are records but the first one is still beyond our current UT and inaccessible
+            if rsManeuver.bof or rsManeuver.eof then
+              response.write("<script>")
+              response.write("var bManeuverCountdown = true;")
+              response.write("var bFutureManeuver = false;")
+              response.write("var nextManeuverSched = 0;")
+              response.write("</script>")
+              response.write("None Scheduled")
+            else
+              
+              'if this maneuver was selected but has already gone off, then there are no more scheduled or they are too far ahead
+              if datediff("s", rsManeuver.fields.item("EventDate"), now()) >= 0 then
+                response.write("<script>")
+                response.write("var bManeuverCountdown = true;")
+
+                'if there is a future one to look for, let js know and update when it hits
+                rsManeuver.movenext()
+                if not rsManeuver.eof then
+                  response.write("var bFutureManeuver = true;")
+                  response.write("var nextManeuverSched = " & rsManeuver.fields.item("UT") & ";")
+                else
+                  response.write("var bFutureManeuver = false;")
+                  response.write("var nextManeuverSched = 0;")
+                end if
+                response.write("</script>")
+              else
+                response.write("<script>")
+                response.write("var bManeuverCountdown = true;")
+                response.write("var bFutureManeuver = false;")
+                response.write("var nextManeuverSched = 0;")
+                response.write("var maneuverUT = " & datediff("s", rsManeuver.fields.item("EventDate"), now()) & ";")
+                response.write("</script>")
+                response.write("<a href='" & rsManeuver.fields.item("CraftLink") & "&node=true'>" & rsManeuver.fields.item("CraftName") & "</a><br />")
+                response.write(formatdatetime(rsManeuver.fields.item("EventDate")) & "<br />")
+                response.write("<span id='tminusmaneuver'></span>")
+              end if
+            end if
+            %>
+          </td>
+        </tr>
+      </table>
       </center>
     </td>
   </tr>
@@ -2176,13 +2238,18 @@ rsMoons.movefirst
         }
       }
 
-      // purposefully delay the display of the map (and orbital plot message if needed)
+      // purposefully delay the display of the map (and any messages as needed)
       // this is so users can see the static plot exists first
       // remove the popup box for the craft position after 5 seconds, user can re-open it if they want to
       setTimeout(function () { 
-        setTimeout(function () { craft.closePopup(); }, 5000);
+        setTimeout(function () { 
+          craft.closePopup();
+          // open the maneuver node if we were sent here looking for it and it exists on the map
+          if (getParameterByName('node') && bUpcomingNode && !bNodeRefreshCheck) { nodeMark.openPopup(); }
+        }, 5000);
         $("#map").css("visibility", "visible");
-        if (showMsg) { $("#msg").css("visibility", "visible"); }
+        if (getParameterByName('node') && bUpcomingNode && bNodeRefreshCheck) { $("#msgNode").css("visibility", "visible"); }
+        if (showMsg) { $("#msgObtPd").css("visibility", "visible"); }
       }, 2500);
     }
     
@@ -2336,18 +2403,30 @@ rsMoons.movefirst
       $("#distance").html(strAccDst + "<br />Estimated Current Total Distance Traveled: " + numeral(dstTraveled + (now * avgSpeed)).format('0,0') + "km");
     }
     
-    // update the clock and any accompanying launch countdown
+    // update the clock and any accompanying countdowns
     $('#ksctime').html(dd.toLocaleDateString() + ' ' + Date.toTZString(dd, 'E'));
     if (bLaunchCountdown) {
       
       // only count down if thete is something to countdown
       if (launchUT < 0) {
-        $('#tminus').html(formatTime(Math.abs(launchUT)));
+        $('#tminuslaunch').html(formatTime(Math.abs(launchUT)));
         launchUT++;
       }
       else {
-        $('#tminus').html("LIFTOFF!!");
+        $('#tminuslaunch').html("LIFTOFF!!");
         bLaunchCountdown = false;
+      }
+    }
+    if (bManeuverCountdown) {
+      
+      // only count down if thete is something to countdown
+      if (maneuverUT < 0) {
+        $('#tminusmaneuver').html(formatTime(Math.abs(maneuverUT)));
+        maneuverUT++;
+      }
+      else {
+        $('#tminusmaneuver').html("Maneuver Executed");
+        bManeuverCountdown = false;
       }
     }
     
@@ -2369,6 +2448,10 @@ rsMoons.movefirst
     }
     // have we reached a new scheduled launch posting?
     if (bFutureLaunch && UT >= nextLaunchSched) {
+      location.reload(true);
+    }
+    // have we reached a new scheduled maneuver posting?
+    if (bFutureManeuver && UT >= nextManeuverSched) {
       location.reload(true);
     }
     

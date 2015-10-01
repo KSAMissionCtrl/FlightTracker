@@ -915,7 +915,7 @@ end if
         maneuverUT++;
       }
       else {
-        $('#tminusmaneuver').html("LIFTOFF!!");
+        $('#tminusmaneuver').html("Maneuver Executed");
         bManeuverCountdown = false;
       }
     }
