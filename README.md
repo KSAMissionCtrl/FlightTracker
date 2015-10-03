@@ -40,6 +40,7 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] Some form of integration with [OrbitViewer](http://www.astroarts.com/products/orbitviewer/index.html)?
 * [FT] Interpolation/streaming of ascent data to allow for continuous updates rather than 15s intervals
 * [FT] Embedded Sketchfab rendering of vessel to display in addition to static vessel image (static will be fallback and switchable like the static orbits)
+* [FT] Real-time calculation of distance from bodies for signal delay and solar power readouts
 * [CR] Roll-up text to give biographies for astronauts
 * [CR] Link for pop-out window when viewing as a full page
 * [CR] Menu for easier browsing between astronaut profiles (with sort options for rank, status, mission)
