@@ -30,7 +30,7 @@
 
 <%
 'open roster database. "db" was prepended because without it for some reason I had trouble connecting
-db = "..\..\..\..\database\db" & request.querystring("db") & ".mdb"
+db = "..\..\database\db" & request.querystring("db") & ".mdb"
 Dim conn, sConnection
 Set conn = Server.CreateObject("ADODB.Connection")
 sConnection = "Provider=Microsoft.Jet.OLEDB.4.0;" & _

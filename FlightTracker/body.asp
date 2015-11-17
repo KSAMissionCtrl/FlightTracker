@@ -13,6 +13,8 @@
   <!-- use this image link to force reddit to use a certain image for its thumbnail -->
   <meta property="og:image" content="http://i.imgur.com/gIRTgKb.png" />
 
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  
   <!-- CSS stylesheets -->
   <link href="style.css" rel="stylesheet" type="text/css" media="screen" />
   <link rel="stylesheet" type="text/css" href="tipped.css" />
@@ -218,7 +220,7 @@ fromDate = "16-Feb-2014 00:00:00"
 UT = datediff("s", fromdate, now())
 
 'open database. "db" was prepended because without it for some reason I had trouble connecting
-db = "..\..\..\..\database\db" & request.querystring("db") & ".mdb"
+db = "..\..\database\db" & request.querystring("db") & ".mdb"
 Dim connCraft, sConnection
 Set connCraft = Server.CreateObject("ADODB.Connection")
 sConnection = "Provider=Microsoft.Jet.OLEDB.4.0;" & _
@@ -279,7 +281,7 @@ Link Text - the text that will be hyperlinked
 'do we need to open the flags DB?
 if rsBody.fields.item("Flags") then
   'open database. "db" was prepended because without it for some reason I had trouble connecting
-  db = "..\..\..\..\database\dbFlags.mdb"
+  db = "..\..\database\dbFlags.mdb"
   Dim connFlags, sConnectionFlags
   Set connFlags = Server.CreateObject("ADODB.Connection")
   sConnectionFlags = "Provider=Microsoft.Jet.OLEDB.4.0;" & _
@@ -318,10 +320,9 @@ end if
 <%
 'image map data for the system
 'image maps created via http://summerstyle.github.io/summer/
-'replace functions adds compatibility with Tipped
-response.write(replace(replace(rsBody.fields.item("HTML"), "title", "class='tip' data-tipped-options=""target: 'mouse', behavior: 'hide'"" title"), "&#013;", "<br />"))
+'replace functions adds compatibility with Tipped, removes blade-edge.com domain
+response.write(replace(replace(replace(rsBody.fields.item("HTML"), "title", "class='tip' data-tipped-options=""target: 'mouse', behavior: 'hide'"" title"), "&#013;", "<br />"), "blade-edge.com/images/KSA", "kerbalspace.agency")) 
 %>
-
 <!-- 
 hack used to allow collapse of orbital image and still display footer text below dynamic map, 
 as Leaflet map for some reason didn't agree with the 'display' CSS property
@@ -364,10 +365,10 @@ end if
       bodyControl: false,
       layersControl: false,
       scaleControl: true,
+      minZoom: 0,
+      maxZoom: 5,
+      zoom: 1
     });
-    
-    // for some reason this call is needed for the map to display, even though no such call is needed in craft.asp
-    map.fitWorld();
     
     // touchscreens don't register the cursor location, so only show location data if this isn't a touchscreen
     // leaflet.js was modified to remove the biome, slope and elevation data displays
@@ -417,7 +418,6 @@ end if
 
 <!-- footer links for craft information section-->
 <span style="font-family:arial;color:black;font-size:12px;">
-<p>Hover over dots to view & click to load, or expand the menu on the right</p>
 <p>
 <a target='_blank' href='http://bit.ly/KSAHomePage'>KSA Historical Archives</a> | <a target='_blank' href='http://bit.ly/-FltTrk'>Flight Tracker Source on Github</a> | Orbits rendered with <a target='_blank' href="http://bit.ly/KSPTOT">KSPTOT</a> | Image mapping via <a target='_blank' href="http://summerstyle.github.io/summer/">Summer Image Map Creator</a>
 </p>
@@ -487,7 +487,7 @@ AllowPlot - checked if this body is supported by KSP.Leaflet (everything except 
 
 <%
 'open craft database. "db" was prepended because without it for some reason I had trouble connecting
-db = "..\..\..\..\database\dbCrafts.mdb"
+db = "..\..\database\dbCrafts.mdb"
 Dim connBodies
 Set connBodies = Server.CreateObject("ADODB.Connection")
 sConnection2 = "Provider=Microsoft.Jet.OLEDB.4.0;" & _
@@ -554,7 +554,7 @@ if request.querystring("filter") = "inactive" then
           if isnull(rsCrafts.fields.item("db")) then
             response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "'target='_blank' href='"& rsCrafts.fields.item("popout") & "'>" & rsCrafts.fields.item("vessel") & "</a></li>")
           else
-            response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "' href='http://www.blade-edge.com/images/KSA/Flights/craft.asp?db=" & rsCrafts.fields.item("db") & "&filter=inactive'>" & rsCrafts.fields.item("vessel") & "</a></li>")
+            response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "' href='http://www.kerbalspace.agency/Flights/craft.asp?db=" & rsCrafts.fields.item("db") & "&filter=inactive'>" & rsCrafts.fields.item("vessel") & "</a></li>")
           end if
         end if
       end if
@@ -606,20 +606,20 @@ else
               
                 'include the planet in the tree if this has not yet been done
                 if not bPlanet then
-                  url = "http://www.blade-edge.com/images/KSA/Flights/body.asp?db=bodies&body=" & rsPlanets.fields.item("body") & "-System"
+                  url = "http://www.kerbalspace.agency/Flights/body.asp?db=bodies&body=" & rsPlanets.fields.item("body") & "-System"
                   if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
                   response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show body overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a></label> <input type='checkbox' id='' /> <ol>")
                   bPlanet = true
                 end if
                 
-                url = "http://www.blade-edge.com/images/KSA/Flights/body.asp?db=bodies&body=" & rsMoons.fields.item("body")
+                url = "http://www.kerbalspace.agency/Flights/body.asp?db=bodies&body=" & rsMoons.fields.item("body")
                 if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
                 response.write("<li><label for='" & rsMoons.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show body overview' href='" & url & "'>" & rsMoons.fields.item("body") & "</a></label> <input type='checkbox' id='' /> <ol>")
                 bVessels = true
               end if
               
               'include the craft as a child of the moon
-              url = "http://www.blade-edge.com/images/KSA/Flights/craft.asp?db=" & rsCrafts.fields.item("db")
+              url = "http://www.kerbalspace.agency/Flights/craft.asp?db=" & rsCrafts.fields.item("db")
               if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
               response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 255, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "' href='" & url & "'>" & rsCrafts.fields.item("vessel") & "</a></li>")
               bEntry = true
@@ -670,14 +670,14 @@ else
         
           'include the planet in the tree if this has not yet been done
           if not bPlanet then
-            url = "http://www.blade-edge.com/images/KSA/Flights/body.asp?db=bodies&body=" & rsPlanets.fields.item("body") & "-System"
+            url = "http://www.kerbalspace.agency/Flights/body.asp?db=bodies&body=" & rsPlanets.fields.item("body") & "-System"
             if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
             response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show body overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a></label> <input type='checkbox' id='' /> <ol>")
             bPlanet = true
           end if
           
           'include the craft as a child of the planet
-          url = "' href='http://www.blade-edge.com/images/KSA/Flights/craft.asp?db=" & rsCrafts.fields.item("db")
+          url = "' href='http://www.kerbalspace.agency/Flights/craft.asp?db=" & rsCrafts.fields.item("db")
           if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
           response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & url & "'>" & rsCrafts.fields.item("vessel") & "</a></li>")
           bEntry = true
@@ -751,7 +751,7 @@ EventDate - date string in VBScript date format for the time of the event (in lo
 
 <%
 'open database. "db" was prepended because without it for some reason I had trouble connecting
-db = "..\..\..\..\database\dbEvents.mdb"
+db = "..\..\database\dbEvents.mdb"
 Dim connEvent
 Set connEvent = Server.CreateObject("ADODB.Connection")
 sConnection = "Provider=Microsoft.Jet.OLEDB.4.0;" & _
@@ -771,12 +771,12 @@ rsLaunch.open "select * from Launches", connEvent, 1, 1
 rsManeuver.open "select * from Maneuvers", connEvent, 1, 1
 
 if not rsLaunch.eof then
-  rsLaunch.find ("ut>" & dbUT)
+  rsLaunch.find ("ut>" & UT)
   rsLaunch.moveprevious
 end if
 
 if not rsManeuver.eof then
-  rsManeuver.find ("ut>" & dbUT)
+  rsManeuver.find ("ut>" & UT)
   rsManeuver.moveprevious
 end if
 %>
@@ -807,7 +807,7 @@ end if
               'if this launch was selected but has already gone off, then there are no more scheduled or they are too far ahead
               if datediff("s", rsLaunch.fields.item("EventDate"), now()) >= 0 then
                 response.write("<script>")
-                response.write("var bLaunchCountdown = true;")
+                response.write("var bLaunchCountdown = false;")
 
                 'if there is a future one to look for, let js know and update when it hits
                 rsLaunch.movenext()
@@ -819,6 +819,7 @@ end if
                   response.write("var nextLaunchSched = 0;")
                 end if
                 response.write("</script>")
+                response.write("None Scheduled")
               else
                 response.write("<script>")
                 response.write("var bLaunchCountdown = true;")
@@ -849,7 +850,7 @@ end if
               'if this maneuver was selected but has already gone off, then there are no more scheduled or they are too far ahead
               if datediff("s", rsManeuver.fields.item("EventDate"), now()) >= 0 then
                 response.write("<script>")
-                response.write("var bManeuverCountdown = true;")
+                response.write("var bManeuverCountdown = false;")
 
                 'if there is a future one to look for, let js know and update when it hits
                 rsManeuver.movenext()
@@ -861,6 +862,7 @@ end if
                   response.write("var nextManeuverSched = 0;")
                 end if
                 response.write("</script>")
+                response.write("None Scheduled")
               else
                 response.write("<script>")
                 response.write("var bManeuverCountdown = true;")
