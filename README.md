@@ -13,6 +13,7 @@ The following mods/apps are used to provide the data the Flight Tracker and Crew
 * [Final Frontier](http://forum.kerbalspaceprogram.com/threads/67246)
 * [VOID](http://forum.kerbalspaceprogram.com/threads/54533-0-23-VOID-Vessel-Orbital-Informational-Display)
 * [FAR](http://forum.kerbalspaceprogram.com/threads/20451-0-23-Ferram-Aerospace-Research-v0-12-5-2-Aero-Fixes-For-Planes-Rockets-1-7-14)
+* [kOS] (https://github.com/KSP-KOS/KOS)
 
 The following JavaScript libraries are used:
 
@@ -21,6 +22,8 @@ The following JavaScript libraries are used:
 * [Leaflet Label](https://github.com/Leaflet/Leaflet.label)
 * [Numeral](http://numeraljs.com/)
 * [Tipped](http://www.tippedjs.com/)
+* [Codebird](https://github.com/jublonet/codebird-js)
+* [Spin.js](http://fgnass.github.io/spin.js/)
 
 Blank template MDB Access files are included for both crafts and rosters, as well as filled-in example databases.
 
@@ -30,22 +33,79 @@ Basically you need to install the folders to your server and feed them a databas
 
 ### Known Issues
 
-* For some reason, in the `setTimeout` call that withholds display of the map, no code will execute past `if (showMsg) { $("#msg").css("visibility", "visible"); }` within the function
-* New event viewer hasn't been fully tested, will probably break under some scenarios I haven't thought of yet and maybe even some I have
+- [FT] Launch video has been reported as not completing loading on Chrome
+- [FT] Mobile Safari does not reset the drop-down list boxes on page unload, so using the Back button will have them still set to whatever was last selected
+- [FT] Sketchfab model viewer does not autoplay when it is shown, nor does it stop when it is hidden unless manually stopped first. Sketchfab has already responded to us about some API extensions to allow us to do this eventually
+- [FT] Captions cannot be automatically enabled when a video goes fullscreen on mobile devices. We've not found a way to get this to work
+- [FT] There are actually two caption tracks, one for current event the second for the name 
 
 ### Future Additions
 
 * [FT] Further KSP.Leaflet integration (terminator view, etc)
 * [FT] Hyperbolic orbital plotting
-* [FT] Some form of integration with [OrbitViewer](http://www.astroarts.com/products/orbitviewer/index.html)?
-* [FT] Interpolation/streaming of ascent data to allow for continuous updates rather than 15s intervals
-* [FT] Embedded Sketchfab rendering of vessel to display in addition to static vessel image (static will be fallback and switchable like the static orbits)
 * [FT] Real-time calculation of distance from bodies for signal delay and solar power readouts
 * [CR] Roll-up text to give biographies for astronauts
 * [CR] Link for pop-out window when viewing as a full page
 * [CR] Menu for easier browsing between astronaut profiles (with sort options for rank, status, mission)
 
 ### Change Log
+
+**v3.0** (11/17/15)
+
+Fixes:
+- [FT] **Ground plots now handle map edges properly** - a much nicer algortithm now cuts off lines at the edge of the map in all instances before they wrap across to the other side and doesn't care if the craft is moving in a prograde or retrograde orbit
+- [FT] **Time synched between JS and VBscript** - the methods used to get the time elapsed from a certain date in javascript and vbscript can return results that differ by as much as 20-30 seconds. The offset is now recorded on page load and applied throughout all operations involving calculated elapsed time, favoring the result given by vbscript's `dateDiff()`
+- [FT] **Current event always recognized** - it is now properly recognized when coming from a past event to an event from the Next Event(s) list (`ut` query string included in the URL) whether this event is in fact the *current* event (the event you would get if you removed `ut` from the URL). This is important as before the flight tracker assumed any inclusion of `ut` in the URL was indication of viewing an event that occurred in the past
+- [FT] `body.asp` now contains character encoding information
+- [FT] Missing options `minZoom`, `maxZoom` and `zoom` added to all leaflet map initialization. Not only does this solve the problem where maps would fail to even render, the + zoom button will now grey out when max zoom is achieved
+- [FT] Event calendar was incorrectly referencing the UT passed by URL querystring when available instead of the UT calculated for the current time, so it was showing past events
+- [FT] Event calendar was setting `bLaunchCountdown` and `bManeuverCountdown` to `true` by default, is now properly defaulting to `false` and switching to `true` only when an upcoming event is displayed
+- [FT] Viewport scaling removed to allow tablet/mobile devices to load the page from a more zoomed-out perspective
+- [FT] `formatTime()` now uses the absolute value of any number passed to it to prevent errors where number is negative
+- [FT] All JS functions shuffled about to be defined before they are called to play better with Chrome browsers
+- [FT] VBscript now returns to proper error checking after it has tested for possibly-unsupported databse fields
+- [FT] When viewing a past event that includes a launch time which was scrubbed, the actual launch time now finally properly displays in the tooltip as originally designed back in like v1.0
+- [FT] Several JS variables that were not being properly set to default values and throwing reference errors because the ASP code that creates them did not execute due to a logical condition now have default values that are created regardless
+- [FT] In some instances the Distance Traveled field would fail to show estimated distance
+- [FT] Traveling to other crafts via the menu now properly preserves certain variables in the URL
+- [FT] `latlon` was being referenced by index at times when it had no data
+- [FT] Craft marker popup was displaying the same cardinal directions for both Lat and Lng
+- [FT] Page no longer refreshes when the end of the orbit is reached if a maneuver node (which would end the orbit plot) just fired and instead waits for the next event to trigger a refresh
+
+Changes:
+- [FT] **Greater timer accuracy and monitoring** - using a method proposed online the code no longer uses `setInterval()` for timed callbacks but instead calls itself with `setTimeout()` after it has processed and monitors the time it took to carry out its operations and when it needs to call itself again to remain on time with whatever interval it is set for. This not only keeps things accurate when users are viewing the page, but if they tab off and the page's CPU priority is reduced, when they come back they will see things catch up to the current time
+- [FT] **Quick event jumping** - The [<]Prev and Next[>] buttons that only went forward/backward a single event at a time have been replaced with drop-down list boxes that contain the *entire* history of the vessel to make it easier to go back in time for vessels that have been in operation for a while. Future-planned events and maneuvers are still implemented when available in the Next Event(s) drop-down list and shown via tooltip or if on a touchscreen via an alert. Any future-planned event is shown only when viewing the current event for that time, and not any past events
+- [FT] **Asynchronous orbital data calculation** - Orbital data calculation is now wrapped in an inline function and batch-called every millisecond instead of run as a single loop. This takes slightly longer for large orbits but has the benefits of no longer locking up the browser entirely waiting for it to complete, shows a snazzy loading bar and makes it feasible to expose the option to render all 3 orbits for craft with very long (100,000s+) orbital periods
+- [FT] Because the asynchronous batch loading of orbital data breaks the linear flow of the original JS loading code, `renderMap()` now exists to complete the loading of the map once the orbital data calculations have finished
+- [FT]/[CR] Paths and URLs changed to point properly to new kerbalspace.agency domain and file structure. String replace also utilized to automatically change links pulled from DB
+- [FT] Removed second footer line with obvious instructions from body overview page 
+- [FT] Event calendar now displays "None Scheduled" when lacking a future event
+- [FT] Text on landing page for mobile users attempting to view a popout has been updated to no longer say mobile devices are unsupported in controlling various aspects of the flight tracker
+- [FT] Clock now shows UTC in the title instead of the time, as iOS devices were outputting the full month name instead of shorthand and causing a text wrap of the current time
+- [FT] `formatTime()` can now optionally return seconds with 5 significant digits (00.000) instead of a whole number
+- [FT] Fancy JQuery fade events are now rampantly applied across the entire page to show/hide pretty much everything that needs to be shown and hidden including notification boxes, the map lat/lng key (now only visible when the cursor is over the map), the dynamic map itself, and more
+- [FT] The page will not auto-update to a new event if the user is viewing a past event under the assumption that the user is purposely on that past event for a reason and wants to stay there
+- [FT] Documentation updated for all recordsets
+- [FT] The page title now includes the craft name and current event title
+- [FT] The values for deltaV and vessel mass can now be ommitted from the database fields and the page will display 0
+- [FT] The communication signal delay is now formatted into yy:dd:hh:mm:ss.ms instead of displaying raw seconds
+- [FT] The ImgDataCode field no longer has to remain empty to trigger an ascent telemetry event, as it can hold the size information for the three HTML5 video files. It must still remain empty to load older ascent telemetry
+- [FT] The note that appeared below the Inactive Vessels menu is now in a tooltip cited next to the menu header
+- [FT] Vessel template DB now contains new ascent data table
+
+Additions:
+- [FT] **Real-time video and telemetry streaming** - this deprecates the original launch telemetry functionality that auto-updated the entire page every 15s with new data (still viewable on older craft). Now, the page stays loaded and JQuery updates telemetry data, which is initially read from a database that contains values for a set interval (0.5s, 1s, 5s, whatever) and then linear interpolation fills in the rest to be played back at up to 30FPS. FPS throttling allows the page to lower the FPS if it detects the launch time is falling behind real time, keeping older devices in sync during live launch streams. Video can be created to load at any point before the launch and play through to any point during the launch and supports all three major HTML5 formats. Video captions are supplied for devices that cannot play video inline. Mobile/tablet users are warned of the video size they will need to download. Once a launch occurs it can be viewed again in archive mode that allows the ability to seek through the telemetry data. A post-launch survey collects user data and feedback to help improve the system. During a live launch the main twitter timeline will be displayed so tweets pushed out during the launch are shown (within 30s) and users can interact directly through the widget
+- [FT] **Sketchfab model viewer support** - unfortunately this is a very premature feature as the Sketchfab KSP exporter remains in beta status at the time of this release and is not capable of handling modded craft files very well. Where avaiable, the Sketchfab icon will appear over the craft description box and allow the user to switch between the 2D image/description and the 3D model viewer. The craft model can also change from event to event as the craft changes configuration
+- [FT] **Dynamic pre-launch map** - the event prior to launch telemetry can now hold a dynamic map that shows the location of the launch site as well as basic information about it
+- [FT] ASP check for mobile browsers
+- [FT] Codebird.js allows the flight tracker to send automated tweets
+- [FT] Spin.js allows the flight tracker to show custom loading spinners where needed
+- [FT] `craft.asp` now initially loads loads all the time with a background "loading" image that is then removed via JQuery when all the heavy ASP processing at the top of the page is completed (mainly seen during launch telemetry interpolation)
+- [FT] OS and browser information is now collected and made available to JS to enable/disable functionality of certain features not globally supported
+- [FT] If there is a launch scheduled in the event calendar and the user is on another craft page or looking at an older craft entry an alert box will pop up 5-mins prior to the launch to give the user the option to jump to the craft page of the launching vehicle
+- [FT] A new auto-refresh check now reloads the page to re-render the map when new orbital data is detected
+- [FT] A tooltip can show up for launch and maneuver events if a description has been added to them, providing quick information about the event
+- [FT] A sample Excel spreadsheet is included showing telemetry data
 
 **v2.4** (9/30/15)
 
