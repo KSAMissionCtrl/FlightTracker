@@ -49,6 +49,7 @@ Basically you need to install the folders to your server and feed them a databas
 * [CR] Roll-up text to give biographies for astronauts
 * [CR] Link for pop-out window when viewing as a full page
 * [CR] Menu for easier browsing between astronaut profiles (with sort options for rank, status, mission)
+* Cookies to allow for stuff like launch ascent FPS and help text
 
 ### Change Log
 
