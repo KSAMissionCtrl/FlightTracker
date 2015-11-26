@@ -38,6 +38,7 @@ Basically you need to install the folders to your server and feed them a databas
 - [FT] Sketchfab model viewer does not autoplay when it is shown, nor does it stop when it is hidden unless manually stopped first. Sketchfab has already responded to us about some API extensions to allow us to do this eventually
 - [FT] Captions cannot be automatically enabled when a video goes fullscreen on mobile devices. We've not found a way to get this to work
 - [FT] There are actually two caption tracks, one for current event the second for the name, but apprently only one can be shown on iphone in fullscreen
+- [FT] When left in the background for a while, the countdown timers for maneuver nodes both in the events box and the map pop-up fall way behind and don't ever catch up once focus is returned to the window, necessitating a refresh
 
 ### Future Additions
 
