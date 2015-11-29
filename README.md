@@ -45,7 +45,7 @@ Basically you need to install the folders to your server and feed them a databas
 
 * [FT] Terminators for dynamic maps
 * [FT] Hyperbolic orbital plotting
-* [FT] Real-time calculation of distance from bodies for signal delay and solar power readouts
+* [FT] Real-time calculation of [distance from bodies](https://github.com/Arrowstar/ksptot/blob/5eb5dc990fce6299c4c209995d9a224aeece7da1/helper_methods/astrodynamics/getAbsPositBetweenSpacecraftAndBody.m) for signal delay and solar power readouts
 * [FT] Toggle to display discovered anomalies on dynamic maps
 * [FT] Click on an orbital line to see time & orbital details for that plot point (separate button for static view)
 * [CR] Roll-up text to give biographies for astronauts
