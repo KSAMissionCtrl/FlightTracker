@@ -40,6 +40,7 @@ Basically you need to install the folders to your server and feed them a databas
 - [FT] There are actually two caption tracks, one for current event the second for the name, but apprently only one can be shown on iphone in fullscreen
 - [FT] When left in the background for a while, the countdown timers for maneuver nodes both in the events box and the map pop-up fall way behind and don't ever catch up once focus is returned to the window, necessitating a refresh
 - [FT] Resource mass does not include a , separator for whole numbers when greater than 999
+- [FT] Dynamic map can load so quickly for very short orbits (when a maneuver node is close) that automatic pop-ups don't appear
 
 ### Future Additions
 
