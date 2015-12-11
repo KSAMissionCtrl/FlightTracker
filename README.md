@@ -44,6 +44,7 @@ Basically you need to install the folders to your server and feed them a databas
 
 ### Future Additions
 
+* [FT] Put back in the ability to jump forward/back one event at a time next to the drop-downs for longer traversals
 * [FT] Terminators for dynamic maps
 * [FT] Hyperbolic orbital plotting
 * [FT] Real-time calculation of [distance from bodies](https://github.com/Arrowstar/ksptot/blob/5eb5dc990fce6299c4c209995d9a224aeece7da1/helper_methods/astrodynamics/getAbsPositBetweenSpacecraftAndBody.m) for signal delay and solar power readouts
