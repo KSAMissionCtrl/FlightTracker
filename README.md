@@ -50,6 +50,9 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] Real-time calculation of [distance from bodies](https://github.com/Arrowstar/ksptot/blob/5eb5dc990fce6299c4c209995d9a224aeece7da1/helper_methods/astrodynamics/getAbsPositBetweenSpacecraftAndBody.m) for signal delay and solar power readouts
 * [FT] Toggle to display discovered anomalies on dynamic maps
 * [FT] Click on an orbital line to see time & orbital details for that plot point (separate button for static view)
+* [FT] Better use of dynamic tooltips to show planet/moon information in the system overview diagrams
+* [FT] Clicking on the planet in the body overview diagrams brings up a dynamic map of the surface allowing you to choose a view (sat/terrain/biome) where available
+* [FT] New sat/terrain/biome maps for OPM?
 * [CR] Roll-up text to give biographies for astronauts
 * [CR] Link for pop-out window when viewing as a full page
 * [CR] Menu for easier browsing between astronaut profiles (with sort options for rank, status, mission)
