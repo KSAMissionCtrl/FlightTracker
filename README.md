@@ -41,6 +41,7 @@ Basically you need to install the folders to your server and feed them a databas
 - [FT] When left in the background for a while, the countdown timers for maneuver nodes both in the events box and the map pop-up fall way behind and don't ever catch up once focus is returned to the window, necessitating a refresh
 - [FT] Resource mass does not include a , separator for whole numbers when greater than 999
 - [FT] Dynamic map can load so quickly for very short orbits (when a maneuver node is close) that automatic pop-ups don't appear
+- [FT] A slight gap is visible between orbital paths on the dynamic map where switching to the next orbit color
 
 ### Future Additions
 
