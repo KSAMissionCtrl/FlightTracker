@@ -33,19 +33,16 @@ Basically you need to install the folders to your server and feed them a databas
 
 ### Known Issues
 
-- [FT] Launch video has been reported as not completing loading on Chrome
 - [FT] Mobile Safari does not reset the drop-down list boxes on page unload, so using the Back button will have them still set to whatever was last selected
 - [FT] Sketchfab model viewer does not autoplay when it is shown, nor does it stop when it is hidden unless manually stopped first. Sketchfab has already responded to us about some API extensions to allow us to do this eventually
 - [FT] Captions cannot be automatically enabled when a video goes fullscreen on mobile devices. We've not found a way to get this to work
 - [FT] There are actually two caption tracks, one for current event the second for the name, but apprently only one can be shown on iphone in fullscreen
 - [FT] When left in the background for a while, the countdown timers for maneuver nodes both in the events box and the map pop-up fall way behind and don't ever catch up once focus is returned to the window, necessitating a refresh
-- [FT] Resource mass does not include a , separator for whole numbers when greater than 999
 - [FT] Dynamic map can load so quickly for very short orbits (when a maneuver node is close) that automatic pop-ups don't appear
 - [FT] A slight gap is visible between orbital paths on the dynamic map where switching to the next orbit color
 
 ### Future Additions
 
-* [FT] Put back in the ability to jump forward/back one event at a time next to the drop-downs for longer traversals
 * [FT] Terminators for dynamic maps
 * [FT] Hyperbolic orbital plotting
 * [FT] Real-time calculation of [distance from bodies](https://github.com/Arrowstar/ksptot/blob/5eb5dc990fce6299c4c209995d9a224aeece7da1/helper_methods/astrodynamics/getAbsPositBetweenSpacecraftAndBody.m) for signal delay and solar power readouts
