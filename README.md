@@ -47,9 +47,7 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] Hyperbolic orbital plotting
 * [FT] Clicking on the planet in the body overview diagrams brings up a dynamic map of the surface allowing you to choose a view (sat/terrain/biome) where available
 * [FT] New sat/terrain/biome maps for OPM?
-* [CR] Roll-up text to give biographies for astronauts
-* [CR] Link for pop-out window when viewing as a full page
-* [CR] Menu for easier browsing between astronaut profiles (with sort options for rank, status, mission)
+
 
 ### Change Log
 
