@@ -45,6 +45,7 @@ Basically you need to install the folders to your server and feed them a databas
 
 * [FT] Terminators for dynamic maps
 * [FT] Clicking on the planet in the body overview diagrams brings up a dynamic map of the surface allowing you to choose a view (sat/terrain/biome) where available
+* [FT] Body map includes layers selection to show flags, points of interest, anomalies, labels for geographic features, and the ability to see all orbiting vessels by type (all vessel orbits/locations overlaid at once, one orbit per vessel) and ground vessel locations
 * [FT] New sat/terrain/biome maps for OPM?
 
 
