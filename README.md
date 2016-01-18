@@ -44,7 +44,6 @@ Basically you need to install the folders to your server and feed them a databas
 ### Future Additions
 
 * [FT] Terminators for dynamic maps
-* [FT] Hyperbolic orbital plotting
 * [FT] Clicking on the planet in the body overview diagrams brings up a dynamic map of the surface allowing you to choose a view (sat/terrain/biome) where available
 * [FT] New sat/terrain/biome maps for OPM?
 
