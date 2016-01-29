@@ -45,8 +45,6 @@ Basically you need to install the folders to your server and feed them a databas
 ### Future Additions
 
 * [FT] Terminators for dynamic maps
-* [FT] Clicking on the planet in the body overview diagrams brings up a dynamic map of the surface allowing you to choose a view (sat/terrain/biome) where available
-* [FT] Body map includes layers selection to show flags, points of interest, anomalies, labels for geographic features, and the ability to see all orbiting vessels by type (all vessel orbits/locations overlaid at once, one orbit per vessel) and ground vessel locations
 * [FT] New sat/terrain/biome maps for OPM?
 * [FT] Show number of orbits for craft in the Orbital Period tooltip. Orbital count needs to take into account the fact that orbits will change over the course of the mission and first orbit of current body doesn't start at the beginning of a mission timer, can't just calculate from the mission time/current orbital period
 * [FT] For stations, make the description box click to open rather than scroll up by default so that the craft image can be a map that allows tooltips to pop up to show details on the various station modules
