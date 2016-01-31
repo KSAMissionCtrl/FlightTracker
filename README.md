@@ -40,16 +40,16 @@ Basically you need to install the folders to your server and feed them a databas
 - [FT] When left in the background for a while, the countdown timers for maneuver nodes both in the events box and the map pop-up fall way behind and don't ever catch up once focus is returned to the window, necessitating a refresh
 - [FT] Dynamic map can load so quickly for very short orbits (when a maneuver node is close) that automatic pop-ups don't appear
 - [FT] A slight gap is visible between orbital paths on the dynamic map where switching to the next orbit color
-- [FT] Craft popups on ground maps are always 500px wide - despite this being set via a `maxWidth` property, Leaflet does not size down the popups when they contain content smaller than this width
+- [FT] Craft popups on ground maps are always 500px wide - despite this being set via a `maxWidth` property, Leaflet does not size down the popups when they contain content smaller than this width when this property is changed from default
 
 ### Future Additions
 
 * [FT] Terminators for dynamic maps
 * [FT] New sat/terrain/biome maps for OPM?
 * [FT] Show number of orbits for craft in the Orbital Period tooltip. Orbital count needs to take into account the fact that orbits will change over the course of the mission and first orbit of current body doesn't start at the beginning of a mission timer, can't just calculate from the mission time/current orbital period
-* [FT] For stations, make the description box click to open rather than scroll up by default so that the craft image can be a map that allows tooltips to pop up to show details on the various station modules
 * [FT] Additional stations stat that shows open/used docking ports
 * [FT] Redezvous mode that tells the individual craft page to draw 2 orbits to allow people to see craft rendezvousing
+* [FT] Additional orbital line for crafts with maneuver nodes that shows the planned orbit after the maneuver
 * [FT] Total crew hours for crewed missions as a tooltip for the Crew stat, adding to the individual crew member tooltips their hours aboard the vessel in addition to their names
 * [FT] Additional stat that links vessels to another craft page, possibly with an AJAX tooltip that shows basic craft info on hover (similar to tooltips in body.asp). This will let people see what craft delivered a rover or lander to surface or even what vessel a spent stage belongs to.
 * [FT] Resource icon scrolling to make sure crafts with a lot of resources don't expand the stats table below the craft image
