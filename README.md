@@ -46,7 +46,6 @@ Basically you need to install the folders to your server and feed them a databas
 
 * [FT] Terminators for dynamic maps
 * [FT] New sat/terrain/biome maps for OPM?
-* [FT] Show number of orbits for craft in the Orbital Period tooltip. Orbital count needs to take into account the fact that orbits will change over the course of the mission and first orbit of current body doesn't start at the beginning of a mission timer, can't just calculate from the mission time/current orbital period
 * [FT] Additional stations stat that shows open/used docking ports
 * [FT] Redezvous mode that tells the individual craft page to draw 2 orbits to allow people to see craft rendezvousing
 * [FT] Additional orbital line for crafts with maneuver nodes that shows the planned orbit after the maneuver
