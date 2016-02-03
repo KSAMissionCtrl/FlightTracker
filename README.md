@@ -48,7 +48,6 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] New sat/terrain/biome maps for OPM?
 * [FT] Additional stations stat that shows open/used docking ports
 * [FT] Redezvous mode that tells the individual craft page to draw 2 orbits to allow people to see craft rendezvousing
-* [FT] Additional orbital line for crafts with maneuver nodes that shows the planned orbit after the maneuver
 * [FT] Total crew hours for crewed missions as a tooltip for the Crew stat, adding to the individual crew member tooltips their hours aboard the vessel in addition to their names
 * [FT] Additional stat that links vessels to another craft page, possibly with an AJAX tooltip that shows basic craft info on hover (similar to tooltips in body.asp). This will let people see what craft delivered a rover or lander to surface or even what vessel a spent stage belongs to.
 * [FT/CR] More AJAX integration. Possibly a nearly-complete rewrite to use more Javascript on live page w/ASP removed & replaced with AJAX requests. Would make page as a whole updateable without needing to do a full refresh (except for changes in what needs to be rendered - like a pre-launch state to a launch state to an orbital state would require a page refresh for a layout change)
