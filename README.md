@@ -38,7 +38,6 @@ Basically you need to install the folders to your server and feed them a databas
 - [FT] Captions cannot be automatically enabled when a video goes fullscreen on mobile devices. We've not found a way to get this to work
 - [FT] There are actually two caption tracks, one for current event the second for the name, but apprently only one can be shown on iphone in fullscreen
 - [FT] When left in the background for a while, the countdown timers for maneuver nodes both in the events box and the map pop-up fall way behind and don't ever catch up once focus is returned to the window, necessitating a refresh
-- [FT] Dynamic map can load so quickly for very short orbits (when a maneuver node is close) that automatic pop-ups don't appear
 - [FT] A slight gap is visible between orbital paths on the dynamic map where switching to the next orbit color
 - [FT] Craft popups on ground maps are always 500px wide - despite this being set via a `maxWidth` property, Leaflet does not size down the popups when they contain content smaller than this width when this property is changed from default
 
