@@ -46,7 +46,6 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] Terminators for dynamic maps
 * [FT] New sat/terrain/biome maps for OPM?
 * [FT] Additional stations stat that shows open/used docking ports
-* [FT/CR] More AJAX integration. Possibly a nearly-complete rewrite to use more Javascript on live page w/ASP removed & replaced with AJAX requests. Would make page as a whole updateable without needing to do a full refresh (except for changes in what needs to be rendered - like a pre-launch state to a launch state to an orbital state would require a page refresh for a layout change)
 * [FT/CR] cookie users can see when a craft/kerbal has updated information to be viewed
 
 ### Change Log
