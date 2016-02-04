@@ -44,7 +44,7 @@ Basically you need to install the folders to your server and feed them a databas
 ### Future Additions
 
 * [FT] Terminators for dynamic maps
-* [FT] New sat/terrain/biome maps for OPM?
+* [FT] New sat/terrain/biome maps for OPM
 * [FT] Updated biome maps for stock planets
 * [FT] Additional stations stat that shows open/used docking ports
 * [FT/CR] cookie users can see when a craft/kerbal has updated information to be viewed, showing up as a badge next to the craft name in the menu, over the pictures in the full roster listing, and badges with numbers will appear next to bodies in the menu showing how many craft in their SOI have updates to view
