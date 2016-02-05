@@ -13,7 +13,7 @@ The following mods/apps are used to provide the data the Flight Tracker and Crew
 * [Final Frontier](http://forum.kerbalspaceprogram.com/threads/67246)
 * [VOID](http://forum.kerbalspaceprogram.com/threads/54533-0-23-VOID-Vessel-Orbital-Informational-Display)
 * [FAR](http://forum.kerbalspaceprogram.com/threads/20451-0-23-Ferram-Aerospace-Research-v0-12-5-2-Aero-Fixes-For-Planes-Rockets-1-7-14)
-* [kOS] (https://github.com/KSP-KOS/KOS)
+* [kOS](https://github.com/KSP-KOS/KOS)
 
 The following JavaScript libraries are used:
 
@@ -24,6 +24,7 @@ The following JavaScript libraries are used:
 * [Tipped](http://www.tippedjs.com/)
 * [Codebird](https://github.com/jublonet/codebird-js)
 * [Spin.js](http://fgnass.github.io/spin.js/)
+* [iOSBadge.js](http://kristerkari.github.io/iOSBadge/)
 
 Blank template MDB Access files are included for both crafts and rosters, as well as filled-in example databases.
 
@@ -40,6 +41,7 @@ Basically you need to install the folders to your server and feed them a databas
 - [FT] When left in the background for a while, the countdown timers for maneuver nodes both in the events box and the map pop-up fall way behind and don't ever catch up once focus is returned to the window, necessitating a refresh
 - [FT] A slight gap is visible between orbital paths on the dynamic map where switching to the next orbit color
 - [FT] Craft popups on ground maps are always 500px wide - despite this being set via a `maxWidth` property, Leaflet does not size down the popups when they contain content smaller than this width when this property is changed from default
+- [FT] Update/New badges can be cutoff from the menu if the craft name is just long enough to not wrap and leave little room at the end of the line to show the badge
 - [FT] (Chrome) scheduled events tooltip does not show up when the list item is hovered over
 - [FT] (Chrome) launch video replays do not always load fully
 
@@ -49,7 +51,6 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] New sat/terrain/biome maps for OPM
 * [FT] Updated biome maps for stock planets
 * [FT] Additional stations stat that shows open/used docking ports
-* [FT/CR] cookie users can see when a craft/kerbal has updated information to be viewed, showing up as a badge next to the craft name in the menu, over the pictures in the full roster listing, and badges with numbers will appear next to bodies in the menu showing how many craft in their SOI have updates to view
 
 ### Change Log
 
