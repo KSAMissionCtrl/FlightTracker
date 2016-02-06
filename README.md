@@ -51,9 +51,9 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] Terminators for dynamic maps
 * [FT] New sat/terrain/biome maps for OPM
 * [FT] Updated biome maps for stock planets
-* [FT] Additional stations stat that shows open/used docking ports
 * [FT] Ground tracking for rovers
 * [FT] 2-3 additional zoom levels for dynamic map
+* [FT] note the number of crew aboard and use that to calculate remaining times for any included life support resources (need to decide what life support system to use first - USI or TAC)
 
 ### Change Log
 
