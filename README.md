@@ -53,6 +53,7 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] Updated biome maps for stock planets
 * [FT] Additional stations stat that shows open/used docking ports
 * [FT] Ground tracking for rovers
+* [FT] 2-3 additional zoom levels for dynamic map
 
 ### Change Log
 
