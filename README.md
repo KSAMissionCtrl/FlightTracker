@@ -59,6 +59,7 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT/CR] back-end interface that allows creation/modification of records through the website when detecting the missionctrl cookie for updating craft and crew databases
 * [FT] change the filters to check boxes to allow more than one to be selected at a time - default is they are all checked on page load - perhaps tag the craft type when building the menu and then use jQuery to hide the elements associated with the check boxes types. Save active filters as cookie, keep URL string for non-cookie users
 * [FT] Bring back ability for reminder notification to persist across FT pages for non-cookie users
+* [FT/CR] [push notifications](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)?
 
 ### Change Log
 
