@@ -60,6 +60,7 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] change the filters to check boxes to allow more than one to be selected at a time - default is they are all checked on page load - perhaps tag the craft type when building the menu and then use jQuery to hide the elements associated with the check boxes types. Save active filters as cookie, keep URL string for non-cookie users (add warning icon for non-cookie users)
 * [FT] Bring back ability for reminder notification to persist across FT pages for non-cookie users
 * [FT/CR] [push notifications](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)?
+* [FT] KSC map needs to be schedulable for updates, currently is hard-coded
 
 ### Change Log
 
