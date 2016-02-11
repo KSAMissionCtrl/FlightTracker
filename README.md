@@ -58,6 +58,7 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] use [Rrose](http://erictheise.github.io/rrose/) to show hover popup along orbit lines that displays orbit #, time and date, then clicking brings up the full details (replaces label)
 * [FT/CR] back-end interface that allows creation/modification of records through the website when detecting the missionctrl cookie for updating craft and crew databases
 * [FT] change the filters to check boxes to allow more than one to be selected at a time - default is they are all checked on page load - perhaps tag the craft type when building the menu and then use jQuery to hide the elements associated with the check boxes types
+* [FT] Bring back ability for reminder notification to persist across FT pages for non-cookie users
 
 ### Change Log
 
