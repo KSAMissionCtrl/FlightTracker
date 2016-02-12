@@ -42,7 +42,8 @@ Basically you need to install the folders to your server and feed them a databas
 - [FT] A slight gap is visible between orbital paths on the dynamic map where switching to the next orbit color
 - [FT] Craft popups on ground maps are always 500px wide - despite this being set via a `maxWidth` property, Leaflet does not size down the popups when they contain content smaller than this width when this property is changed from default
 - [FT] Update/New badges can be cutoff from the menu if the craft name is just long enough to not wrap and leave little room at the end of the line to show the badge
-- [FT] notification badges are too large in the menu and overlap. Smaller sizes are being looked into
+- [FT] Notification badges are too large in the menu and overlap. Smaller sizes are being looked into
+- [FT] Hiding a video during archive playback makes it come back when the back seek arrow is used
 - [FT] *Chrome Only* scheduled events tooltip does not show up when the list item is hovered over
 - [FT] *Chrome Only* launch video replays do not always load fully
 
@@ -62,6 +63,7 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT/CR] [push notifications](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)?
 * [FT] KSC map needs to be schedulable for updates, currently is hard-coded
 * [FT] Allow for camera switches prior to launch
+* [FT] Allow live launches to also hide the video
 
 ### Change Log
 
