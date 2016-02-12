@@ -61,6 +61,7 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] Bring back ability for reminder notification to persist across FT pages for non-cookie users
 * [FT/CR] [push notifications](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)?
 * [FT] KSC map needs to be schedulable for updates, currently is hard-coded
+* [FT] Allow for camera switches prior to launch
 
 ### Change Log
 
