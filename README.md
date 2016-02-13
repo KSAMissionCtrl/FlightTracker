@@ -64,6 +64,7 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] KSC map needs to be schedulable for updates, currently is hard-coded
 * [FT] Allow for camera switches prior to launch
 * [FT] Allow live launches to also hide the video
+* [FT] `loc` URL variable shows a pin on the map w/caption, `center` focuses on a certain spot
 
 ### Change Log
 
