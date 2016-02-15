@@ -67,6 +67,7 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] `loc` URL variable shows a pin on the map w/caption, `center` focuses on a certain spot
 * [FT] Cookie override for FPS setting when URL variable is modified by user
 * [FT] Craft 2D image can have multiple angles to allow users to rotate the craft to view different sides
+* [FT] see if for Kerbin "satellite" layer can be changed to "aerial"
 
 ### Change Log
 
