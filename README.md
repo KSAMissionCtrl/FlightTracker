@@ -56,7 +56,6 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] Ground tracking for rovers. Resolution of movement dependent on whether max zoom level can be increased
 * [FT] 2-3 additional zoom levels for dynamic map
 * [FT] note the number of crew aboard and use that to calculate in real-time the remaining duration for any included life support resources (need to decide what life support system to use first - USI or TAC)
-* [FT] Show orbital craft under acceleration. Extend the Flightplan recordset with additional field to hold delimited telemetry data collected via kOS during thrust. Craft position will be calculated and updated via this data at most once per second for a single orbit (or max delta time). Final orbit will be shown as a dotted orange line. Maneuver node marker will be placed where the thrust begins, not the node time first given by KSPTOT, and removed when thrust starts. Orbital data in the info box will be updated based on calculations based on current telemetry. Craft image will show thruster/engine activation (new DB field `CraftImgBurn`). Craft info popup will add decreasing Total Dv value and burn time remaining. Fuel resource icon data will update as well, including resource tooltip. Need way to detect craft is in a thrust state on page load to jump to proper telemetry point since there is no defined state for maneuver (begins as it is reached without reloading the page and jumping to a new record). Telemetry display update (info box text) will be delayed based on the current signal delay calculated for the craft (have popup state waiting for telemetry data), however the map will continue to show how the craft is supposed to be moving in real-time. Telem data update will be linear interpolation between 1s telemetry data states just like launch/ascent telemetry. Normal page update after execution when new orbital data period is reached.
 * [FT] use [Rrose](http://erictheise.github.io/rrose/) to show hover popup along orbit lines that displays orbit #, time and date, then clicking brings up the full details (replaces label)
 * [FT/CR] back-end interface that allows creation/modification of records through the website when detecting the missionctrl cookie for updating craft and crew databases
 * [FT] change the filters to check boxes to allow more than one to be selected at a time - default is they are all checked on page load - perhaps tag the craft type when building the menu and then use jQuery to hide the elements associated with the check boxes types. Save active filters as cookie, keep URL string for non-cookie users (add warning icon for non-cookie users)
@@ -71,6 +70,7 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] see if for Kerbin "satellite" layer can be changed to "aerial"
 * [CR] extended information in the tooltips on the Full Roster page
 * [CR] twitter timelines for kerbals
+* [FT] Add information to the static orbit real-time display for maneuvers and SOI escapes, allow it to display maneuver telemetry
 
 ### Change Log
 
