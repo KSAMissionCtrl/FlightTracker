@@ -69,8 +69,10 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] Craft 2D image can have multiple angles to allow users to rotate the craft to view different sides
 * [FT] see if for Kerbin "satellite" layer can be changed to "aerial"
 * [CR] extended information in the tooltips on the Full Roster page
-* [CR] twitter timelines for kerbals
+* [CR] twitter timelines for kerbals (extend crew recordset in catalog DB)
 * [FT] Add information to the static orbit real-time display for maneuvers and SOI escapes, allow it to display maneuver telemetry
+* [FT] Craft image can be image map
+* [FT] option for non-satellite availablity for surface maps so places like Eve and Tekto can't have them due to perpetual cloud cover
 
 ### Change Log
 
