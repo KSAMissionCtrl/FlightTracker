@@ -56,7 +56,6 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] Ground tracking for rovers. Resolution of movement dependent on whether max zoom level can be increased
 * [FT] 2-3 additional zoom levels for dynamic map
 * [FT] note the number of crew aboard and use that to calculate in real-time the remaining duration for any included life support resources (need to decide what life support system to use first - USI or TAC)
-* [FT] use [Rrose](http://erictheise.github.io/rrose/) to show hover popup along orbit lines that displays orbit #, time and date, then clicking brings up the full details (replaces label)
 * [FT/CR] back-end interface that allows creation/modification of records through the website when detecting the missionctrl cookie for updating craft and crew databases
 * [FT] change the filters to check boxes to allow more than one to be selected at a time - default is they are all checked on page load - perhaps tag the craft type when building the menu and then use jQuery to hide the elements associated with the check boxes types. Save active filters as cookie, keep URL string for non-cookie users (add warning icon for non-cookie users)
 * [FT] Bring back ability for reminder notification to persist across FT pages for non-cookie users
