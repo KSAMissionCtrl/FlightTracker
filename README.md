@@ -60,9 +60,6 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] note the number of crew aboard and use that to calculate in real-time the remaining duration for any included life support resources (need to decide what life support system to use first - USI or TAC)
 * [FT/CR] back-end interface that allows creation/modification of records through the website when detecting the missionctrl cookie for updating craft and crew databases
 * [FT/CR] [push notifications](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)?
-* [FT] Allow for camera switches prior to launch
-* [FT] Allow live launches to also hide the video
-* [FT] Cookie override for FPS setting when URL variable is modified by user
 * [FT] Craft 2D image can have multiple angles to allow users to rotate the craft to view different sides
 * [CR] extended information in the tooltips on the Full Roster page
 * [CR] twitter timelines for kerbals (extend crew recordset in catalog DB)
