@@ -59,7 +59,6 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] 2-3 additional zoom levels for dynamic map
 * [FT] note the number of crew aboard and use that to calculate in real-time the remaining duration for any included life support resources (need to decide what life support system to use first - USI or TAC)
 * [FT/CR] back-end interface that allows creation/modification of records through the website when detecting the missionctrl cookie for updating craft and crew databases
-* [FT] Bring back ability for reminder notification to persist across FT pages for non-cookie users
 * [FT/CR] [push notifications](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)?
 * [FT] KSC map needs to be schedulable for updates, currently is hard-coded
 * [FT] Allow for camera switches prior to launch
