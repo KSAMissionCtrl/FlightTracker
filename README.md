@@ -25,6 +25,7 @@ The following JavaScript libraries are used:
 * [Codebird](https://github.com/jublonet/codebird-js)
 * [Spin.js](http://fgnass.github.io/spin.js/)
 * [iOSBadge.js](http://kristerkari.github.io/iOSBadge/)
+* [Rrose](http://erictheise.github.io/rrose/)
 
 Blank template MDB Access files are included for both crafts and rosters, as well as filled-in example databases.
 
