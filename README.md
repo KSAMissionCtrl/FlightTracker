@@ -63,8 +63,6 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] note the number of crew aboard and use that to calculate in real-time the remaining duration for any included life support resources (need to decide what life support system to use first - USI or TAC)
 * [FT/CR] back-end interface that allows creation/modification of records through the website when detecting the missionctrl cookie for updating craft and crew databases
 * [FT/CR] [push notifications](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)?
-* [CR] extended information in the tooltips on the Full Roster page
-* [CR] twitter timelines for kerbals (extend crew recordset in catalog DB)
 * [FT] Add information to the static orbit real-time display for maneuvers and SOI escapes, allow it to display maneuver telemetry
 * [FT] Pull craft part information from a DB catalog similar to how body.asp pulls information with its body/craft tooltips
 
