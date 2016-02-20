@@ -47,7 +47,7 @@ Basically you need to install the folders to your server and feed them a databas
 - [FT] Hiding a video during archive playback makes it come back when the back seek arrow is used
 - [FT] Leaflet popups will overlap and are not smart enough to position themselves to stay off other popups
 - [CR] Going to an astronaut page from the full roster doesn't save filter settings
-- [FT] Hovering over a craft part description tooltip will cause site to think you're no longer hovering over the craft image and elements will fade out until tooltip disappears, possibly removing original caption title as well
+- [FT] Hovering over a craft part description tooltip will cause site to think you're no longer hovering over the craft image and elements will fade out until tooltip disappears, possibly removing original caption title as well ([tipped issue](http://forum.nickstakenburg.com/index.php?p=/discussions))
 - [FT] *Chrome Only* scheduled events tooltip does not show up when the list item is hovered over
 - [FT] *Chrome Only* launch video replays do not always load fully
 
