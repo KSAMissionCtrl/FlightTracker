@@ -47,6 +47,7 @@ Basically you need to install the folders to your server and feed them a databas
 - [FT] Hiding a video during archive playback makes it come back when the back seek arrow is used
 - [FT] Leaflet popups will overlap and are not smart enough to position themselves to stay off other popups
 - [CR] Going to an astronaut page from the full roster doesn't save filter settings
+- [FT] Hovering over a craft part description tooltip will cause site to think you're no longer hovering over the craft image and elements will fade out until tooltip disappears, possibly removing original caption title as well
 - [FT] *Chrome Only* scheduled events tooltip does not show up when the list item is hovered over
 - [FT] *Chrome Only* launch video replays do not always load fully
 
@@ -63,6 +64,7 @@ Basically you need to install the folders to your server and feed them a databas
 * [CR] extended information in the tooltips on the Full Roster page
 * [CR] twitter timelines for kerbals (extend crew recordset in catalog DB)
 * [FT] Add information to the static orbit real-time display for maneuvers and SOI escapes, allow it to display maneuver telemetry
+* [FT] Pull craft part information from a DB catalog similar to how body.asp pulls information with its body/craft tooltips
 
 ### Change Log
 
