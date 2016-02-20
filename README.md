@@ -64,7 +64,6 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT/CR] back-end interface that allows creation/modification of records through the website when detecting the missionctrl cookie for updating craft and crew databases
 * [FT/CR] [push notifications](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)?
 * [FT] Add information to the static orbit real-time display for maneuvers and SOI escapes, allow it to display maneuver telemetry
-* [FT] Pull craft part information from a DB catalog similar to how body.asp pulls information with its body/craft tooltips
 
 ### Change Log
 
