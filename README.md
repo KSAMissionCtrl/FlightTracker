@@ -44,11 +44,8 @@ Basically you need to install the folders to your server and feed them a databas
 - [FT] Craft popups on ground maps are always 500px wide - despite this being set via a `maxWidth` property, Leaflet does not size down the popups when they contain content smaller than this width when this property is changed from default
 - [FT] Update/New badges can be cutoff from the menu if the craft name is just long enough to not wrap and leave little room at the end of the line to show the badge
 - [FT] Notification badges are too large in the menu and overlap. Smaller sizes are being looked into
-- [FT] Hiding a video during archive playback makes it come back when the back seek arrow is used
 - [FT] Leaflet popups will overlap and are not smart enough to position themselves to stay off other popups
 - [CR] Going to an astronaut page from the full roster doesn't save filter settings
-- [FT] Hovering over a craft part description tooltip will cause site to think you're no longer hovering over the craft image and elements will fade out until tooltip disappears, possibly removing original caption title as well ([tipped issue](http://forum.nickstakenburg.com/index.php?p=/discussions))
-- [FT] Part descriptions overlay gets in the way of clicking to show more details from the bottom caption
 - [FT] *Chrome Only* scheduled events tooltip does not show up when the list item is hovered over
 - [FT] *Chrome Only* launch video replays do not always load fully
 - [FT] *Chrome Only* hotspots don't show tooltips on body overviews and craft image maps
@@ -63,7 +60,6 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] note the number of crew aboard and use that to calculate in real-time the remaining duration for any included life support resources (need to decide what life support system to use first - USI or TAC)
 * [FT/CR] back-end interface that allows creation/modification of records through the website when detecting the missionctrl cookie for updating craft and crew databases
 * [FT/CR] [push notifications](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)?
-* [FT] Add information to the static orbit real-time display for maneuvers and SOI escapes, allow it to display maneuver telemetry
 
 ### Change Log
 
