@@ -60,6 +60,9 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] note the number of crew aboard and use that to calculate in real-time the remaining duration for any included life support resources (need to decide what life support system to use first - USI or TAC)
 * [FT/CR] back-end interface that allows creation/modification of records through the website when detecting the missionctrl cookie for updating craft and crew databases
 * [FT/CR] [push notifications](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)?
+* [FT] Allow maneuver node and second orbit plot to be drawn together
+* [FT] Maneuver with SOI escape shown
+* [FT] Surface map plots showing maneuver nodes and SOI transits
 
 ### Change Log
 
