@@ -42,7 +42,7 @@ Basically you need to install the folders to your server and feed them a databas
 - [FT] When left in the background for a while, the countdown timers for maneuver nodes both in the events box and the map pop-up fall way behind and don't ever catch up once focus is returned to the window, necessitating a refresh
 - [FT] A slight gap is visible between orbital paths on the dynamic map where switching to the next orbit color
 - [FT] Craft popups on ground maps are always 500px wide - despite this being set via a `maxWidth` property, Leaflet does not size down the popups when they contain content smaller than this width when this property is changed from default
-- [FT] Update/New badges can be cutoff from the menu if the craft name is just long enough to not wrap and leave little room at the end of the line to show the badge
+- [FT] Update/New badges can be cutoff from the menu if the craft name is just long enough to not wrap and leave little room at the end of the line to show the badge (use jQuery to add nbsp; when badge is shown?)
 - [FT] Notification badges are too large in the menu and overlap. Smaller sizes are being looked into
 - [FT] Leaflet popups will overlap and are not smart enough to position themselves to stay off other popups
 - [FT] *Chrome Only* scheduled events tooltip does not show up when the list item is hovered over
