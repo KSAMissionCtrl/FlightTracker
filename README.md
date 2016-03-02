@@ -60,6 +60,7 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT/CR] back-end interface that allows creation/modification of records through the website when detecting the missionctrl cookie for updating craft and crew databases
 * [FT/CR] [push notifications](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)?
 * [FT] SCANsat support - satellites equipped with scanners will reveal satellite, terrain, slope and biome layers for surface maps. Since no one will be watching this happen in real-time throughout the whole process, the state of the map needs to be shown from whatever time the user visits, so this whole process needs to be pre-calculated so it can be played back from any point. Current idea is to run the orbital plotting/tracking in the Flight Tracker at accelerated speed to gather up and then store the data. Unsure yet how to hide the map and show only swaths as defined by the satellite's altitude and FOV.
+* [FT] Craft being de-orbited should be accounted for when dynamic data is being shown
 
 ### Change Log
 
