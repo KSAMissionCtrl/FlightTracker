@@ -51,7 +51,7 @@ Basically you need to install the folders to your server and feed them a databas
 
 ### Future Additions
 
-* [FT] Terminators for dynamic maps
+* [FT] Terminators for dynamic maps, showing sun position marker as well. Could be pre-calculated since body motion does not change
 * [FT] New sat/terrain/biome maps for OPM
 * [FT] Updated biome maps for stock planets
 * [FT] Ground tracking for rovers. Resolution of movement dependent on whether max zoom level can be increased
@@ -61,6 +61,7 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT/CR] [push notifications](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)?
 * [FT] SCANsat support - satellites equipped with scanners will reveal satellite, terrain, slope and biome layers for surface maps. Since no one will be watching this happen in real-time throughout the whole process, the state of the map needs to be shown from whatever time the user visits, so this whole process needs to be pre-calculated so it can be played back from any point. Current idea is to run the orbital plotting/tracking in the Flight Tracker at accelerated speed to gather up and then store the data. Unsure yet how to hide the map and show only swaths as defined by the satellite's altitude and FOV.
 * [FT] Craft being de-orbited should be accounted for when dynamic data is being shown
+* [FT] Ability for Surface Map to show the orbital positions/paths of moons
 
 ### Change Log
 
