@@ -60,8 +60,6 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT/CR] back-end interface that allows creation/modification of records through the website when detecting the missionctrl cookie for updating craft and crew databases
 * [FT/CR] [push notifications](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)?
 * [FT] [Animate rover tracks](https://github.com/IvanSanchez/Leaflet.Polyline.SnakeAnim)? (for drawing old drive paths upon page load, not as a means to do "live" pathing)
-* [FT] Ability for Surface Map to show the orbital positions/paths of moons
-* [FT] Handle plotting of craft re-entering the atmosphere. If telem available, update with that otherwise show trajectory up until atmo interface
 
 ### Change Log
 
