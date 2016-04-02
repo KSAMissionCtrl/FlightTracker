@@ -19,10 +19,10 @@ if request.querystring("pass") then	queryString = queryString & "&pass=" & reque
 
 if request.querystring("popout") then
   response.write("<body onload=""centeredPopup(")
-  response.write("'http://www.kerbalspace.agency/Flights/craft.asp?popout=true&db=" & querystring & "','myWindow','1160','890','no')")
+  response.write("'http://www.kerbalspace.agency/Tracker/craft.asp?popout=true&db=" & querystring & "','myWindow','1160','890','no')")
   response.write(""">")
 else
-  response.redirect "http://www.kerbalspace.agency/Flights/craft.asp?popout=false&db=" & querystring
+  response.redirect "http://www.kerbalspace.agency/Tracker/craft.asp?popout=false&db=" & querystring
 end if 
 %>
 <center>
@@ -31,7 +31,7 @@ end if
   <td>
     <center><h2>Mobile User?</h2></center>
     <p>If the flight tracker did not load, then you are likely on a mobile device that could not load the pop-up window. If this is the case, you can still access the flight tracker as a regular page.</p>
-    <p><center><%response.write("<a href='http://www.kerbalspace.agency/Flights/craft.asp?popout=true&r=true&db=" & request.querystring("db") & "'>")%><b>Click/Tap Here</b></a></center></p>
+    <p><center><%response.write("<a href='http://www.kerbalspace.agency/Tracker/craft.asp?popout=true&r=true&db=" & request.querystring("db") & "'>")%><b>Click/Tap Here</b></a></center></p>
     </td>
   </tr>
 </table>

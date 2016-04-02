@@ -1,10 +1,10 @@
-/* http://meyerweb.com/eric/tools/css/reset/ 
-   v2.0 | 20110126
-   License: none (public domain)
-*/
+/* Leaflet label text adjustment - centered by default */
+.labeltext { text-align: left; }
+
+/* some custom Flight Tracker styling */
 th,td
 {
-font-family:arial;color:black;font-size:14px;
+font-family:arial;color:black;font-size:12px;
 padding:3px;
 }
 h3
@@ -25,6 +25,17 @@ border-bottom: 1px dotted #000;
 text-decoration: none;
 }
 
+/* for non href image map links */
+area:hover {
+ cursor:pointer;
+}
+
+/* http://meyerweb.com/eric/tools/css/reset/ 
+   v2.0 | 20110126
+   License: none (public domain)
+   
+   http://www.hongkiat.com/blog/css3-image-captions/
+*/
 caption {
 	/*coordinated marking to match cell's padding*/
 	margin-bottom:.5em;
@@ -36,6 +47,11 @@ p,fieldset {
 	margin-bottom:1em;
 }
 
+#link {
+	text-decoration: none;
+	color: #000000;
+}
+
 #mainwrapper {
 	font: 10pt normal Arial, sans-serif;
 	height: auto;
@@ -45,11 +61,10 @@ p,fieldset {
 
 /* Image Box Style */
 #mainwrapper .box {
-	cursor: pointer;
-	height: 380px;
+	height: 551px;
 	position: relative;
 	overflow: hidden;
-	width: 525px;
+	width: 360px;
 }
 #mainwrapper .box img {
 	position: absolute;
@@ -76,10 +91,10 @@ p,fieldset {
 
 /** Caption 1: Simple **/
 #mainwrapper .box .simple-caption {
-	height: 400px;
-	width: 520px;
+	height: 573px;
+	width: 360px;
 	display: block;
-	bottom: -382px;
+	bottom: -555px;
 	text-align: left;
 	color:white;
 	padding: 5px 5px 5px 5px;
@@ -123,13 +138,17 @@ p,fieldset {
     left:81px;
 }
 
-/* CSS Tree menu styles */
+/* CSS Tree menu styles 
+http://www.thecssninja.com/css/css-tree-menu
+modified for Flight Tracker use
+*/
 ol.tree
 {
-	padding: 0 0 0 30px;
-	width: 245px;
+	padding: 1px 0 2px 20px;
+	width: 278px;
 	border-style: double;
-	border-width: 5px;
+	border-width: 1px;
+	font-size:14px;
 }
 	li 
 	{ 
@@ -247,8 +266,77 @@ ol.tree
 		li input + ol > li { display: none; margin-left: -14px !important; padding-left: 1px; }
 	li label
 	{
+		background: url(folder-horizontal.png) 15px 1px no-repeat;
+		display: block;
+		padding-left: 37px;
+	}
+	
+	li labelbody
+	{
 		background: url(button_bodies.png) 15px 1px no-repeat;
-		cursor: pointer;
+		display: block;
+		padding-left: 37px;
+	}
+	
+	li labelDebris
+	{
+		background: url(button_vessel_debris.png) 15px 1px no-repeat;
+		display: block;
+		padding-left: 37px;
+	}
+
+	li labelAsteroid
+	{
+		background: url(button_vessel_asteroid.png) 15px 1px no-repeat;
+		display: block;
+		padding-left: 37px;
+	}
+
+	li labelBase
+	{
+		background: url(button_vessel_base.png) 15px 1px no-repeat;
+		display: block;
+		padding-left: 37px;
+	}
+
+	li labelLander
+	{
+		background: url(button_vessel_lander.png) 15px 1px no-repeat;
+		display: block;
+		padding-left: 37px;
+	}
+
+	li labelProbe
+	{
+		background: url(button_vessel_probe.png) 15px 1px no-repeat;
+		display: block;
+		padding-left: 37px;
+	}
+
+	li labelRover
+	{
+		background: url(button_vessel_rover.png) 15px 1px no-repeat;
+		display: block;
+		padding-left: 37px;
+	}
+
+	li labelShip
+	{
+		background: url(button_vessel_ship.png) 15px 1px no-repeat;
+		display: block;
+		padding-left: 37px;
+	}
+
+	li labelStation
+	{
+		background: url(button_vessel_station.png) 15px 1px no-repeat;
+		display: block;
+		padding-left: 37px;
+	}
+
+	li labelRoster
+	{
+		background: url(button_vessel_eva.png) 15px 1px no-repeat;
 		display: block;
 		padding-left: 37px;
 	}

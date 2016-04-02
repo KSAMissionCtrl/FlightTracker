@@ -4,7 +4,7 @@
 /* some custom Flight Tracker styling */
 th,td
 {
-font-family:arial;color:black;font-size:12px;
+font-family:arial;font-size:12px;
 padding:3px;
 }
 h3
@@ -25,6 +25,16 @@ border-bottom: 1px dotted #000;
 text-decoration: none;
 }
 
+#link {
+  text-decoration: none;
+  color: #000000;
+}
+
+/* for non href image map links */
+area:hover {
+ cursor:pointer;
+}
+
 /* http://meyerweb.com/eric/tools/css/reset/ 
    v2.0 | 20110126
    License: none (public domain)
@@ -42,10 +52,9 @@ p,fieldset {
 	margin-bottom:1em;
 }
 
-#link {
-	text-decoration: none;
-	color: #000000;
-}
+a.desclink:visited { color: white }
+a.desclink:link { color: white }
+a.desclink:hover { color: white }
 
 #mainwrapper {
 	font: 10pt normal Arial, sans-serif;
@@ -56,11 +65,10 @@ p,fieldset {
 
 /* Image Box Style */
 #mainwrapper .box {
-	cursor: pointer;
-	height: 380px;
+	height: 375px;
 	position: relative;
 	overflow: hidden;
-	width: 525px;
+	width: 520px;
 }
 #mainwrapper .box img {
 	position: absolute;
@@ -76,7 +84,7 @@ p,fieldset {
 #mainwrapper .box .caption {
 	background-color: rgba(0,0,0,0.8);
 	position: absolute;
-	z-index: 100;
+	z-index: 200;
 		-webkit-transition: all 300ms ease-out;
 		-moz-transition: all 300ms ease-out;
 		-o-transition: all 300ms ease-out;
@@ -94,9 +102,10 @@ p,fieldset {
 	text-align: left;
 	color:white;
 	padding: 5px 5px 5px 5px;
+	z-index: 200;
 }
 
-/** Simple Caption :hover Behaviour **/
+/** Simple Caption :hover Behaviour 
 #mainwrapper .box:hover .simple-caption {
 	-moz-transform: translateY(-93%);
 	-o-transform: translateY(-93%);
@@ -110,7 +119,7 @@ p,fieldset {
 	-o-transform: translateX(200px);
 	-webkit-transform: translateX(200px);
 	transform: translateX(200px);
-}
+}**/
 
 #container
 {
@@ -319,6 +328,13 @@ ol.tree
 	li labelStation
 	{
 		background: url(button_vessel_station.png) 15px 1px no-repeat;
+		display: block;
+		padding-left: 37px;
+	}
+
+	li labelRoster
+	{
+		background: url(button_vessel_eva.png) 15px 1px no-repeat;
 		display: block;
 		padding-left: 37px;
 	}
