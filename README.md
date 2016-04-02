@@ -45,6 +45,7 @@ Basically you need to install the folders to your server and feed them a databas
 - [FT] Update/New badges can be cutoff from the menu if the craft name is just long enough to not wrap and leave little room at the end of the line to show the badge (use jQuery to add nbsp; when badge is shown?)
 - [FT] Notification badges are too large in the menu and overlap. Smaller sizes are being looked into
 - [FT] Leaflet popups will overlap and are not smart enough to position themselves to stay off other popups
+- [FT] Engine/Thruster overlay during a maneuver only has a single image and can't account for rotation
 - [FT] *Chrome Only* scheduled events tooltip does not show up when the list item is hovered over
 - [FT] *Chrome Only* launch video replays do not always load fully
 - [FT] *Chrome Only* hotspots don't show tooltips on body overviews and craft image maps
@@ -55,12 +56,83 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] Updated biome maps for stock planets
 * [FT] Ground tracking for rovers. Resolution of movement dependent on whether max zoom level can be increased
 * [FT] 2-3 additional zoom levels for dynamic map
+* [FT] Allow surface maps for gas giants just for the sake of vessel/moon plotting
 * [FT] note the number of crew aboard and use that to calculate in real-time the remaining duration for any included life support resources (need to decide what life support system to use first - USI or TAC)
 * [FT/CR] back-end interface that allows creation/modification of records through the website when detecting the missionctrl cookie for updating craft and crew databases
 * [FT/CR] [push notifications](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)?
 * [FT] [Animate rover tracks](https://github.com/IvanSanchez/Leaflet.Polyline.SnakeAnim)? (for drawing old drive paths upon page load, not as a means to do "live" pathing)
+* [FT] Be able to tell if a trajectory intercepting the atmosphere is an aerobrake or re-entry
+* [FT] Detect trajectories that hit the surface on airless bodies and show a landing mark
 
 ### Change Log
+
+**v4.0.0** (4/2/16)
+
+Fixes:
+  - [FT/CR] Pages now have their `<!DOCTYPE html>` defined at the very top
+  - [FT] Dynamic map no longer skips over opening up the vessel popup on load when calculation is done in a single batch
+  - [FT] Chrome support for launch videos is now much better
+  - [FT] Resource mass value is now formatted correctly
+  - [FT] A few things that were supposed to be implemented in both `craft.asp` and `body.asp` actually weren't
+  - [FT] When checking if it's possible to see a future maneuver node, check is now done based on the length of the rendered orbit instead of always against the maximum-allowed length
+  
+Changes:
+  - [FT/CR] Can now load an empty directory URL or handle not being passed a `db` value
+  - [FT/CR] Backwards-compatibility with v3.0 and earlier databases has been removed
+  - [FT/CR] JS libraries consolidated into a single folder to be shared
+  - [FT/CR] Many properties are now read in as delimited text strings rather than pairs of recordset fields
+  - [FT/CR] Menus now always link between the two
+  - [CR] Roster can be viewed as individual entries or a complete listing of all entries
+  - [CR] Individual entries can now be viewed with their own twitter timeline
+  - [FT] Static orbit real-time display now also shows data for events (maneuvers, SOI exit, etc)
+  - [FT] video can be hidden/shown during archival playback
+  - [FT] Launch video can allow camera changes to happen prior to launch
+  - [FT] Image showing KSC flags can now be scheduled to update
+  - [FT] Crew display now includes the date they boarded and the MET aboard
+  - [FT] Orbital Period display now includes the number of orbits to date around the current body (or the number of orbits total around a previous body)
+  - [FT] Resource icons are now restricted to a single line and scroll left/right when more than 5 need to be shown
+  - [FT] Extended vessel description text no longer opens when hovering over the vessel image until the header is clicked
+  - [FT] Both solar array output and signal delay are now calculated based on the vessel's current distance from Kerbol and KSC, respectively
+  - [FT] Event reminders now use alert dialogs to steal focus or flash the tab
+  - [FT] dbCrafts is now dbCatalog and is used for storing a wider range of reference data
+  - [FT] Map close button is now an image above the Surface Map to make room for the layers control
+  - [FT] Flight Tracker directory is now /Tracker instead of /Flights
+  - [FT] Launch video no longer re-syncs every second prior to launch and instead re-syncs everytime the camera view is changed, when no one would notice if there occurs a jump in video
+  - [FT] Longer launch videos have to end 3s early to avoid the Freemake converter watermark
+  - [FT] All units are spaced: 100 km instead of 100km
+  - [FT] Static orbit display is now shown with a map button, orbit lines can now be clicked on to show the state of the vessel at that point. When hovered over, a popup shows the time the vessel will be at that point as well as the orbit number
+  - [FT] When a vessel is requested that can't be found, the user is redirected to the archive site to try and find it there
+  - [FT] Prev/Next seek controls for archival launch telemetry playback are spaced further away from the Play/Pause link to try and ease mobile usage
+  - [FT] Map now hides any and all controls/buttons when the mouse is no longer over it
+  - [FT] Map can allow more than one popup to be visible at once
+  - [FT] Events show the UTC time and date in addition to the countdown
+  - [FT] Dynamic map size increased, vessel image size decreased
+  
+Additions:
+  - [FT/CR] Tag icon next to body/kerbal/vessel name allows user to quickly fetch any images and website postings related to it
+  - [FT/CR] Wiki has been populated with user and developer documentation
+  - [FT/CR] Cookies are now supported to allow for numerous usability features, including saving optimal launch telemetry FPS
+  - [FT/CR] With cookies enabled, the user can see each time they visit what vessel/kerbal has been added or updated with new information
+  - [CR] For kerbals assigned a mission, you can see how long until the mission launches or how long the mission has been running
+  - [CR] A kerbal's activation date includes a tooltip with their number of service years
+  - [CR] Portraits have roll-up text on hover that includes additional background information
+  - [CR] Individual roster pages can be opened in a popout window
+  - [CR] Menu for browsing directly between profiles, with filters for sorting
+  - [CR] When viewing the full roster, tooltips provide quick details on each kerbal
+  - [FT] Large dynamic surface map shows flags, points of interest, anomalies, labels and orbital plots for any vessels and moons in orbit, as well as various base layers (biome, terrain, etc)
+  - [FT] Terminator display on both the Surface Map and vessel dynamic map shows the position of the sun and the terminator lines
+  - [FT] Vessel dynamic map shows where and when a trajectory will intercept the atmosphere
+  - [FT] Hyperbolic orbits can now be plotted and show when the SOI transition takes place. SOI transits also show for non-hyperbolic orbits that still escape the current SOI
+  - [FT] Vessel images can now be image maps that allow individual parts to be identified and tooltips shown on hover containing details
+  - [FT] Vessel images can now be rotated 90 degrees in both directions
+  - [FT] Vessel dynamic map and orbital data can show changes in trajectory in real-time during maneuvers
+  - [FT] Docking port data can now be shown for vessels that are docked, including which ports are open/occupied
+  - [FT] If one vessel is related to another (Delivery Vehicle <-> Lander) this relationship can be shown
+  - [FT] A second orbit can be rendered on the dynamic map to show two vessels approaching for a rendezvous
+  - [FT] All maneuver nodes now show the planned orbital trajectory, and that planned trajectory also shows if the craft will exit the SOI or enter the atmosphere
+  - [FT] Body diagrams showing the orbits of planets/moons/vessels now have rich tooltips for all of them providing details at a glance
+  - [FT] Can retrive the current UT as calculated by the Flight Tracker by passing `showut=true` to `craft.asp` - output to debug window
+  - [FT] Maps DB added to contain all the data needed to display things on the Surface Map
 
 **v3.0** (11/17/15)
 
