@@ -51,7 +51,6 @@ Basically you need to install the folders to your server and feed them a databas
 
 ### Future Additions
 
-* [FT] Terminators for dynamic maps, showing sun position marker as well. Could be pre-calculated since body motion does not change
 * [FT] New sat/terrain/biome maps for OPM
 * [FT] Updated biome maps for stock planets
 * [FT] Ground tracking for rovers. Resolution of movement dependent on whether max zoom level can be increased
