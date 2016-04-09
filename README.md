@@ -64,7 +64,7 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] Be able to tell if a trajectory intercepting the atmosphere is an aerobrake or re-entry
 * [FT] Detect trajectories that hit the surface on airless bodies and show a landing mark
 * [FT] Scheduled events tooltip shows an alert dialog when clicked on in Chrome containing future event details
-* [FT] Change use of <area> tag to <div> to enable use of tooltips over planets and bodies in Chrome
+* [FT] Change use of `area` tag to `div` to enable use of tooltips over planets and bodies in Chrome
 * [FT] Fix issues with Sketchfab model support (button display for new hoverbox behavior, start/stop on show/hide)
 * [FT] Multiple thruster/engine images to account for image of current craft rotation position
 * [FT] Hued ascent lines w/ marker points to show staging/events during launch ([Leaflet.Hotline](https://github.com/iosphere/Leaflet.hotline))
