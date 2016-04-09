@@ -67,6 +67,11 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] Change use of <area> tag to <div> to enable use of tooltips over planets and bodies in Chrome
 * [FT] Fix issues with Sketchfab model support (button display for new hoverbox behavior, start/stop on show/hide)
 * [FT] Multiple thruster/engine images to account for image of current craft rotation position
+* [FT] Hued ascent lines w/ marker points to show staging/events during launch ([Leaflet.Hotline](https://github.com/iosphere/Leaflet.hotline))
+* [FT] Proper terminator display taking orbital inclination into account ([Leaflet.Curve](https://github.com/elfalem/Leaflet.curve))
+* [FT] Allow elevation and biome data to show in lower-left control when those terrain layers are enabled
+* [FT] Add fullscreen control to Surface Map ([Leaflet.Fullscreen](https://github.com/brunob/leaflet.fullscreen))
+* [FT] Add groups for Surface Map layers control ([Leaflet.GroupedLayerControl](https://github.com/ismyrnow/Leaflet.groupedlayercontrol))
 
 ### Change Log
 
