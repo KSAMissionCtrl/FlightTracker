@@ -50,7 +50,7 @@ Basically you need to install the folders to your server and feed them a databas
 - [FT] *Chrome Only* launch video replays do not always load fully
 - [FT] *Chrome Only* hotspots don't show tooltips on body overviews and craft image maps
 
-### Future Additions
+### Future Fixes/Changes/Additions
 
 * [FT] New sat/terrain/biome maps for OPM
 * [FT] Updated biome maps for stock planets
@@ -63,6 +63,10 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] [Animate rover tracks](https://github.com/IvanSanchez/Leaflet.Polyline.SnakeAnim)? (for drawing old drive paths upon page load, not as a means to do "live" pathing)
 * [FT] Be able to tell if a trajectory intercepting the atmosphere is an aerobrake or re-entry
 * [FT] Detect trajectories that hit the surface on airless bodies and show a landing mark
+* [FT] Scheduled events tooltip shows an alert dialog when clicked on in Chrome containing future event details
+* [FT] Change use of <area> tag to <div> to enable use of tooltips over planets and bodies in Chrome
+* [FT] Fix issues with Sketchfab model support (button display for new hoverbox behavior, start/stop on show/hide)
+* [FT] Multiple thruster/engine images to account for image of current craft rotation position
 
 ### Change Log
 
