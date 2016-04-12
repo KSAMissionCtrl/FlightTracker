@@ -1063,7 +1063,6 @@ if len(fpsCookie) = 0 then fpsCookie = 30
 
     // once we've calculated all the orbital stuff needed, we can draw the map
     var craft;
-    var ascentTracks = [];
     var cardinal;
     var nodeMark;
     var SOIMark;
@@ -1805,10 +1804,12 @@ if len(fpsCookie) = 0 then fpsCookie = 30
     var ascentDelta = 0;
     var surveyURL;
     var lastCam;
+    var ascentTracks = [];
+    var ascentMarks = [];
     var ascentColors = ['#00FF00', '#FF0000', '#FFFF00', '#00FFFF', '#FF00FF', '#0000FF', '#800080', '#ffa500'];
     var ascentColorsIndex = -1;
-    var strLastAscentEvent = '';
     var ascentPopup = null;
+    var noMarkBox = L.latLngBounds(L.latLng(0.1978, -74.8389), L.latLng(-0.3516, -74.2896));
     function ascentUpdater(delta, bForceUpdate) {
 
       // update the the mission timer caption
@@ -1842,15 +1843,14 @@ if len(fpsCookie) = 0 then fpsCookie = 30
         dstTraveled = ascentData[delta].DstTraveled.clamp;
         aoa = ascentData[delta].AoA.clamp;
 
-        // event status change after lift off? Then update our line color and start a new line
+        // phase status update after lift off? Then update our line color and start a new line
         // don't do this if paused, the seek buttons will redraw the whole path
-        if (!bForceUpdate && ascentData[delta].Event != strLastAscentEvent && ascentData[delta].DstTraveled.clamp > 0) {  
-          strLastAscentEvent = ascentData[delta].Event;
+        if (!bForceUpdate && ascentData[delta].Phase && ascentData[delta].DstTraveled.clamp > 0) {  
           ascentColorsIndex++;
           if (ascentColorsIndex == ascentColors.length) { ascentColorsIndex = 0; }
           ascentTracks.push(L.polyline([], {smoothFactor: .25, clickable: true, color: ascentColors[ascentColorsIndex], weight: 2, opacity: 1}).addTo(map));
           ascentTracks[ascentTracks.length-1].spliceLatLngs(0, 0, [ascentData[delta-1].Lat, ascentData[delta-1].Lon]);
-          ascentTracks[ascentTracks.length-1]._myId = strLastAscentEvent;
+          ascentTracks[ascentTracks.length-1]._myId = "<center>" + ascentData[delta].Phase + "</center>";
           ascentTracks[ascentTracks.length-1].on('mouseover mousemove', function(e) {
             ascentPopup = new L.Rrose({ offset: new L.Point(0,-1), closeButton: false, autoPan: false });
             ascentPopup.setLatLng(e.latlng);
@@ -1863,10 +1863,34 @@ if len(fpsCookie) = 0 then fpsCookie = 30
           });
         }
         
+        // if we are out of a bound area around KSC, add event markers to the plot
+        // prior to this there's no point as they would just pile atop each other
+        if (!noMarkBox.contains(craft.getLatLng()) && !bForceUpdate && ascentData[delta].EventMark) {
+          var labelIcon = L.icon({
+            iconUrl: 'label.png',
+            iconSize: [10, 10],
+          });
+          ascentMarks.push(L.marker([ascentData[delta].Lat, ascentData[delta].Lon], {icon: labelIcon}).addTo(map));
+          ascentMarks[ascentMarks.length-1]._myId = ascentData[delta].EventMark + ";" + ascentData[delta].Lat + ";" + ascentData[delta].Lon;
+          ascentMarks[ascentMarks.length-1].on('mouseover mousemove', function(e) {
+          
+            // hack to get around leaflet error of not being able to get Lat/Lng from callback e.latlng
+            data = e.target._myId.split(";")
+            ascentPopup = new L.Rrose({ offset: new L.Point(0,-1), closeButton: false, autoPan: false });
+            ascentPopup.setLatLng([data[1], data[2]]);
+            ascentPopup.setContent(data[0]);
+            ascentPopup.openOn(map);
+          });
+          ascentMarks[ascentMarks.length-1].on('mouseout', function(e) {
+            if (ascentPopup) { map.closePopup(ascentPopup); }
+            ascentPopup = null;
+          });
+        }
+        
         // reposition the craft marker and create/add to the line
         // for some reason, using addLatLng() produced an intractible error, so using spliceLatLngs() instead *shrug*
         craft.setLatLng([ascentData[delta].Lat, ascentData[delta].Lon]);
-        if (!bForceUpdate) { ascentTracks[ascentTracks.length-1].spliceLatLngs(0, 0, craft.getLatLng()); }
+        if (!bForceUpdate && ascentTracks.length) { ascentTracks[ascentTracks.length-1].spliceLatLngs(0, 0, craft.getLatLng()); }
 
         // reposition the map if the craft has moved out of the current view
         if (ascentTracks.length && !map.getBounds().contains(ascentTracks[ascentTracks.length-1].getBounds())) { map.fitBounds(ascentTracks[ascentTracks.length-1].getBounds(), {maxZoom: 5}); }
@@ -2736,10 +2760,12 @@ if len(fpsCookie) = 0 then fpsCookie = 30
           $("#telemData").html("Play Telemetry");
           $("#captionMET").html("Launch in: ");
           for (i=0; i<ascentTracks.length; i++) { map.removeLayer(ascentTracks[i]); }
+          for (i=0; i<ascentMarks.length; i++) { map.removeLayer(ascentMarks[i]); }
           ascentTracks = [];
-          strLastAscentEvent = '';
+          ascentMarks = [];
           ascentColorsIndex = -1;
           ascentUpdater(Math.floor(ascentDelta), true);
+          map.setView(craft.getLatLng(), 5);
           $("#videoStatus").fadeIn();
           $("#videoCameraName").fadeOut();
           $("#ascentStatus").fadeIn();
@@ -2822,17 +2848,17 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             
             // rebuild the map plot if we still have positive ascentDelta, then update data window values
             for (i=0; i<ascentTracks.length; i++) { map.removeLayer(ascentTracks[i]); }
+            for (i=0; i<ascentMarks.length; i++) { map.removeLayer(ascentMarks[i]); }
             ascentTracks = [];
-            strLastAscentEvent = '';
+            ascentMarks = [];
             ascentColorsIndex = -1;
             for (x=0; x<=ascentDelta; x++) {
-              if (ascentData[x].Event != strLastAscentEvent && ascentData[x].DstTraveled.clamp > 0) {  
-                strLastAscentEvent = ascentData[x].Event;
+              if (ascentData[x].Phase && ascentData[x].DstTraveled.clamp > 0) {  
                 ascentColorsIndex++;
                 if (ascentColorsIndex == ascentColors.length) { ascentColorsIndex = 0; }
                 ascentTracks.push(L.polyline([], {smoothFactor: .25, clickable: true, color: ascentColors[ascentColorsIndex], weight: 2, opacity: 1}).addTo(map));
                 ascentTracks[ascentTracks.length-1].spliceLatLngs(0, 0, [ascentData[x-1].Lat, ascentData[x-1].Lon]);
-                ascentTracks[ascentTracks.length-1]._myId = strLastAscentEvent;
+                ascentTracks[ascentTracks.length-1]._myId = "<center>" + ascentData[x].Phase + "</center>";
                 ascentTracks[ascentTracks.length-1].on('mouseover mousemove', function(e) {
                   ascentPopup = new L.Rrose({ offset: new L.Point(0,-1), closeButton: false, autoPan: false });
                   ascentPopup.setLatLng(e.latlng);
@@ -2845,6 +2871,25 @@ if len(fpsCookie) = 0 then fpsCookie = 30
                 });
               }
               if (ascentTracks.length) { ascentTracks[ascentTracks.length-1].spliceLatLngs(0, 0, [ascentData[x].Lat, ascentData[x].Lon]); }
+              if (!noMarkBox.contains([ascentData[x].Lat, ascentData[x].Lon]) && ascentData[x].EventMark) {
+                var labelIcon = L.icon({
+                  iconUrl: 'label.png',
+                  iconSize: [10, 10],
+                });
+                ascentMarks.push(L.marker([ascentData[x].Lat, ascentData[x].Lon], {icon: labelIcon}).addTo(map));
+                ascentMarks[ascentMarks.length-1]._myId = ascentData[x].EventMark + ";" + ascentData[x].Lat + ";" + ascentData[x].Lon;
+                ascentMarks[ascentMarks.length-1].on('mouseover mousemove', function(e) {
+                  data = e.target._myId.split(";")
+                  ascentPopup = new L.Rrose({ offset: new L.Point(0,-1), closeButton: false, autoPan: false });
+                  ascentPopup.setLatLng([data[1], data[2]]);
+                  ascentPopup.setContent(data[0]);
+                  ascentPopup.openOn(map);
+                });
+                ascentMarks[ascentMarks.length-1].on('mouseout', function(e) {
+                  if (ascentPopup) { map.closePopup(ascentPopup); }
+                  ascentPopup = null;
+                });
+              }
             }
             ascentUpdater(Math.floor(ascentDelta), true);
           } else {
@@ -2904,17 +2949,17 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             
             // we should be able to just add to whatever existing plot, but again leaflet is being touchy so just redo the whole thing
             for (i=0; i<ascentTracks.length; i++) { map.removeLayer(ascentTracks[i]); }
+            for (i=0; i<ascentMarks.length; i++) { map.removeLayer(ascentMarks[i]); }
             ascentTracks = [];
-            strLastAscentEvent = '';
+            ascentMarks = [];
             ascentColorsIndex = -1;
             for (x=0; x<=ascentDelta; x++) {
-              if (ascentData[x].Event != strLastAscentEvent && ascentData[x].DstTraveled.clamp > 0) {  
-                strLastAscentEvent = ascentData[x].Event;
+              if (ascentData[x].Phase && ascentData[x].DstTraveled.clamp > 0) {  
                 ascentColorsIndex++;
                 if (ascentColorsIndex == ascentColors.length) { ascentColorsIndex = 0; }
                 ascentTracks.push(L.polyline([], {smoothFactor: .25, clickable: true, color: ascentColors[ascentColorsIndex], weight: 2, opacity: 1}).addTo(map));
                 ascentTracks[ascentTracks.length-1].spliceLatLngs(0, 0, [ascentData[x-1].Lat, ascentData[x-1].Lon]);
-                ascentTracks[ascentTracks.length-1]._myId = strLastAscentEvent;
+                ascentTracks[ascentTracks.length-1]._myId = "<center>" + ascentData[x].Phase + "</center>";
                 ascentTracks[ascentTracks.length-1].on('mouseover mousemove', function(e) {
                   ascentPopup = new L.Rrose({ offset: new L.Point(0,-1), closeButton: false, autoPan: false });
                   ascentPopup.setLatLng(e.latlng);
@@ -2927,6 +2972,25 @@ if len(fpsCookie) = 0 then fpsCookie = 30
                 });
               }
               if (ascentTracks.length) { ascentTracks[ascentTracks.length-1].spliceLatLngs(0, 0, [ascentData[x].Lat, ascentData[x].Lon]); }
+              if (!noMarkBox.contains([ascentData[x].Lat, ascentData[x].Lon]) && ascentData[x].EventMark) {
+                var labelIcon = L.icon({
+                  iconUrl: 'label.png',
+                  iconSize: [10, 10],
+                });
+                ascentMarks.push(L.marker([ascentData[x].Lat, ascentData[x].Lon], {icon: labelIcon}).addTo(map));
+                ascentMarks[ascentMarks.length-1]._myId = ascentData[x].EventMark + ";" + ascentData[x].Lat + ";" + ascentData[x].Lon;
+                ascentMarks[ascentMarks.length-1].on('mouseover mousemove', function(e) {
+                  data = e.target._myId.split(";")
+                  ascentPopup = new L.Rrose({ offset: new L.Point(0,-1), closeButton: false, autoPan: false });
+                  ascentPopup.setLatLng([data[1], data[2]]);
+                  ascentPopup.setContent(data[0]);
+                  ascentPopup.openOn(map);
+                });
+                ascentMarks[ascentMarks.length-1].on('mouseout', function(e) {
+                  if (ascentPopup) { map.closePopup(ascentPopup); }
+                  ascentPopup = null;
+                });
+              }
             }
             ascentUpdater(Math.floor(ascentDelta), true);
             
@@ -2938,13 +3002,12 @@ if len(fpsCookie) = 0 then fpsCookie = 30
               ascentStartTime = 0;
               ascentDelta = launchCountdown - (telemetryUT - getParameterByName('ut'));
               for (x=Math.floor(ascentDelta); x<Math.floor(ascentDelta)+seekTime; x++) {
-                if (ascentData[x].Event != strLastAscentEvent && ascentData[x].DstTraveled.clamp > 0) {  
-                  strLastAscentEvent = ascentData[x].Event;
+                if (ascentData[x].Phase && ascentData[x].DstTraveled.clamp > 0) {  
                   ascentColorsIndex++;
                   if (ascentColorsIndex == ascentColors.length) { ascentColorsIndex = 0; }
                   ascentTracks.push(L.polyline([], {smoothFactor: .25, clickable: true, color: ascentColors[ascentColorsIndex], weight: 2, opacity: 1}).addTo(map));
                   ascentTracks[ascentTracks.length-1].spliceLatLngs(0, 0, [ascentData[x-1].Lat, ascentData[x-1].Lon]);
-                  ascentTracks[ascentTracks.length-1]._myId = strLastAscentEvent;
+                  ascentTracks[ascentTracks.length-1]._myId = "<center>" + ascentData[x].Phase + "</center>";
                   ascentTracks[ascentTracks.length-1].on('mouseover mousemove', function(e) {
                     ascentPopup = new L.Rrose({ offset: new L.Point(0,-1), closeButton: false, autoPan: false });
                     ascentPopup.setLatLng(e.latlng);
@@ -2957,6 +3020,25 @@ if len(fpsCookie) = 0 then fpsCookie = 30
                   });
                 }
                 if (ascentTracks.length) { ascentTracks[ascentTracks.length-1].spliceLatLngs(0, 0, [ascentData[x].Lat, ascentData[x].Lon]); }
+                if (!noMarkBox.contains([ascentData[x].Lat, ascentData[x].Lon]) && ascentData[x].EventMark) {
+                  var labelIcon = L.icon({
+                    iconUrl: 'label.png',
+                    iconSize: [10, 10],
+                  });
+                  ascentMarks.push(L.marker([ascentData[x].Lat, ascentData[x].Lon], {icon: labelIcon}).addTo(map));
+                  ascentMarks[ascentMarks.length-1]._myId = ascentData[x].EventMark + ";" + ascentData[x].Lat + ";" + ascentData[x].Lon;
+                  ascentMarks[ascentMarks.length-1].on('mouseover mousemove', function(e) {
+                    data = e.target._myId.split(";")
+                    ascentPopup = new L.Rrose({ offset: new L.Point(0,-1), closeButton: false, autoPan: false });
+                    ascentPopup.setLatLng([data[1], data[2]]);
+                    ascentPopup.setContent(data[0]);
+                    ascentPopup.openOn(map);
+                  });
+                  ascentMarks[ascentMarks.length-1].on('mouseout', function(e) {
+                    if (ascentPopup) { map.closePopup(ascentPopup); }
+                    ascentPopup = null;
+                  });
+                }
               }
               $("#captionMET").html("MET: ");
               ascentUpdater(Math.floor(ascentDelta), true);
@@ -3429,7 +3511,9 @@ if not rsAscent.bof then
                       ", Video: " & lcase(rsAscent.fields.item("Video")) & _
                       ", Tweet: """ & rsAscent.fields.item("Tweet") & _
                       """, Camera: '" & rsAscent.fields.item("Camera") & _
-                      "', Image: '" & rsAscent.fields.item("Image") & "'});")
+                      "', Image: '" & rsAscent.fields.item("Image") & _
+                      "', Phase: '" & rsAscent.fields.item("Phase") & _
+                      "', EventMark: '" & rsAscent.fields.item("EventMark") & "'});")
      
       'update length of launch video during telemetry
       if rsAscent.fields.item("video") then vidLength = vidLength + 1
@@ -5520,13 +5604,12 @@ rsMoons.movefirst
       ascentDelta = <%response.write dbUT%> - telemetryUT;
       craft = L.marker([ascentData[0].Lat, ascentData[0].Lon], {icon: ship, clickable: false}).addTo(map);
       for (x = 0; x < ascentDelta; x++) {
-        if (ascentData[x].Event != strLastAscentEvent && ascentData[x].DstTraveled.clamp > 0) {  
-          strLastAscentEvent = ascentData[x].Event;
+        if (ascentData[x].Phase && ascentData[x].DstTraveled.clamp > 0) {  
           ascentColorsIndex++;
           if (ascentColorsIndex == ascentColors.length) { ascentColorsIndex = 0; }
           ascentTracks.push(L.polyline([], {smoothFactor: .25, clickable: true, color: ascentColors[ascentColorsIndex], weight: 2, opacity: 1}).addTo(map));
           ascentTracks[ascentTracks.length-1].spliceLatLngs(0, 0, [ascentData[x-1].Lat, ascentData[x-1].Lon]);
-          ascentTracks[ascentTracks.length-1]._myId = strLastAscentEvent;
+          ascentTracks[ascentTracks.length-1]._myId = "<center>" + ascentData[x].Phase + "</center>";
           ascentTracks[ascentTracks.length-1].on('mouseover mousemove', function(e) {
             ascentPopup = new L.Rrose({ offset: new L.Point(0,-1), closeButton: false, autoPan: false });
             ascentPopup.setLatLng(e.latlng);
@@ -5539,6 +5622,25 @@ rsMoons.movefirst
           });
         }
         if (ascentTracks.length) { ascentTracks[ascentTracks.length-1].spliceLatLngs(0, 0, [ascentData[x].Lat, ascentData[x].Lon]); }
+        if (!noMarkBox.contains([ascentData[x].Lat, ascentData[x].Lon]) && ascentData[x].EventMark) {
+          var labelIcon = L.icon({
+            iconUrl: 'label.png',
+            iconSize: [10, 10],
+          });
+          ascentMarks.push(L.marker([ascentData[x].Lat, ascentData[x].Lon], {icon: labelIcon}).addTo(map));
+          ascentMarks[ascentMarks.length-1]._myId = ascentData[x].EventMark + ";" + ascentData[x].Lat + ";" + ascentData[x].Lon;
+          ascentMarks[ascentMarks.length-1].on('mouseover mousemove', function(e) {
+            data = e.target._myId.split(";")
+            ascentPopup = new L.Rrose({ offset: new L.Point(0,-1), closeButton: false, autoPan: false });
+            ascentPopup.setLatLng([data[1], data[2]]);
+            ascentPopup.setContent(data[0]);
+            ascentPopup.openOn(map);
+          });
+          ascentMarks[ascentMarks.length-1].on('mouseout', function(e) {
+            if (ascentPopup) { map.closePopup(ascentPopup); }
+            ascentPopup = null;
+          });
+        }
       }
 
       // kick off the telemetry update loop

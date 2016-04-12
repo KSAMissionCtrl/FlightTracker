@@ -27,6 +27,8 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
   <link rel="stylesheet" type="text/css" href="http://static.kerbalmaps.com/leaflet.css" />
   <link rel="stylesheet" type="text/css" href="../jslib/leaflet.label.css" />
   <link rel="stylesheet" type="text/css" href="../jslib/iosbadge.css" />
+  <link rel="stylesheet" type="text/css" href="../jslib/Control.FullScreen.css" />
+  <link rel="stylesheet" type="text/css" href="../jslib/leaflet.groupedlayercontrol.min.css" />
 
   <!-- JS libraries -->
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
@@ -39,6 +41,8 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
   <script type="text/javascript" src="../jslib/numeral.min.js"></script>
   <script type="text/javascript" src="../jslib/leaflet.label.js"></script>
   <script type="text/javascript" src="../jslib/iosbadge.min.js"></script>
+  <script type="text/javascript" src="../jslib/Control.FullScreen.js"></script>
+  <script type="text/javascript" src="../jslib/leaflet.groupedlayercontrol.min.js"></script>
 
   <script>
     // small helper function to make sure number calculated is not greater than a certain value
@@ -625,7 +629,7 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
             } else {
               var txtColor = colors[currType];
             }
-            layerControl.addOverlay(overlays[currType], "<img src='button_vessel_" + types[currType] + ".png' width='10px' style='vertical-align: 1px;'> <span style='color: " + txtColor + ";'>" + types[currType] + "</span>");
+            layerControl.addOverlay(overlays[currType], "<img src='button_vessel_" + types[currType] + ".png' width='10px' style='vertical-align: 1px;'> <span style='color: " + txtColor + ";'>" + types[currType] + "</span>", "Orbital Plots");
             bCraftAdded = false;
             
             // if there is a layers URL variable, see if any of the layer names match this one and show it if so
@@ -639,7 +643,7 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
           // if there are more types to look at, update & reset to prep for the next group
           if (currType < types.length) {
             plzWait = L.layerGroup();
-            layerControl.addOverlay(plzWait, "Loading orbits...");
+            layerControl.addOverlay(plzWait, "Loading orbits...", "Orbital Plots");
             overlays.push(L.layerGroup());
             currType++;
             currCraft = 0;
@@ -1904,9 +1908,13 @@ end if
       scaleControl: true,
       minZoom: 0,
       maxZoom: 5,
-      zoom: 2
+      zoom: 2,
+      fullscreenControl: true,
+      fullscreenControlOptions: {
+        position: 'topleft'
+      }
     });
-    
+
     // define the icons for the various layer markers
     var flagIcon = L.icon({
       iconUrl: 'button_vessel_flag.png',
@@ -1941,7 +1949,7 @@ end if
     });
     
     // check for any available base map layers and add as necessary
-    var layerControl = L.control.layers().addTo(map);
+    var layerControl = L.control.groupedLayers().addTo(map);
     var bBaseAdded = false;
     if (<%if rsBody.fields.item("Map") then response.write(lcase(rsMaps.fields.item("Satellite"))) else response.write("false")%>) {
     layerControl.addBaseLayer(
@@ -2082,7 +2090,7 @@ end if
       }
       
       // add the layer to the map and if it is asked for in the URL variable show it immediately
-      layerControl.addOverlay(layerFlags, "<img src='button_vessel_flag.png' width='10px' style='vertical-align: 1px;'> Flags");
+      layerControl.addOverlay(layerFlags, "<img src='button_vessel_flag.png' width='10px' style='vertical-align: 1px;'> Flags", "Ground Markers");
       if (showLayers.length) {
         for (l=0; l<showLayers.length; l++) {
           if ("flags" == showLayers[l]) { layerFlags.addTo(map); }
@@ -2105,7 +2113,7 @@ end if
         layerPOI.addLayer(POIMarker);
         POIMarker._myId = -1;
       }
-      layerControl.addOverlay(layerPOI, "<img src='poi.png' width='10px' style='vertical-align: 1px;'> Points of Interest");
+      layerControl.addOverlay(layerPOI, "<img src='poi.png' width='10px' style='vertical-align: 1px;'> Points of Interest", "Ground Markers");
       if (showLayers.length) {
         for (l=0; l<showLayers.length; l++) {
           if ("poi" == showLayers[l]) { layerPOI.addTo(map); }
@@ -2129,7 +2137,7 @@ end if
         layerAnomalies.addLayer(anomalyMarker);
         anomalyMarker._myId = -1;
       }
-      layerControl.addOverlay(layerAnomalies, "<img src='anomaly.png' width='10px' style='vertical-align: 1px;'> Anomalies");
+      layerControl.addOverlay(layerAnomalies, "<img src='anomaly.png' width='10px' style='vertical-align: 1px;'> Anomalies", "Ground Markers");
       if (showLayers.length) {
         for (l=0; l<showLayers.length; l++) {
           if ("anomalies" == showLayers[l]) { layerAnomalies.addTo(map); }
@@ -2154,7 +2162,7 @@ end if
           map.setView(e.target.getLatLng(), 5);
         });
       }
-      layerControl.addOverlay(layerLabels, "<img src='label.png' style='vertical-align: 1px;'> Labels");
+      layerControl.addOverlay(layerLabels, "<img src='label.png' style='vertical-align: 1px;'> Labels", "Ground Markers");
       if (showLayers.length) {
         for (l=0; l<showLayers.length; l++) {
           if ("labels" == showLayers[l]) { layerLabels.addTo(map); }
@@ -2201,7 +2209,7 @@ end if
     
     // add to the layer selection control
     // check if we should show this on load
-    layerControl.addOverlay(layerSolar, "<img src='sun.png' width='10px' style='vertical-align: 1px;'> Sun/Terminator");
+    layerControl.addOverlay(layerSolar, "<img src='sun.png' width='10px' style='vertical-align: 1px;'> Sun/Terminator", "Ground Markers");
     if (showLayers.length) {
       for (l=0; l<showLayers.length; l++) {
         if ("sun" == showLayers[l]) { layerSolar.addTo(map); }
@@ -2270,7 +2278,7 @@ end if
     var currCraft = 0;
     var endTime = -1;
     var plzWait = L.layerGroup();
-    layerControl.addOverlay(plzWait, "Loading orbits...");
+    layerControl.addOverlay(plzWait, "Loading orbits...", "Orbital Plots");
     
     // wait for an AJAX callback or JQuery setup to begin loading orbital data
   }
