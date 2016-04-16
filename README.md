@@ -18,14 +18,17 @@ The following mods/apps are used to provide the data the Flight Tracker and Crew
 The following JavaScript libraries are used:
 
 * [Leaflet](http://leafletjs.com/)
+* [Leaflet.KSP](https://github.com/saik0/Leaflet.KSP)
 * [Sylvester](http://sylvester.jcoglan.com/)
-* [Leaflet Label](https://github.com/Leaflet/Leaflet.label)
+* [Leaflet.Label](https://github.com/Leaflet/Leaflet.label)
 * [Numeral](http://numeraljs.com/)
 * [Tipped](http://www.tippedjs.com/)
 * [Codebird](https://github.com/jublonet/codebird-js)
 * [Spin.js](http://fgnass.github.io/spin.js/)
 * [iOSBadge.js](http://kristerkari.github.io/iOSBadge/)
 * [Rrose](http://erictheise.github.io/rrose/)
+* [Leaflet.Fullscreen](https://github.com/brunob/leaflet.fullscreen)
+* [Leaflet.GroupedLayerControl](https://github.com/ismyrnow/Leaflet.groupedlayercontrol)
 
 Blank template MDB Access files are included for both crafts and rosters, as well as filled-in example databases.
 
@@ -67,13 +70,19 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] Change use of `area` tag to `div` to enable use of tooltips over planets and bodies in Chrome
 * [FT] Fix issues with Sketchfab model support (button display for new hoverbox behavior, start/stop on show/hide)
 * [FT] Multiple thruster/engine images to account for image of current craft rotation position
-* [FT] Hued ascent lines w/ marker points to show staging/events during launch ([Leaflet.Hotline](https://github.com/iosphere/Leaflet.hotline))
 * [FT] Proper terminator display taking orbital inclination into account ([Leaflet.Curve](https://github.com/elfalem/Leaflet.curve))
-* [FT] Allow elevation and biome data to show in lower-left control when those terrain layers are enabled
-* [FT] Add fullscreen control to Surface Map ([Leaflet.Fullscreen](https://github.com/brunob/leaflet.fullscreen))
-* [FT] Add groups for Surface Map layers control ([Leaflet.GroupedLayerControl](https://github.com/ismyrnow/Leaflet.groupedlayercontrol))
 
 ### Change Log
+
+**v4.1.0** (4/12/16)
+
+Changes:
+  - [FT] Surface Map layer control now labels the two groups of overlays available
+  - [FT] Ascent path now changes color during separate phases of flight (booster ascent, coast, etc) and also drops markers for defined events (fairing jettison, MECO, etc)
+
+Additons:
+  - [FT] Surface Map can go fullscreen
+  - [FT] `Phase` and `EventMark` fields added to the ascent data table
 
 **v4.0.0** (4/2/16)
 
