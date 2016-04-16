@@ -50,6 +50,77 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
       if (Math.abs(eq) > Math.abs(val)) { return val; } else { return eq; }
     }
     
+    // get our platform properties
+    // http://stackoverflow.com/questions/11219582/how-to-detect-my-browser-version-and-operating-system-using-javascript
+    var nVer = navigator.appVersion;
+    var nAgt = navigator.userAgent;
+    var browserName  = navigator.appName;
+    var fullVersion  = ''+parseFloat(navigator.appVersion); 
+    var majorVersion = parseInt(navigator.appVersion,10);
+    var nameOffset,verOffset,ix;
+
+    // In Opera, the true version is after "Opera" or after "Version"
+    if ((verOffset=nAgt.indexOf("Opera"))!=-1) {
+     browserName = "Opera";
+     fullVersion = nAgt.substring(verOffset+6);
+     if ((verOffset=nAgt.indexOf("Version"))!=-1) 
+       fullVersion = nAgt.substring(verOffset+8);
+    }
+    
+    // In MSIE, the true version is after "MSIE" in userAgent
+    else if ((verOffset=nAgt.indexOf("MSIE"))!=-1) {
+     browserName = "Microsoft Internet Explorer";
+     fullVersion = nAgt.substring(verOffset+5);
+    }
+    
+    // In Chrome, the true version is after "Chrome" 
+    else if ((verOffset=nAgt.indexOf("Chrome"))!=-1) {
+     browserName = "Chrome";
+     fullVersion = nAgt.substring(verOffset+7);
+    }
+    
+    // In Safari, the true version is after "Safari" or after "Version" 
+    else if ((verOffset=nAgt.indexOf("Safari"))!=-1) {
+     browserName = "Safari";
+     fullVersion = nAgt.substring(verOffset+7);
+     if ((verOffset=nAgt.indexOf("Version"))!=-1) 
+       fullVersion = nAgt.substring(verOffset+8);
+    }
+    
+    // In Firefox, the true version is after "Firefox" 
+    else if ((verOffset=nAgt.indexOf("Firefox"))!=-1) {
+     browserName = "Firefox";
+     fullVersion = nAgt.substring(verOffset+8);
+    }
+    
+    // In most other browsers, "name/version" is at the end of userAgent 
+    else if ( (nameOffset=nAgt.lastIndexOf(' ')+1) < 
+              (verOffset=nAgt.lastIndexOf('/')) ) 
+    {
+     browserName = nAgt.substring(nameOffset,verOffset);
+     fullVersion = nAgt.substring(verOffset+1);
+     if (browserName.toLowerCase()==browserName.toUpperCase()) {
+      browserName = navigator.appName;
+     }
+    }
+    
+    // trim the fullVersion string at semicolon/space if present
+    if ((ix=fullVersion.indexOf(";"))!=-1)
+       fullVersion=fullVersion.substring(0,ix);
+    if ((ix=fullVersion.indexOf(" "))!=-1)
+       fullVersion=fullVersion.substring(0,ix);
+    majorVersion = parseInt(''+fullVersion,10);
+    if (isNaN(majorVersion)) {
+     fullVersion  = ''+parseFloat(navigator.appVersion); 
+     majorVersion = parseInt(navigator.appVersion,10);
+    }
+    var browserDeets = browserName + " (v" + fullVersion + ") [" + navigator.appName + "] [" + navigator.userAgent + "]";
+    var OSName="Unknown OS";
+    if (navigator.appVersion.indexOf("Win")!=-1) OSName="Windows";
+    if (navigator.appVersion.indexOf("Mac")!=-1) OSName="MacOS";
+    if (navigator.appVersion.indexOf("X11")!=-1) OSName="UNIX";
+    if (navigator.appVersion.indexOf("Linux")!=-1) OSName="Linux";
+
     // checks for cookies being enabled
     // http://stackoverflow.com/questions/2167310/how-to-show-a-message-only-if-cookies-are-disabled-in-browser
     function checkCookies() {
@@ -762,7 +833,19 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
             
             // search for multiple instances of the craft represented on the orbital diagram to assign the content to
             $("area").each(function(index) {
-              if ($(this ).attr("title") == "#" + craftsCatalog[craftIndex].DB) { $(this).attr("title", strHTML); }
+            
+              // we have to hack our own tooltips in Chrome so only redo the title attribute in Firefox
+              if (browserName != "Chrome") {
+                if ($(this ).attr("title") == "#" + craftsCatalog[craftIndex].DB) { $(this).attr("title", strHTML); }
+                
+              // for Chrome we are going to move the data to the alt tag so it doesn't create a tooltip
+              // and we can use it to plug the data into a dynamic tooltip attached to a div that moves over the cursor location
+              } else {
+                if ($(this ).attr("title") == "#" + craftsCatalog[craftIndex].DB) { 
+                  $(this).attr("title", ""); 
+                  $(this).attr("alt", strHTML); 
+                }
+              }
             });
             
             // save data for loading the ground map, don't allow dupes
@@ -794,15 +877,16 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
             }
           }
           
-          // behavior of the tooltip depends on the device
-          if (is_touch_device()) {
-            var showOpt = 'click';
-          } else {
-            var showOpt = 'mouseenter';
-          }
-          
-          // create all the tooltips using Tipped.js - http://www.tippedjs.com/
-          Tipped.create('.tip', {size: 'small', showOn: showOpt, hideOnClickOutside: is_touch_device()});
+// behavior of the tooltip depends on the device
+if (is_touch_device()) {
+  var showOpt = 'click';
+} else {
+  var showOpt = 'mouseenter';
+}
+
+// create all the tooltips using Tipped.js - http://www.tippedjs.com/
+Tipped.create('.tip', {size: 'small', showOn: showOpt, hideOnClickOutside: is_touch_device()});
+Tipped.create('.tip-update', {size: 'small', showOn: showOpt, hideOnClickOutside: is_touch_device()});
           
           // load the orbits for the surface map
           findMoons();
@@ -870,7 +954,43 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
     // JQuery setup
     var bCreateTips = true;
     $(document).ready(function(){
-    
+      
+      // Chrome support for image map tooltips with Tipped
+      $("area").hover(function() { 
+      
+        // HTML data is stashed in the alt attribute so Chrome doesn't show its own tooltip
+        if (browserName == "Chrome" && $(this).attr("alt") && $(this).attr("alt") != "map") { 
+          $("#chromeMapTipData").html($(this).attr("alt"));
+          
+          // get the coordinate data for the area and size/center the div around it
+          // div containing image map is below the title header, so offset must be applied
+          // div containing all content is left-margin: auto to center on page, so offset must be applied
+          areaCenter = $(this).attr("coords").split(",");
+          $("#chromeMapTip").css("width", parseInt(areaCenter[2])*2);
+          $("#chromeMapTip").css("height", parseInt(areaCenter[2])*2);
+          $("#chromeMapTip").css("top", parseInt(areaCenter[1])+$(this).position().top-parseInt(areaCenter[2]));
+          $("#chromeMapTip").css("left", parseInt(areaCenter[0])+$("#mainContent").position().left-parseInt(areaCenter[2]));
+
+          // if we need to link to another page
+          if (!$(this).attr("href")) {
+            $("#chromeMapTip").css("cursor", "default");
+          } else {
+            $("#chromeMapTip").attr("href", $(this).attr("href"));
+            $("#chromeMapTip").css("cursor", "pointer");
+          }
+          $("#chromeMapTip").show();
+        }
+      }, function() {
+      
+        // called once the div is shown atop this
+        Tipped.refresh(".tip-update");
+      });
+
+      // Chrome only - click through to a link on the image map
+      $("#chromeMapTip").click(function() { 
+        if (browserName == "Chrome" && $("#chromeMapTip").css("cursor") == "pointer") { window.location.href = $("#chromeMapTip").attr("href"); }
+      });
+      
       // check every <area> tag on the page for body/craft rich content tooltip insertions
       $("area").each(function( index ) {
       
@@ -902,7 +1022,17 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
           strHTML += "Atmosphere: " + bodiesCatalog[bodyIndex].Atmo + "</p>";
           if (bodiesCatalog[bodyIndex].Moons) { strHTML += "<p><b>Moons</b></p><p>" + bodiesCatalog[bodyIndex].Moons + "</p>"; }
           strHTML += "</td></tr></table>";
-          $(this ).attr("title", strHTML);
+          
+          // we have to hack our own tooltips in Chrome so only redo the title attribute in Firefox
+          if (browserName != "Chrome") {
+            $(this ).attr("title", strHTML);
+            
+          // for Chrome we are going to move the data to the alt tag so it doesn't create a tooltip
+          // and we can use it to plug the data into a dynamic tooltip attached to a div that moves over the cursor location
+          } else {
+            $(this).attr("title", ""); 
+            $(this).attr("alt", strHTML); 
+          }
           
           // if this tag doesn't have an href attribute, don't let people think there is a link to click through to
           if (!$(this ).attr("href")) { $(this ).css("cursor", "default"); }
@@ -941,6 +1071,7 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
         
         // create all the tooltips using Tipped.js - http://www.tippedjs.com/
         Tipped.create('.tip', {size: 'small', showOn: showOpt, hideOnClickOutside: is_touch_device()});
+        Tipped.create('.tip-update', {size: 'small', showOn: showOpt, hideOnClickOutside: is_touch_device()});
       }
          
       // check on cookies
@@ -979,6 +1110,9 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
       $("#close").click(function(){
         if ($("#map").css("visibility") == "visible")
         {
+          // hack for Chrome because hiding the map for some reason no longer makes the tooltip <div> accessible
+          // so just reload the page, minus the show map flag if it is included
+          if (browserName == "Chrome") { window.location.href = window.location.href.replace("&map=true", ""); }
           $("#map").css("visibility", "hidden");
           $("#close").css("visibility", "hidden");
           $("#kscflags").css("visibility", "hidden");
@@ -1204,9 +1338,9 @@ rsBody.moveprevious
 
 'depending on whether we are in a pop-out window or normal page decides how page is formatted
 if request.querystring("popout") then
-  response.write("<div style='width: 100%; overflow: hidden;'>")
+  response.write("<div id='mainContent' style='width: 100%; overflow: hidden;'>")
 else
-  response.write("<div style='width: 1145px; overflow: hidden; margin-left: auto; margin-right: auto; position: relative'>")
+  response.write("<div id='mainContent' style='width: 1145px; overflow: hidden; margin-left: auto; margin-right: auto; position: relative'>")
 end if
 %>
 
@@ -1215,6 +1349,12 @@ end if
 
 <!-- special notice box for new users to the site -->
 <div id='intro' style='font-family: sans-serif; border-style: solid; border-width: 2px; height: 177px; width: 370px; padding: 0; position: absolute; z-index: 301; margin: 0; top: 330px; left: 240px; background-color: gray; display: none'><center><b>Welcome to the Flight Tracker & Crew Roster!</b><p style='font-size: 14px; text-align: justify; margin-left: 5px; margin-right: 5px'>Here you can learn everything there is to know about the astronauts & vessels involved in our space program. We highly suggest <a target="_blank" href="https://github.com/Gaiiden/FlightTracker/wiki">visiting the wiki</a> for detailed instructions on how to use the many features to be found herein.<p><span id='dismissIntro' style='cursor: pointer;'>Click here to dismiss</span><p style='font-size: 14px; text-align: center;'><span style="cursor: help; text-decoration: underline; text-decoration-style: dotted" class='tip' data-tipped-options="maxWidth: 300" title="The KSA uses cookies stored on your computer via the web browser to enable certain features of the website. It does not store tracking information nor use any third party cookies for analytics or other data gathering. The website's core functionality will not be affected should cookies be disabled, at the expense of certain usability features.">Cookie Use Policy</span></p></center></div>
+
+<!-- hidden div that is set to contain data to show in tooltip -->
+<div id='chromeMapTipData' style='display: none'></div>
+
+<!-- hidden div with dynamic tooltip for Chrome use to display over image maps -->
+<div id="chromeMapTip" style="position: absolute; display: none; z-index: 9999999;" class='tip-update' data-tipped-options="inline: 'chromeMapTipData', target: 'mouse', behavior: 'hide', detach: false"></div>
 
 <!-- create the page section for body information -->
 <div style="position: relative; width: 840px; float: left;">
@@ -1241,7 +1381,13 @@ response.write("&nbsp;<img class='tip' id='tagData' data-tipped-options=""positi
 'image map data for the system
 'image maps created via http://summerstyle.github.io/summer/
 'tooltips added via replace function so code itself can be copied and used straight from image map editor
-response.write(replace(rsBody.fields.item("HTML"), "title", "class='tip' data-tipped-options=""target: 'mouse', behavior: 'hide'"" title"))
+'however only let these be created into Tipped tooltips when not using Chrome otherwise they will not work
+strContent = Request.ServerVariables("HTTP_USER_AGENT")
+if instr(strContent, "Chrome") = 0 then
+  response.write(replace(rsBody.fields.item("HTML"), "title", "class='tip' data-tipped-options=""target: 'mouse', behavior: 'hide'"" title"))
+else
+  response.write rsBody.fields.item("HTML")
+end if
 %>
 
 <!-- 

@@ -2239,14 +2239,32 @@ if len(fpsCookie) = 0 then fpsCookie = 30
               for (x=0; x<parts.length; x++) {
                 part = parts[x].split("~");
                 if (part[0] == strPartName) { 
-                  $(this).attr("title", part[1]);
+
+                  // we have to hack our own tooltips in Chrome so only redo the title attribute in Firefox
+                  if (browserName != "Chrome") {
+                    $(this).attr("title", part[1]);
+                    
+                  // for Chrome we are going to move the data to the alt tag so it doesn't create a tooltip
+                  // and we can use it to plug the data into a dynamic tooltip attached to a div that moves over the cursor location
+                  } else {
+                    $(this).attr("title", ""); 
+                    $(this).attr("alt", part[1]);
+                  }
                   break; 
                 }
               }
             }
           });
           
-          // now we can go ahead and create the page tooltips
+          // Chrome support for image map tooltips
+          // check every <area> tag on the page for any title data remaining from custom part data not taken from the database
+          $("area").each(function( index ) {
+            if (browserName == "Chrome" && $(this).attr("title")) {
+              $(this).attr("alt", $(this).attr("title")); 
+              $(this).attr("title", ""); 
+            }
+          });      
+              // now we can go ahead and create the page tooltips
           // behavior of tooltips depends on the device
           if (is_touch_device()) {
             showOpt = 'click';
@@ -2327,6 +2345,29 @@ if len(fpsCookie) = 0 then fpsCookie = 30
     var craftCaption = "";
     $(document).ready(function(){
     
+      // Chrome support for image map tooltips with Tipped
+      $("area").hover(function() { 
+
+        // HTML data is stashed in the alt attribute so Chrome doesn't show its own tooltip
+        if (browserName == "Chrome" && $(this).attr("alt")) { 
+          $("#chromeMapTipData").html($(this).attr("alt"));
+          
+          // get the coordinate data for the area and size/center the div around it
+          // div containing image map is below the title header, so offset must be applied
+          // div containing all content is left-margin: auto to center on page, so offset must be applied
+          areaCenter = $(this).attr("coords").split(",");
+          $("#chromeMapTip").css("width", parseInt(areaCenter[2])*2);
+          $("#chromeMapTip").css("height", parseInt(areaCenter[2])*2);
+          $("#chromeMapTip").css("top", parseInt(areaCenter[1])+$("#mainwrapper").position().top-parseInt(areaCenter[2]));
+          $("#chromeMapTip").css("left", parseInt(areaCenter[0])+$("#mainwrapper").position().left+$("#mainContent").position().left-parseInt(areaCenter[2]));
+          $("#chromeMapTip").show();
+        }
+      }, function() {
+      
+        // called once the div is shown atop this
+        Tipped.refresh(".tip-update");
+      });
+
       // tell site to set cookie that allows tweets to be sent by this user
       if (getParameterByName('missionctrl')) { setCookie('missionctrl', true, true); }
     
@@ -2405,7 +2446,6 @@ if len(fpsCookie) = 0 then fpsCookie = 30
           
           // caption may need modifying if electric charge icon is used
           if (resources[resIndex+x].Img.toLowerCase() == "electriccharge") {
-            console.log("EC");
             $("#resTip" + x).html(resources[resIndex+x].Title + solarOutputStr);
           } else {
             $("#resTip" + x).html(resources[resIndex+x].Title);
@@ -2421,6 +2461,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
           $("#craftLeft").css("display", "none");
           $("#craftRight").css("display", "none");
           $("#craftImgOverlay" + craftImgIndex).css("display", "none");
+          $("#chromeMapTip").hide();
           bDescOpen = true;
         }
       });
@@ -2453,7 +2494,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
       $("#iconSurfaceMap").click(function(){
         window.location.href = $(this).attr("href");
       });
-            
+
       // does away with the notification for orbital plot length and reloads the page to render full orbits
       // if this is a touchscreen then user can't see tooltip, may not know the implications of the option, so warn them with an alert
       $("#msgObtPdRender").click(function(){
@@ -2662,6 +2703,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
         $("#engineOverlay").attr("src", craftImgs[craftImgIndex].Normal);
         $("#thrusterOverlay").attr("src", craftImgs[craftImgIndex].Normal);
         $("#craftImgOverlay" + craftImgIndex).css("display", "initial");
+        $("#chromeMapTip").hide();
       });
       $("#craftRight").click(function(){
         $("#craftImgOverlay" + craftImgIndex).css("display", "none");
@@ -2671,6 +2713,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
         $("#engineOverlay").attr("src", craftImgs[craftImgIndex].Normal);
         $("#thrusterOverlay").attr("src", craftImgs[craftImgIndex].Normal);
         $("#craftImgOverlay" + craftImgIndex).css("display", "initial");
+        $("#chromeMapTip").hide();
       });
       
       // ensures #mainwrapper returns to unhovered state in case mouse-off is too fast to register a mousover for #mainwrapper
@@ -3640,9 +3683,9 @@ if not isnull(rsCraft.fields.item("MissionEnd")) or launchmsg = "To Be Determine
 
 'depending on whether we are in a pop-out window or normal page decides how page is formatted
 if request.querystring("popout") then
-  response.write("<div style='width: 100%; overflow: hidden;'>")
+  response.write("<div id='mainContent' style='width: 100%; overflow: hidden;'>")
 else
-  response.write("<div style='width: 1145px; overflow: hidden; margin-left: auto; margin-right: auto; position: relative'>")
+  response.write("<div id='mainContent' style='width: 1145px; overflow: hidden; margin-left: auto; margin-right: auto; position: relative'>")
 end if
 
 'determine if this craft has a 3D model available to view and if so, make available the controls to see it
@@ -3836,6 +3879,12 @@ if (bLaunchVideo) {
 <div id='craftRight' style='cursor: pointer; z-index: 135; padding: 0; margin: 0; position: absolute; top: 225px; left: 495px; display: none;'><img src="craftRight.png"></div>
 <div id='craftLeft' style='cursor: pointer; z-index: 135; padding: 0; margin: 0; position: absolute; top: 225px; left: 15px; display: none;'><img src="craftLeft.png"></div>
 
+<!-- hidden div that is set to contain data to show in tooltip -->
+<div id='chromeMapTipData' style='display: none'></div>
+
+<!-- hidden div with dynamic tooltip for Chrome use to display over image maps -->
+<div id="chromeMapTip" style="position: absolute; display: none; z-index: 9999999;" class='tip-update' data-tipped-options="fixed: true, maxWidth: 200, inline: 'chromeMapTipData', target: 'mouse', behavior: 'hide', detach: false"></div>
+
 <!-- create the page section for craft information -->
 <div style="width: 840px; float: left;">
 
@@ -3875,7 +3924,14 @@ document.title = document.title + " - <%response.write rsCraft.fields.item("Craf
           if ubound(split(images(0), "~")) then
             for each img in images
               values = split(img, "~")
-              response.write("<div id='craftImgOverlay" & imgIndex & "' style='z-index: 125; padding: 0; margin: 0; position: absolute; top: 58px; left: 10px; display: none;'>" & replace(values(3), "title", "class='tip' data-tipped-options=""fixed: true, maxWidth: 200, target: 'mouse', behavior: 'hide'"" title") & "</div>")
+              
+              'Chrome can not display tooltips by default so do not alter title if in Chrome
+              strContent = Request.ServerVariables("HTTP_USER_AGENT")
+              if instr(strContent, "Chrome") = 0 then
+                response.write("<div id='craftImgOverlay" & imgIndex & "' style='z-index: 125; padding: 0; margin: 0; position: absolute; top: 58px; left: 10px; display: none;'>" & replace(values(3), "title", "class='tip' data-tipped-options=""fixed: true, maxWidth: 200, target: 'mouse', behavior: 'hide'"" title") & "</div>")
+              else
+                response.write("<div id='craftImgOverlay" & imgIndex & "' style='z-index: 125; padding: 0; margin: 0; position: absolute; top: 58px; left: 10px; display: none;'>" & values(3) & "</div>")
+              end if
               imgIndex = imgIndex + 1
 
               'save data to JS
