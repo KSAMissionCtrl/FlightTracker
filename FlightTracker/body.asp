@@ -834,11 +834,11 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
             // search for multiple instances of the craft represented on the orbital diagram to assign the content to
             $("area").each(function(index) {
             
-              // we have to hack our own tooltips in Chrome so only redo the title attribute in Firefox
-              if (browserName != "Chrome") {
+              // we have to hack our own tooltips in other browsers so only redo the title attribute in Firefox
+              if (browserName == "Firefox") {
                 if ($(this ).attr("title") == "#" + craftsCatalog[craftIndex].DB) { $(this).attr("title", strHTML); }
                 
-              // for Chrome we are going to move the data to the alt tag so it doesn't create a tooltip
+              // for other browsers we are going to move the data to the alt tag so it doesn't create a tooltip
               // and we can use it to plug the data into a dynamic tooltip attached to a div that moves over the cursor location
               } else {
                 if ($(this ).attr("title") == "#" + craftsCatalog[craftIndex].DB) { 
@@ -955,30 +955,30 @@ Tipped.create('.tip-update', {size: 'small', showOn: showOpt, hideOnClickOutside
     var bCreateTips = true;
     $(document).ready(function(){
       
-      // Chrome support for image map tooltips with Tipped
+      // support for image map tooltips with Tipped outside of Firefox
       $("area").hover(function() { 
       
-        // HTML data is stashed in the alt attribute so Chrome doesn't show its own tooltip
-        if (browserName == "Chrome" && $(this).attr("alt") && $(this).attr("alt") != "map") { 
-          $("#chromeMapTipData").html($(this).attr("alt"));
+        // HTML data is stashed in the alt attribute so other browsers don't show their own tooltip
+        if (browserName != "Firefox" && $(this).attr("alt") && $(this).attr("alt") != "map") { 
+          $("#mapTipData").html($(this).attr("alt"));
           
           // get the coordinate data for the area and size/center the div around it
           // div containing image map is below the title header, so offset must be applied
           // div containing all content is left-margin: auto to center on page, so offset must be applied
           areaCenter = $(this).attr("coords").split(",");
-          $("#chromeMapTip").css("width", parseInt(areaCenter[2])*2);
-          $("#chromeMapTip").css("height", parseInt(areaCenter[2])*2);
-          $("#chromeMapTip").css("top", parseInt(areaCenter[1])+$(this).position().top-parseInt(areaCenter[2]));
-          $("#chromeMapTip").css("left", parseInt(areaCenter[0])+$("#mainContent").position().left-parseInt(areaCenter[2]));
+          $("#mapTip").css("width", parseInt(areaCenter[2])*2);
+          $("#mapTip").css("height", parseInt(areaCenter[2])*2);
+          $("#mapTip").css("top", parseInt(areaCenter[1])+47-parseInt(areaCenter[2]));
+          $("#mapTip").css("left", parseInt(areaCenter[0])+$("#mainContent").position().left-parseInt(areaCenter[2]));
 
           // if we need to link to another page
           if (!$(this).attr("href")) {
-            $("#chromeMapTip").css("cursor", "default");
+            $("#mapTip").css("cursor", "default");
           } else {
-            $("#chromeMapTip").attr("href", $(this).attr("href"));
-            $("#chromeMapTip").css("cursor", "pointer");
+            $("#mapTip").attr("href", $(this).attr("href"));
+            $("#mapTip").css("cursor", "pointer");
           }
-          $("#chromeMapTip").show();
+          $("#mapTip").show();
         }
       }, function() {
       
@@ -986,9 +986,9 @@ Tipped.create('.tip-update', {size: 'small', showOn: showOpt, hideOnClickOutside
         Tipped.refresh(".tip-update");
       });
 
-      // Chrome only - click through to a link on the image map
-      $("#chromeMapTip").click(function() { 
-        if (browserName == "Chrome" && $("#chromeMapTip").css("cursor") == "pointer") { window.location.href = $("#chromeMapTip").attr("href"); }
+      // Non-Firefox only - click through to a link on the image map
+      $("#mapTip").click(function() { 
+        if (browserName != "Firefox" && $("#mapTip").css("cursor") == "pointer") { window.location.href = $("#mapTip").attr("href"); }
       });
       
       // check every <area> tag on the page for body/craft rich content tooltip insertions
@@ -1023,11 +1023,11 @@ Tipped.create('.tip-update', {size: 'small', showOn: showOpt, hideOnClickOutside
           if (bodiesCatalog[bodyIndex].Moons) { strHTML += "<p><b>Moons</b></p><p>" + bodiesCatalog[bodyIndex].Moons + "</p>"; }
           strHTML += "</td></tr></table>";
           
-          // we have to hack our own tooltips in Chrome so only redo the title attribute in Firefox
-          if (browserName != "Chrome") {
+          // we have to hack our own tooltips in other browsers so only redo the title attribute in Firefox
+          if (browserName == "Firefox") {
             $(this ).attr("title", strHTML);
             
-          // for Chrome we are going to move the data to the alt tag so it doesn't create a tooltip
+          // for other browsers we are going to move the data to the alt tag so they don't create a tooltip
           // and we can use it to plug the data into a dynamic tooltip attached to a div that moves over the cursor location
           } else {
             $(this).attr("title", ""); 
@@ -1110,9 +1110,9 @@ Tipped.create('.tip-update', {size: 'small', showOn: showOpt, hideOnClickOutside
       $("#close").click(function(){
         if ($("#map").css("visibility") == "visible")
         {
-          // hack for Chrome because hiding the map for some reason no longer makes the tooltip <div> accessible
+          // hack for other browsers because hiding the map for some reason no longer makes the tooltip <div> accessible
           // so just reload the page, minus the show map flag if it is included
-          if (browserName == "Chrome") { window.location.href = window.location.href.replace("&map=true", ""); }
+          if (browserName != "Firefox") { window.location.href = window.location.href.replace("&map=true", ""); }
           $("#map").css("visibility", "hidden");
           $("#close").css("visibility", "hidden");
           $("#kscflags").css("visibility", "hidden");
@@ -1351,10 +1351,10 @@ end if
 <div id='intro' style='font-family: sans-serif; border-style: solid; border-width: 2px; height: 177px; width: 370px; padding: 0; position: absolute; z-index: 301; margin: 0; top: 330px; left: 240px; background-color: gray; display: none'><center><b>Welcome to the Flight Tracker & Crew Roster!</b><p style='font-size: 14px; text-align: justify; margin-left: 5px; margin-right: 5px'>Here you can learn everything there is to know about the astronauts & vessels involved in our space program. We highly suggest <a target="_blank" href="https://github.com/Gaiiden/FlightTracker/wiki">visiting the wiki</a> for detailed instructions on how to use the many features to be found herein.<p><span id='dismissIntro' style='cursor: pointer;'>Click here to dismiss</span><p style='font-size: 14px; text-align: center;'><span style="cursor: help; text-decoration: underline; text-decoration-style: dotted" class='tip' data-tipped-options="maxWidth: 300" title="The KSA uses cookies stored on your computer via the web browser to enable certain features of the website. It does not store tracking information nor use any third party cookies for analytics or other data gathering. The website's core functionality will not be affected should cookies be disabled, at the expense of certain usability features.">Cookie Use Policy</span></p></center></div>
 
 <!-- hidden div that is set to contain data to show in tooltip -->
-<div id='chromeMapTipData' style='display: none'></div>
+<div id='mapTipData' style='display: none'></div>
 
-<!-- hidden div with dynamic tooltip for Chrome use to display over image maps -->
-<div id="chromeMapTip" style="position: absolute; display: none; z-index: 9999999;" class='tip-update' data-tipped-options="inline: 'chromeMapTipData', target: 'mouse', behavior: 'hide', detach: false"></div>
+<!-- hidden div with dynamic tooltip for use to display over image maps outside of Firefox -->
+<div id="mapTip" style="position: absolute; display: none; z-index: 9999999;" class='tip-update' data-tipped-options="inline: 'mapTipData', target: 'mouse', spinner: false, behavior: 'hide', detach: false"></div>
 
 <!-- create the page section for body information -->
 <div style="position: relative; width: 840px; float: left;">
@@ -1381,9 +1381,9 @@ response.write("&nbsp;<img class='tip' id='tagData' data-tipped-options=""positi
 'image map data for the system
 'image maps created via http://summerstyle.github.io/summer/
 'tooltips added via replace function so code itself can be copied and used straight from image map editor
-'however only let these be created into Tipped tooltips when not using Chrome otherwise they will not work
+'however only let these be created into Tipped tooltips when using Firefox otherwise they will not work
 strContent = Request.ServerVariables("HTTP_USER_AGENT")
-if instr(strContent, "Chrome") = 0 then
+if instr(strContent, "Firefox") > 0 then
   response.write(replace(rsBody.fields.item("HTML"), "title", "class='tip' data-tipped-options=""target: 'mouse', behavior: 'hide'"" title"))
 else
   response.write rsBody.fields.item("HTML")

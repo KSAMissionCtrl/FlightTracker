@@ -2240,11 +2240,11 @@ if len(fpsCookie) = 0 then fpsCookie = 30
                 part = parts[x].split("~");
                 if (part[0] == strPartName) { 
 
-                  // we have to hack our own tooltips in Chrome so only redo the title attribute in Firefox
-                  if (browserName != "Chrome") {
+                  // we have to hack our own tooltips in other browsers so only redo the title attribute in Firefox
+                  if (browserName == "Firefox") {
                     $(this).attr("title", part[1]);
                     
-                  // for Chrome we are going to move the data to the alt tag so it doesn't create a tooltip
+                  // for other browsers we are going to move the data to the alt tag so they don't create a tooltip
                   // and we can use it to plug the data into a dynamic tooltip attached to a div that moves over the cursor location
                   } else {
                     $(this).attr("title", ""); 
@@ -2256,10 +2256,10 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             }
           });
           
-          // Chrome support for image map tooltips
+          // Non-Firefox support for image map tooltips
           // check every <area> tag on the page for any title data remaining from custom part data not taken from the database
           $("area").each(function( index ) {
-            if (browserName == "Chrome" && $(this).attr("title")) {
+            if (browserName != "Firefox" && $(this).attr("title")) {
               $(this).attr("alt", $(this).attr("title")); 
               $(this).attr("title", ""); 
             }
@@ -2343,29 +2343,40 @@ if len(fpsCookie) = 0 then fpsCookie = 30
     var craftImgIndex = 0;
     var craftImgs = [];
     var craftCaption = "";
+    var bTipShow = false;
     $(document).ready(function(){
     
-      // Chrome support for image map tooltips with Tipped
+      // adjust positioning of some elements in non-Firefox browsers
+      if (browserName != "Firefox") { $("#map").css("top", parseInt($("#map").css("top")) - 5); }
+      
+      // Non-Firefox support for image map tooltips with Tipped
       $("area").hover(function() { 
 
-        // HTML data is stashed in the alt attribute so Chrome doesn't show its own tooltip
-        if (browserName == "Chrome" && $(this).attr("alt")) { 
-          $("#chromeMapTipData").html($(this).attr("alt"));
+        // HTML data is stashed in the alt attribute so other browsers don't show their own tooltip
+        if (browserName != "Firefox" && $(this).attr("alt")) { 
+          $("#mapTipData").html($(this).attr("alt"));
           
           // get the coordinate data for the area and size/center the div around it
           // div containing image map is below the title header, so offset must be applied
           // div containing all content is left-margin: auto to center on page, so offset must be applied
           areaCenter = $(this).attr("coords").split(",");
-          $("#chromeMapTip").css("width", parseInt(areaCenter[2])*2);
-          $("#chromeMapTip").css("height", parseInt(areaCenter[2])*2);
-          $("#chromeMapTip").css("top", parseInt(areaCenter[1])+$("#mainwrapper").position().top-parseInt(areaCenter[2]));
-          $("#chromeMapTip").css("left", parseInt(areaCenter[0])+$("#mainwrapper").position().left+$("#mainContent").position().left-parseInt(areaCenter[2]));
-          $("#chromeMapTip").show();
+          $("#mapTip").css("width", parseInt(areaCenter[2])*2);
+          $("#mapTip").css("height", parseInt(areaCenter[2])*2);
+          $("#mapTip").css("top", parseInt(areaCenter[1])+$("#mainwrapper").position().top-parseInt(areaCenter[2]));
+          $("#mapTip").css("left", parseInt(areaCenter[0])+$("#mainwrapper").position().left+$("#mainContent").position().left-parseInt(areaCenter[2]));
+          $("#mapTip").show();
         }
       }, function() {
       
         // called once the div is shown atop this
         Tipped.refresh(".tip-update");
+      });
+  
+      // set flag to tell main image that tooltip is or is no longer visible
+      $("#mapTip").hover(function() { 
+        bTipShow = true;
+      }, function() {
+        bTipShow = false;
       });
 
       // tell site to set cookie that allows tweets to be sent by this user
@@ -2461,7 +2472,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
           $("#craftLeft").css("display", "none");
           $("#craftRight").css("display", "none");
           $("#craftImgOverlay" + craftImgIndex).css("display", "none");
-          $("#chromeMapTip").hide();
+          $("#mapTip").hide();
           bDescOpen = true;
         }
       });
@@ -2512,24 +2523,25 @@ if len(fpsCookie) = 0 then fpsCookie = 30
       // again, touchscreen users can't see tooltip so display as an alert message instead if future event
       $("#prevEvent")
         .change(function () {
-          if ($("#prevEvent").val().length) { window.location.href = $("#prevEvent").val(); }
-        })
-        .change();
+          if ($("#prevEvent").val().length) { console.log("change1"); window.location.href = $("#prevEvent").val(); }
+        });
       $("#nextEvent")
-        .change(function () {
+        .change(function () {          
           if ($("#nextEvent").val().length) { 
             if ($("#nextEvent").val() == "node") { 
             
               // event description is formatted for HTML, have to change line break if showing as an alert dialog
-              if (is_touch_device()) { setTimeout(function() { alert($("#nextNode").html().replace(/<br>/g, "\n")); }, 50); }
+              // alert dialog is shown for mobile devices and non-Firefox browsers that can't see the tooltip on hover
+              if (is_touch_device() || browserName != "Firefox") { 
+                setTimeout(function() { alert($("#nextNode").html().replace(/<br>/g, "\n")); }, 50); 
+              }
               if (!bNodeRefreshCheck && nodeMark) { nodeMark.openPopup(); }
               document.getElementById('nextEvent').selectedIndex = 0;
             } else {
               window.location.href = $("#nextEvent").val(); 
             }
           }
-        })
-        .change();
+        });
       
       // does away with the notification for future maneuver node
       $("#msgNode").click(function(){
@@ -2619,7 +2631,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
         // wait to give tooltips a chance to hide on mouseover before checking to see if we're actually off the image
         // also don't bother checking if the arrow hover off function already ran
         setTimeout(function() {
-          if (!$('#craftLeft').is(":hover") && !$('#craftRight').is(":hover") && !$('#mainwrapper').is(":hover") && !bArrowHvrOff) {
+          if (!bTipShow && !$('#craftLeft').is(":hover") && !$('#craftRight').is(":hover") && !$('#mainwrapper').is(":hover") && !bArrowHvrOff) {
             $("#captionCraft").html(craftCaption);
             if (bDescOpen) {
               $("#craftDesc").css("cursor", "pointer");
@@ -2703,7 +2715,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
         $("#engineOverlay").attr("src", craftImgs[craftImgIndex].Normal);
         $("#thrusterOverlay").attr("src", craftImgs[craftImgIndex].Normal);
         $("#craftImgOverlay" + craftImgIndex).css("display", "initial");
-        $("#chromeMapTip").hide();
+        $("#mapTip").hide();
       });
       $("#craftRight").click(function(){
         $("#craftImgOverlay" + craftImgIndex).css("display", "none");
@@ -2713,7 +2725,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
         $("#engineOverlay").attr("src", craftImgs[craftImgIndex].Normal);
         $("#thrusterOverlay").attr("src", craftImgs[craftImgIndex].Normal);
         $("#craftImgOverlay" + craftImgIndex).css("display", "initial");
-        $("#chromeMapTip").hide();
+        $("#mapTip").hide();
       });
       
       // ensures #mainwrapper returns to unhovered state in case mouse-off is too fast to register a mousover for #mainwrapper
@@ -3880,10 +3892,10 @@ if (bLaunchVideo) {
 <div id='craftLeft' style='cursor: pointer; z-index: 135; padding: 0; margin: 0; position: absolute; top: 225px; left: 15px; display: none;'><img src="craftLeft.png"></div>
 
 <!-- hidden div that is set to contain data to show in tooltip -->
-<div id='chromeMapTipData' style='display: none'></div>
+<div id='mapTipData' style='display: none'></div>
 
-<!-- hidden div with dynamic tooltip for Chrome use to display over image maps -->
-<div id="chromeMapTip" style="position: absolute; display: none; z-index: 9999999;" class='tip-update' data-tipped-options="fixed: true, maxWidth: 200, inline: 'chromeMapTipData', target: 'mouse', behavior: 'hide', detach: false"></div>
+<!-- hidden div with dynamic tooltip for non-Firefox use to display over image maps -->
+<div id="mapTip" style="position: absolute; display: none; z-index: 9999999;" class='tip-update' data-tipped-options="fixed: true, maxWidth: 200, inline: 'mapTipData', target: 'mouse', behavior: 'hide', detach: false"></div>
 
 <!-- create the page section for craft information -->
 <div style="width: 840px; float: left;">
@@ -3925,9 +3937,9 @@ document.title = document.title + " - <%response.write rsCraft.fields.item("Craf
             for each img in images
               values = split(img, "~")
               
-              'Chrome can not display tooltips by default so do not alter title if in Chrome
+              'Other browsers can not display tooltips by default so do not alter title if not in Firefox
               strContent = Request.ServerVariables("HTTP_USER_AGENT")
-              if instr(strContent, "Chrome") = 0 then
+              if instr(strContent, "Firefox") > 0 then
                 response.write("<div id='craftImgOverlay" & imgIndex & "' style='z-index: 125; padding: 0; margin: 0; position: absolute; top: 58px; left: 10px; display: none;'>" & replace(values(3), "title", "class='tip' data-tipped-options=""fixed: true, maxWidth: 200, target: 'mouse', behavior: 'hide'"" title") & "</div>")
               else
                 response.write("<div id='craftImgOverlay" & imgIndex & "' style='z-index: 125; padding: 0; margin: 0; position: absolute; top: 58px; left: 10px; display: none;'>" & values(3) & "</div>")
@@ -4505,7 +4517,7 @@ document.title = document.title + " - <%response.write rsCraft.fields.item("Craf
               for x=0 to 4
                 response.write("<div id='resTip" & x & "' style='display: none'>temp</div>")
                 response.write("<span style='cursor:help' class='tip-update' data-tipped-options=""inline: 'resTip" & x & "', detach: false"">")
-                response.write("<img id='resImg" & x & "' src='' style='display: none'></span> ")
+                response.write("<img id='resImg" & x & "' src='' style='display: none; padding-left: 1px; padding-right: 2px'></span>")
               next
               response.write("<img id='nextRes' src='nextList.png' style='display: none; cursor: pointer'></td></tr>")
             end if
@@ -4972,7 +4984,7 @@ response.write("</script>")
   'if there is a ~ symbol then this is an ascent state
   if left(str,1) = "~" then
     MapState = "ascent"
-    response.write("<tr> <td> <div id='map' class='map' style='padding: 0; margin: 0; height: 400px; width: 835px;'></div> </td> </tr>")
+    response.write("<tr> <td> <div id='map' class='map' style='padding: 0; margin: 0; height: 405px; width: 835px;'></div> </td> </tr>")
     bMapOrbit = false
     
     'extract the sizes of the various ascent videos
@@ -4986,7 +4998,7 @@ response.write("</script>")
   'if there is a @ symbol this is a pre-launch state
   elseif left(str,1) = "@" then
     MapState = "prelaunch"
-    response.write("<tr> <td> <div id='map' class='map' style='padding: 0; margin: 0; height: 400px; width: 835px;'></div> </td> </tr>")
+    response.write("<tr> <td> <div id='map' class='map' style='padding: 0; margin: 0; height: 405px; width: 835px;'></div> </td> </tr>")
     
     'extract the launch location and name and save for js use later
     data = split(right(str,len(str)-1), "|")
@@ -5019,7 +5031,7 @@ response.write("</script>")
       mapMsg = "<br>Click for dynamic view"
       
       'create the dynamic map area
-      response.write("<div id='map' class='map' style='padding: 0; margin: 0; height: 400px; width: 835px; position: absolute; top: 446px; left: 0px; visibility: hidden;'></div>")
+      response.write("<div id='map' class='map' style='padding: 0; margin: 0; height: 405px; width: 835px; position: absolute; top: 446px; left: 0px; visibility: hidden;'></div>")
     end if
 
     'check to see if this has coordinates for a static dynamic display for bodies that have no map data
