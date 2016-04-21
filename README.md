@@ -49,9 +49,8 @@ Basically you need to install the folders to your server and feed them a databas
 - [FT] Notification badges are too large in the menu and overlap. Smaller sizes are being looked into
 - [FT] Leaflet popups will overlap and are not smart enough to position themselves to stay off other popups
 - [FT] Engine/Thruster overlay during a maneuver only has a single image and can't account for rotation
-- [FT] *Chrome Only* scheduled events tooltip does not show up when the list item is hovered over
 - [FT] *Chrome Only* launch video replays do not always load fully
-- [FT] *Chrome Only* some system overview pages show an empty tooltip when hovering over a body in addition to the rich HTML tooltip
+- [FT] *Non-Firefox Only* some system overview pages show an empty tooltip when hovering over a body in addition to the rich HTML tooltip
 
 ### Future Fixes/Changes/Additions
 
@@ -66,16 +65,25 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] [Animate rover tracks](https://github.com/IvanSanchez/Leaflet.Polyline.SnakeAnim)? (for drawing old drive paths upon page load, not as a means to do "live" pathing)
 * [FT] Be able to tell if a trajectory intercepting the atmosphere is an aerobrake or re-entry
 * [FT] Detect trajectories that hit the surface on airless bodies and show a landing mark
-* [FT] Scheduled events tooltip shows an alert dialog when clicked on in Chrome containing future event details
 * [FT] Fix issues with Sketchfab model support (button display for new hoverbox behavior, start/stop on show/hide)
 * [FT] Multiple thruster/engine images to account for image of current craft rotation position
 * [FT] Proper terminator display taking orbital inclination into account ([Leaflet.Curve](https://github.com/elfalem/Leaflet.curve))
 
 ### Change Log
 
-**v4.2.0** (4/16/16)
+**v4.2.1** (4/21/16)
 
 Fixes:
+  - [FT] Hack for showing image tooltips in Chrome now applies to any browser that is not Firefox
+  - [FT] Non-Firefox part tooltips no longer hide the part identifier dots & rotate buttons when they are displayed
+  - [FT] Map made 5px taller to better position it to fully cover the static images in non-Firefox browsers
+  - [FT] List boxes are no longer calling the change() event on page load
+  - [FT] Non-Firefox browsers that can't show the Scheduled Event tooltip on mouse hover now show the tooltip text in a an alert window when the Scheduled Event item is clicked
+  - [FT] Side padding to resource icons adjusted so they & the scroll buttons all fit within a single table row in Safari
+
+**v4.2.0** (4/16/16)
+
+Changes:
   - [FT] Chrome now properly shows rich HTML tooltips for bodies, craft and parts on image maps
 
 **v4.1.0** (4/12/16)
