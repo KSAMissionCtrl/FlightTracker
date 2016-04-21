@@ -51,7 +51,7 @@ Basically you need to install the folders to your server and feed them a databas
 - [FT] Engine/Thruster overlay during a maneuver only has a single image and can't account for rotation
 - [FT] *Chrome Only* scheduled events tooltip does not show up when the list item is hovered over
 - [FT] *Chrome Only* launch video replays do not always load fully
-- [FT] *Chrome Only* hotspots don't show tooltips on body overviews and craft image maps
+- [FT] *Chrome Only* some system overview pages show an empty tooltip when hovering over a body in addition to the rich HTML tooltip
 
 ### Future Fixes/Changes/Additions
 
@@ -67,12 +67,16 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] Be able to tell if a trajectory intercepting the atmosphere is an aerobrake or re-entry
 * [FT] Detect trajectories that hit the surface on airless bodies and show a landing mark
 * [FT] Scheduled events tooltip shows an alert dialog when clicked on in Chrome containing future event details
-* [FT] Change use of `area` tag to `div` to enable use of tooltips over planets and bodies in Chrome
 * [FT] Fix issues with Sketchfab model support (button display for new hoverbox behavior, start/stop on show/hide)
 * [FT] Multiple thruster/engine images to account for image of current craft rotation position
 * [FT] Proper terminator display taking orbital inclination into account ([Leaflet.Curve](https://github.com/elfalem/Leaflet.curve))
 
 ### Change Log
+
+**v4.2.0** (4/16/16)
+
+Fixes:
+  - [FT] Chrome now properly shows rich HTML tooltips for bodies, craft and parts on image maps
 
 **v4.1.0** (4/12/16)
 
