@@ -71,6 +71,48 @@ Basically you need to install the folders to your server and feed them a databas
 
 ### Change Log
 
+**v4.3** (9/22/16)
+
+Fixes:
+  - [FT/CR] iosbadges new release now properly handle '+1' property when the badge starts with a value of 0
+  - [FT/CR] Update badges can now properly handle when no craft are available to check for updates, even if craft exist in the database (they are inactive or scheduled for the future)
+  - [FT/CR] Failing to parseInt() values read in from AJAX to check for cookie dates meant I was comparing strings instead of integers, which did not always produce the desired result (for example: '23' > '100' = true!)
+  - [FT/CR] No idea what the hell I was doing to get the "offset" between VB and JS time, but it was whack. I now simply set the JS time to match the UT-0 time (9/13/16 00:00:00) and add the number of seconds since then as computed by the VB function `dateDiff` now everything is just equal. If that made more sense
+  - [CR] Missing default variables for event calendar were causing definition errors
+  - [CR] For some reason the `UT++;` update was missing entirely from the update loop, so the event clock time was never updating. Who knows how long that's been broken...
+  - [FT] Moons were not properly setting the HTML `id` tags for their data windows, which meant they were sharing the same data fields and clicking on a moon would pop up an info box that could contain data from another moon. Now all moons display their own info
+  - [FT] Orbital plots will no longer be calculated and rendered if no surface map is available for the body
+  - [FT] Removed an unneccesary call to `findMoons()` that was causing moon orbits to be calculated & rendered twice
+  - [FT] Moving back/forward in UT time to show past orbital diagrams no longer affects the DB calls made for data that loads craft in the menu, so that information is always based on the current UT
+  - [FT] Minor code formatting issues (tabs) made neater, some leftover `console.log` debugging outputs removed
+  - [FT] To solve the problem of a tweet being published with a bad link to a craft page, the bad DB name is checked for and the user is automatically redirected to the proper craft page
+  - [FT] Mission launch date countdown tooltip now counts down again as it no longer improperly detects a mission end event
+  - [FT] No more errors for bad planet references when looking in the DB for the body a craft is orbiting/landed on
+  - [FT] Craft in pre-launch or non-orbital state can now properly calculate signal delay dynamically
+  - [FT] Requesting data from `craftinfo.asp` no longer causes an ASP timeout from infinite DB search loops when no records are in the DB
+  - [FT] Requesting data from `update.asp` no longer causes a DB access error when craft in the catalog are not yet active and have no body reference
+  
+Changes:
+  - [FT/CR] All dates for calculating UT time have been reset to the new Day 1 = 9/13/16
+  - [FT/CR] All twitter timelines update to use both the new account timeline and collection timeline embed code
+  - [CR] Repositioned tooltip on Full crew Roster so it wouldn't cover up practically the entire crew member's image when it pops up
+  - [CR] Astronaut's current "Assignment" has been changed to "Mission"
+  - [FT] The `loc` map variable can now be used more than once to drop as many pins on the map as you want - does not display popup if more than one pin is dropped
+  - [FT] The surface map can now account for vessels that are listed as belonging to a body but are not in orbit, and thus should not be rendered with orbital paths
+  - [FT] The Key listing for system diagrams is no longer a required DB field, and will not be shown if data is omitted
+  - [FT] Clicking back and forward in the system orbital diagrams moves the page to the top of the diagram for a smoother transition
+  - [FT] Vessels menu can now handle situations where there are no craft at all in the database, or there are craft but none are currently active, or there are craft but non are currently active and some are inactive
+  - [FT] In cases where no craft are active around Kerbol, the system entry is always included in the menu so users can easily navigate back to the "home" page of the system browser
+  - [FT] Surface map vessel updates each tick are now done in reverse order - was just switched around to debug the issue of moons overwriting each other's popup data and has no effect on end user either way
+  - [FT] Craft overlay dots showing part data tips now show on initial page load and hide after a second so people can see that they are there
+  - [FT] Visited links are now colored red
+  
+Additions:
+  - [CR] Astronaut's names & title now appear in the page title/tab
+  - [FT] Body/System name now appears in the page title/tab
+  - [FT] New js function lets me pull and separate data from URL parameters that share the same name
+  - [FT] A new build of the Leaflet.KSP plugin allows the surface map info box to show Lat/Lng, slope degree, terrain height and biome. Any of these (except Lat/Lng) can be removed from the display if that body is defined in the database as not being scanned for that data
+  
 **v4.2.1** (4/21/16)
 
 Fixes:
