@@ -34,7 +34,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
   <title>KSA Flight Tracker</title>
 
   <!-- use this image link to force reddit to use a certain image for its thumbnail -->
-  <meta property="og:image" content="http://i.imgur.com/stu9HCm.png" />
+  <meta property="og:image" content="http://i.imgur.com/Yol0Gf0.png" />
   
   <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 
@@ -50,9 +50,10 @@ if len(fpsCookie) = 0 then fpsCookie = 30
 
   <!-- JS libraries -->
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-  <script type="text/javascript" src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
-  <script type="text/javascript" src="../jslib/leaflet.js"></script>
-  <script type="text/javascript" src="../jslib/leafletembed.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.5.1/leaflet-src.js"></script>
+  <script type="text/javascript" src="../jslib/proj4js-combined.js"></script>
+  <script type="text/javascript" src="../jslib/proj4leaflet.js"></script>
+  <script type="text/javascript" src="../jslib/leaflet.ksp-src.js"></script>
   <script type="text/javascript" src="../jslib/sylvester.js"></script>
   <script type="text/javascript" src="../jslib/sylvester.src.js"></script>
   <script type="text/javascript" src="../jslib/leaflet.label.js"></script>
@@ -60,7 +61,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
   <script type="text/javascript" src="../jslib/tipped.js"></script>
   <script type="text/javascript" src="../jslib/codebird.js"></script>  
   <script type="text/javascript" src="../jslib/spin.min.js"></script>  
-  <script type="text/javascript" src="../jslib/iosbadge.min.js"></script>
+  <script type="text/javascript" src="../jslib/iosbadge.js"></script>
   <script type="text/javascript" src="../jslib/leaflet.rrose-src.js"></script>
 
   <!-- "Data load" screen -->
@@ -849,14 +850,14 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             // functions will make sure fresh data is loaded when the popup displays and not just when the update tick happens
             atmoMark.on('click', function(e) {
               var dd = new Date();
-              dd.setTime(dd.getTime() - timeOffset);
+              dd.setTime(1473739200000 + (UT * 1000));
               var currDate = Math.floor(dd.getTime() / 1000);
               var now = currDate - startDate;
               $('#atmoEntryTime').html("Time to Atmosphere<br>" + formatTime((latlon.length + latlon2.length)-now, false));
             });
             atmoMark.on('popupopen', function(e) {
               var dd = new Date();
-              dd.setTime(dd.getTime() - timeOffset);
+              dd.setTime(1473739200000 + (UT * 1000));
               var currDate = Math.floor(dd.getTime() / 1000);
               var now = currDate - startDate;
               $('#atmoEntryTime').html("Time to Atmosphere<br>" + formatTime((latlon.length + latlon2.length)-now, false));
@@ -890,14 +891,14 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             // functions will make sure fresh data is loaded when the popup displays and not just when the update tick happens
             SOIMark.on('click', function(e) {
               var dd = new Date();
-              dd.setTime(dd.getTime() - timeOffset);
+              dd.setTime(1473739200000 + (UT * 1000));
               var currDate = Math.floor(dd.getTime() / 1000);
               var now = currDate - startDate;
               $('#SOIExitTime').html("Time to SOI Exit<br>" + formatTime((Math.abs(period2) - initialUT)-now, false));
             });
             SOIMark.on('popupopen', function(e) {
               var dd = new Date();
-              dd.setTime(dd.getTime() - timeOffset);
+              dd.setTime(1473739200000 + (UT * 1000));
               var currDate = Math.floor(dd.getTime() / 1000);
               var now = currDate - startDate;
               $('#SOIExitTime').html("Time to SOI Exit<br>" + formatTime((Math.abs(period2) - initialUT)-now, false));
@@ -1032,7 +1033,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
           cardinal = "";
           rvMarker.on('click', function(e) {
             var dd = new Date();
-            dd.setTime(dd.getTime() - timeOffset);
+            dd.setTime(1473739200000 + (UT * 1000));
             var currDate = Math.floor(dd.getTime() / 1000);
             var now = currDate - startDate;
             if (now < latlon2.length) {
@@ -1140,7 +1141,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
           cardinal = "";
           craft.on('click', function(e) {
             var dd = new Date();
-            dd.setTime(dd.getTime() - timeOffset);
+            dd.setTime(1473739200000 + (UT * 1000));
             var currDate = Math.floor(dd.getTime() / 1000);
             var now = currDate - startDate;
             if (now < latlon.length) {
@@ -1316,14 +1317,14 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             // functions will make sure fresh data is loaded when the popup displays and not just when the update tick happens
             atmoMark.on('click', function(e) {
               var dd = new Date();
-              dd.setTime(dd.getTime() - timeOffset);
+              dd.setTime(1473739200000 + (UT * 1000));
               var currDate = Math.floor(dd.getTime() / 1000);
               var now = currDate - startDate;
               $('#atmoEntryTime').html("Time to Atmosphere<br>" + formatTime((latlon.length)-now, false));
             });
             atmoMark.on('popupopen', function(e) {
               var dd = new Date();
-              dd.setTime(dd.getTime() - timeOffset);
+              dd.setTime(1473739200000 + (UT * 1000));
               var currDate = Math.floor(dd.getTime() / 1000);
               var now = currDate - startDate;
               $('#atmoEntryTime').html("Time to Atmosphere<br>" + formatTime((latlon.length)-now, false));
@@ -1414,7 +1415,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
               apMark.bindPopup("<center><span id='apTime'>Time to Apoapsis<br>" + formatTime(apTime, false) + "</span><br><span id='apDate'>" + (apUTC.getUTCMonth() + 1) + '/' + apUTC.getUTCDate() + '/' + apUTC.getUTCFullYear() + '<br>' + hrs + ':' + mins + ':' + secs + " UTC</span></center>", {closeButton: true});
               apMark.on('click', function(e) {
                 var dd = new Date();
-                dd.setTime(dd.getTime() - timeOffset);
+                dd.setTime(1473739200000 + (UT * 1000));
                 var currDate = Math.floor(dd.getTime() / 1000);
                 var now = currDate - startDate;
                 $('#apTime').html("Time to Apoapsis<br>" + formatTime(apTime-now, false));
@@ -1435,7 +1436,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
               peMark.bindPopup("<center><span id='peTime'>Time to Periapsis<br>" + formatTime(peTime, false) + "</span><br><span id='peDate'>" + (peUTC.getUTCMonth() + 1) + '/' + peUTC.getUTCDate() + '/' + peUTC.getUTCFullYear() + '<br>' + hrs + ':' + mins + ':' + secs + " UTC</span></center>", {closeButton: true});
               peMark.on('click', function(e) {
                 var dd = new Date();
-                dd.setTime(dd.getTime() - timeOffset);
+                dd.setTime(1473739200000 + (UT * 1000));
                 var currDate = Math.floor(dd.getTime() / 1000);
                 var now = currDate - startDate;
                 $('#peTime').html("Time to Periapsis<br>" + formatTime(peTime-now, false));
@@ -1470,14 +1471,14 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             // functions will make sure fresh data is loaded when the popup displays and not just when the update tick happens
             SOIMark.on('click', function(e) {
               var dd = new Date();
-              dd.setTime(dd.getTime() - timeOffset);
+              dd.setTime(1473739200000 + (UT * 1000));
               var currDate = Math.floor(dd.getTime() / 1000);
               var now = currDate - startDate;
               $('#SOIExitTime').html("Time to SOI Exit<br>" + formatTime((Math.abs(period) - initialUT)-now, false));
             });
             SOIMark.on('popupopen', function(e) {
               var dd = new Date();
-              dd.setTime(dd.getTime() - timeOffset);
+              dd.setTime(1473739200000 + (UT * 1000));
               var currDate = Math.floor(dd.getTime() / 1000);
               var now = currDate - startDate;
               $('#SOIExitTime').html("Time to SOI Exit<br>" + formatTime((Math.abs(period) - initialUT)-now, false));
@@ -1494,7 +1495,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
           
           // update the marker popup data now for when it is automatically shown
           var dd = new Date();
-          dd.setTime(dd.getTime() - timeOffset);
+          dd.setTime(1473739200000 + (UT * 1000));
           var currDate = Math.floor(dd.getTime() / 1000);
           var now = currDate - startDate;
           if (latlon[now].lat < 0) {
@@ -1541,7 +1542,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
         // no dynamic map, so setup static orbit info box
         } else {
           var dd = new Date();
-          dd.setTime(dd.getTime() - timeOffset);
+          dd.setTime(1473739200000 + (UT * 1000));
           var currDate = Math.floor(dd.getTime() / 1000);
           var now = currDate - startDate;
           if (latlon[now].lat < 0) {
@@ -2107,7 +2108,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             "&entry.1846932672=" + bWentFullscreen + 
             "&entry.1928928792=" + minimizeChoice + 
             "&entry.1790986671=" + videoLoadTime + 
-            "&entry.667865474=" + formatTime(timeOffset/1000, false) + 
+            "&entry.667865474=" + formatTime(0, false) + 
             "&entry.1780703514=" + bVideoLoaded + 
             "&entry.270402597=" + launchVideo.readyState + 
             "&entry.676247940=" + percentLoaded + 
@@ -2291,27 +2292,29 @@ if len(fpsCookie) = 0 then fpsCookie = 30
 
         // parse & handle all craft instances
         for (x=0; x<crafts.length; x++) {
-          craftInfo = crafts[x].split(";");
-          
-          // check if this craft was already viewed before
-          if (getCookie(craftInfo[0])) {
-          
-            // if there was a change to any of its records, tally up the amount
-            // add a badge to the craft menu item, and also the planet (and moon if required) it is orbiting
-            if (getCookie(craftInfo[0]) < craftInfo[1]) {
-              $("#" + craftInfo[0]).iosbadge({ theme: 'red', size: 20, content: 'Update',  position: 'top-left' });
-              $("#" + craftInfo[2]).iosbadge({ theme: 'red', size: 20, content: '+1',  position: 'top-left' });
-              if (craftInfo[3] != "null") { $("#" + craftInfo[3]).iosbadge({ theme: 'red', size: 20, content: '+1',  position: 'top-left' }); }
-            }
-          } else {
-          
-            // this is a new craft - but if it's also a new user's first visit then no point notifying them
-            if (bNewUser) {
-              setCookie(craftInfo[0], craftInfo[1], true);
+          if (crafts[x] != "null" && crafts[x] != "") {
+            craftInfo = crafts[x].split(";");
+            
+            // check if this craft was already viewed before
+            if (getCookie(craftInfo[0])) {
+            
+              // if there was a change to any of its records, tally up the amount
+              // add a badge to the craft menu item, and also the planet (and moon if required) it is orbiting
+              if (parseInt(getCookie(craftInfo[0])) < parseInt(craftInfo[1])) {
+                $("#" + craftInfo[0]).iosbadge({ theme: 'red', size: 20, content: 'Update',  position: 'top-left' });
+                $("#" + craftInfo[2]).iosbadge({ theme: 'red', size: 20, content: '+1',  position: 'top-left' });
+                if (craftInfo[3] != "null") { $("#" + craftInfo[3]).iosbadge({ theme: 'red', size: 20, content: '+1',  position: 'top-left' }); }
+              }
             } else {
-              $("#" + craftInfo[0]).iosbadge({ theme: 'red', size: 20, content: 'New',  position: 'top-left' });
-              $("#" + craftInfo[2]).iosbadge({ theme: 'red', size: 20, content: '+1',  position: 'top-left' });
-              if (craftInfo[3] != "null") { $("#" + craftInfo[3]).iosbadge({ theme: 'red', size: 20, content: '+1',  position: 'top-left' }); }
+            
+              // this is a new craft - but if it's also a new user's first visit then no point notifying them
+              if (bNewUser) {
+                setCookie(craftInfo[0], craftInfo[1], true);
+              } else {
+                $("#" + craftInfo[0]).iosbadge({ theme: 'red', size: 20, content: 'New',  position: 'top-left' });
+                $("#" + craftInfo[2]).iosbadge({ theme: 'red', size: 20, content: '+1',  position: 'top-left' });
+                if (craftInfo[3] != "null") { $("#" + craftInfo[3]).iosbadge({ theme: 'red', size: 20, content: '+1',  position: 'top-left' }); }
+              }
             }
           }
         }
@@ -2320,7 +2323,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
         for (x=0; x<crew.length; x++) {
           kerbalInfo = crew[x].split(";");
           if (getCookie(kerbalInfo[0])) {
-            if (getCookie(kerbalInfo[0]) < kerbalInfo[1]) {
+            if (parseInt(getCookie(kerbalInfo[0])) < parseInt(kerbalInfo[1])) {
             
               // tally up the changes to show on the menu item that links to the Crew Roster
               $("#crewRoster").iosbadge({ theme: 'red', size: 20, content: '+1',  position: 'top-left' });
@@ -2346,6 +2349,9 @@ if len(fpsCookie) = 0 then fpsCookie = 30
     var bTipShow = false;
     $(document).ready(function(){
     
+      // hide the craft overlay, do this after load so ppl see it and go to bring it back
+      setTimeout(function(){ if (!$('#mainwrapper').is(":hover")) $("#craftImgOverlay" + craftImgIndex).fadeOut(1000); }, 1000);
+      
       // adjust positioning of some elements in non-Firefox browsers
       if (browserName != "Firefox") { $("#map").css("top", parseInt($("#map").css("top")) - 5); }
       
@@ -2523,7 +2529,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
       // again, touchscreen users can't see tooltip so display as an alert message instead if future event
       $("#prevEvent")
         .change(function () {
-          if ($("#prevEvent").val().length) { console.log("change1"); window.location.href = $("#prevEvent").val(); }
+          if ($("#prevEvent").val().length) { window.location.href = $("#prevEvent").val(); }
         });
       $("#nextEvent")
         .change(function () {          
@@ -3255,7 +3261,13 @@ sConnection = "Provider=Microsoft.Jet.OLEDB.4.0;" & _
 
 'attempt to access the database. If it is not found then try the archive
 connCraft.Open(sConnection)
-If Err <> 0 Then response.redirect("http://archive.kerbalspace.agency/archive/craft.asp?" & Request.ServerVariables("QUERY_STRING"))
+If Err <> 0 Then 
+  if request.querystring("db") = "progenymk1-a" then
+    response.redirect("http://www.kerbalspace.agency/Tracker/craft.asp?db=progenymk1-a1")
+  else
+    response.redirect("http://archive.kerbalspace.agency/archive/craft.asp?" & Request.ServerVariables("QUERY_STRING"))
+  end if
+end if
 On Error GoTo 0
 
 'create the tables
@@ -3294,7 +3306,7 @@ next
 'http://stackoverflow.com/questions/16474210/detect-if-a-names-field-exists-in-a-record-set
 
 'calculate the time in seconds since epoch 0 when the game started
-UT = datediff("s", "16-Feb-2014 00:00:00", now())
+UT = datediff("s", "13-Sep-2016 00:00:00", now())
 
 'affects the base UT that is used for some areas that ignore dbUT
 if request.querystring("deltaut") then
@@ -3389,11 +3401,8 @@ rsCrafts.open "select * from crafts", connCatalog, 1, 1
 
 'get the record containing the information relative to this vessel
 rsCrafts.find("db='" & request.querystring("db") & "'")
-if rsCrafts.eof then 
 
-  'use Kerbin as a default
-  ref = 3
-else
+if not rsCrafts.eof then 
 
   'parse all the SOIs this craft has/will be in and find the one it is in currently
   locations = split(rsCrafts.fields.item("SOI"), "|")
@@ -3404,6 +3413,9 @@ else
     end if
   next 
 end if
+
+'use Kerbin as a default
+if ref < 0 then ref = 3
 
 'create a recordset copy of the moon/planet recordset depending on what is being orbited at this time
 'moons use 50 or greater for reference numbers
@@ -3631,9 +3643,11 @@ else
 end if
 
 'redo the message entirely if the mission is over
+bUpdateMET = true
 if not isnull(rsCraft.fields.item("MissionEnd")) then
   values = split(rsCraft.fields.item("MissionEnd"), ";")
   if UT >= values(0)*1 then
+    bUpdateMET = false
     msg = values(2) & "<br>MET: "
     MET = datediff("s", rsCraft.fields.item("LaunchDate"), values(1))
   end if
@@ -3690,8 +3704,7 @@ end if
 
 'make note of whether this mission has ended or not, to disable tooltip updates
 'note also we should not update if there is no time to update
-bUpdateMET = true
-if not isnull(rsCraft.fields.item("MissionEnd")) or launchmsg = "To Be Determined" or not tzero then bUpdateMET = false
+if launchmsg = "To Be Determined" or not tzero then bUpdateMET = false
 
 'depending on whether we are in a pop-out window or normal page decides how page is formatted
 if request.querystring("popout") then
@@ -3940,9 +3953,9 @@ document.title = document.title + " - <%response.write rsCraft.fields.item("Craf
               'Other browsers can not display tooltips by default so do not alter title if not in Firefox
               strContent = Request.ServerVariables("HTTP_USER_AGENT")
               if instr(strContent, "Firefox") > 0 then
-                response.write("<div id='craftImgOverlay" & imgIndex & "' style='z-index: 125; padding: 0; margin: 0; position: absolute; top: 58px; left: 10px; display: none;'>" & replace(values(3), "title", "class='tip' data-tipped-options=""fixed: true, maxWidth: 200, target: 'mouse', behavior: 'hide'"" title") & "</div>")
+                response.write("<div id='craftImgOverlay" & imgIndex & "' style='z-index: 125; padding: 0; margin: 0; position: absolute; top: 58px; left: 10px;'>" & replace(values(3), "title", "class='tip' data-tipped-options=""fixed: true, maxWidth: 200, target: 'mouse', behavior: 'hide'"" title") & "</div>")
               else
-                response.write("<div id='craftImgOverlay" & imgIndex & "' style='z-index: 125; padding: 0; margin: 0; position: absolute; top: 58px; left: 10px; display: none;'>" & values(3) & "</div>")
+                response.write("<div id='craftImgOverlay" & imgIndex & "' style='z-index: 125; padding: 0; margin: 0; position: absolute; top: 58px; left: 10px;'>" & values(3) & "</div>")
               end if
               imgIndex = imgIndex + 1
 
@@ -4555,7 +4568,13 @@ document.title = document.title + " - <%response.write rsCraft.fields.item("Craf
                 if rsBody.fields.item("Body") = "Kerbin" then 
                 
                   'if we are in orbit around Kerbin just get our apoapsis
-                  kDist = rsOrbit.fields.item("Apoapsis")
+                  if not rsOrbit.eof then
+                    kDist = rsOrbit.fields.item("Apoapsis")
+                    
+                  'must be pre-launch
+                  else
+                    kDist = 0
+                  end if
                 elseif rsBody.fields.item("Body") <> "Kerbol" then 
                      
                   'calculate the current mean anomaly (in UT)
@@ -5127,7 +5146,8 @@ response.write("<ol class='tree'>")
 
 'decide whether we are building a menu for active or inactive vessels
 bEntry = false
-bInactiveVessels = true
+bInactiveVessels = false
+bKerbolUsed = false
 if request.querystring("filter") = "inactive" then
 
   'we can add or remove the craft types to search for by modifying the previously-defined array above
@@ -5286,10 +5306,11 @@ else
         
           'include the planet in the tree if this has not yet been done
           if not bPlanet then
+            if rsPlanets.fields.item("body") = "Kerbol" then bKerbolUsed = true
             url = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=" & rsPlanets.fields.item("body") & "-System"
             if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
             if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
-                  response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show System overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsPlanets.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
+              response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show System overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsPlanets.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
             bPlanet = true
           end if
           
@@ -5297,7 +5318,7 @@ else
           url = "' href='http://www.kerbalspace.agency/Tracker/craft.asp?db=" & rsCrafts.fields.item("db")
           if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
           if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
-          response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & url & "'>" & rsCrafts.fields.item("vessel") & "&nbsp;&nbsp;<span id='" & rsCrafts.fields.item("db") & "' style='position: relative;'></span></a></li>")
+            response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & url & "'>" & rsCrafts.fields.item("vessel") & "&nbsp;&nbsp;<span id='" & rsCrafts.fields.item("db") & "' style='position: relative;'></span></a></li>")
           bEntry = true
               
           'if this craft is orbiting around the body currently being viewed, it will probably need a rich tooltip to be displayed
@@ -5320,7 +5341,17 @@ else
 end if
 
 'let the user know if we did not find anything for this particular filter
-if not bEntry or not bInactiveVessels then response.write("<span style='margin-left: 70px'>No Vessels Found</a>")
+if not bEntry and request.querystring("filter") <> "inactive" then
+  response.write("<span style='margin-left: 70px'>No Vessels Found</a>")
+end if
+
+'also check that if we did not find a ship for Kerbol, we should add that for a way back to the system overview if taken straight to a body overview
+if not bKerbolUsed and request.querystring("filter") <> "inactive" then 
+  url = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=Kerbol-System"
+  if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
+  if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
+    response.write("<li> <label for='Kerbol'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show System overview' href='" & url & "'>Kerbol</a>&nbsp;&nbsp;<span id='Kerbol' style='position: relative;'></span></label> <input type='checkbox' id='' /> </li>")
+end if
 %>
 
 <!-- adds a link to the crew roster to the end of the menu list -->
@@ -5331,35 +5362,57 @@ if not bEntry or not bInactiveVessels then response.write("<span style='margin-l
 
 <%
 'build a URL to use for linking, preserving certain URL variables
-url = "http://" & Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL") & "?db=" & request.querystring("db")
-if request.querystring("ut") then url = url & "&ut=" & request.querystring("ut")
-if request.querystring("pass") then url = url & "&pass=" & request.querystring("pass")
-if request.querystring("popout") then url = url & "&popout=" & request.querystring("popout")
+'but only if there are craft found
+if bEntry or bInactiveVessels then 
+  url = "http://" & Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL") & "?db=" & request.querystring("db")
+  if request.querystring("ut") then url = url & "&ut=" & request.querystring("ut")
+  if request.querystring("pass") then url = url & "&pass=" & request.querystring("pass")
+  if request.querystring("popout") then url = url & "&popout=" & request.querystring("popout")
 
-'decide what filter types to include beneath the menu tree
-response.write("<span style='font-family:arial;color:black;font-size:12px;'>")
-if request.querystring("filter") = "inactive" then
-  response.write("<b>Filter By:</b> <a href='" & url & "'>Active Vessels</a>")
-else
-  response.write("<b>Filter By:</b> ")
-  if len(request.querystring("filter")) then response.write("<a href='" & url & "'>All</a> | ")
-  
-  'print out the available filters depending on what is defined
-  for each x in filters
-  
-    'convert the string to first character upper case
-    letter = left(x, 1)
-    letter = ucase(letter)
-    title = letter & mid(x, 2, len(x)-1)
+  'decide what filter types to include beneath the menu tree
+  response.write("<span style='font-family:arial;color:black;font-size:12px;'>")
+  if request.querystring("filter") = "inactive" then
+    response.write("<b>Filter By:</b> <a href='" & url & "'>Active Vessels</a>")
+  else
+    response.write("<b>Filter By:</b> ")
+    if len(request.querystring("filter")) then response.write("<a href='" & url & "'>All</a> | ")
     
-    'do not link to an active filter
-    if request.querystring("filter") <> x then
-      response.write("<a href='" & url & "&filter=" & x & "'>" & title & "</a> | ")
-    else
-      response.write(title & " | ")
-    end if
-  next
-  response.write("<a href='" & url & "&filter=inactive'>Inactive Vessels</a>")
+    'print out the available filters depending on what is defined
+    for each x in filters
+    
+      'convert the string to first character upper case
+      letter = left(x, 1)
+      letter = ucase(letter)
+      title = letter & mid(x, 2, len(x)-1)
+      
+      'do not link to an active filter
+      if request.querystring("filter") <> x then
+        response.write("<a href='" & url & "&filter=" & x & "'>" & title & "</a> | ")
+      else
+        response.write(title & " | ")
+      end if
+    next
+    response.write("<a href='" & url & "&filter=inactive'>Inactive Vessels</a>")
+  end if
+  
+'in case no craft are found but the user wants to return to active vessel listing
+elseif len(request.querystring("filter")) then
+  url = "http://" & Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL") & "?db=" & request.querystring("db")
+  if request.querystring("ut") then url = url & "&ut=" & request.querystring("ut")
+  if request.querystring("pass") then url = url & "&pass=" & request.querystring("pass")
+  if request.querystring("popout") then url = url & "&popout=" & request.querystring("popout")
+  response.write("<span style='font-family:arial;color:black;font-size:12px;'>")
+  response.write("<b>Filter By:</b> <a href='" & url & "'>Active Vessels</a>")
+  
+'check that there are craft, but if none were found then they must be inactive. Provide link to inactive filter
+'NOTE: this assumes that there are inactive vessels!
+elseif bCraftExist then
+  url = "http://" & Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL") & "?db=" & request.querystring("db")
+  if request.querystring("ut") then url = url & "&ut=" & request.querystring("ut")
+  if request.querystring("pass") then url = url & "&pass=" & request.querystring("pass")
+  if request.querystring("popout") then url = url & "&popout=" & request.querystring("popout")
+  response.write("<span style='font-family:arial;color:black;font-size:12px;'>")
+  response.write("<b>Filter By:</b> <a href='" & url & "&filter=inactive'>Inactive Vessels</a>")
 end if
 %>
 
@@ -5550,14 +5603,14 @@ rsCrafts.find("db='" & request.querystring("db") & "'")
 'if we are watching a live launch, show the main twitter stream even if there is a mission timeline so it auto-updates with launch tweets
 'we should also hide the timeline if the currect craft record is telling us to do so
 if (bAscentActive and len(request.querystring("ut")) = 0) or (rsCraft.fields.item("HideTimeline")) then
-  response.write("<p><a class='twitter-timeline' href='https://twitter.com/KSA_MissionCtrl' data-widget-id='598711760149852163'>Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','twitter-wjs');</script></p>")
+  response.write("<p><center><a href='https://twitter.com/KSA_MissionCtrl' class='twitter-follow-button' data-show-count='true'>Follow @KSA_MissionCtrl</a><script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></center> <a class='twitter-timeline' href='https://twitter.com/KSA_MissionCtrl' data-widget-id='598711760149852163' height='700' data-chrome='noheader'>Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','twitter-wjs');</script></p>")
 else
   
   'show the mission collection timeline if there is one available, or fall back to the main tweet stream
   if isnull(rsCrafts.fields.item("collection")) or rsCrafts.eof then 
-    response.write("<p><a class='twitter-timeline' href='https://twitter.com/KSA_MissionCtrl' data-widget-id='598711760149852163'>Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','twitter-wjs');</script></p>")
+    response.write("<p><center><a href='https://twitter.com/KSA_MissionCtrl' class='twitter-follow-button' data-show-count='true'>Follow @KSA_MissionCtrl</a><script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></center> <a class='twitter-timeline' href='https://twitter.com/KSA_MissionCtrl' data-widget-id='598711760149852163' height='700' data-chrome='noheader'>Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','twitter-wjs');</script></p>")
   else
-    response.write("<p><a class='twitter-timeline' href='/KSA_MissionCtrl/timelines/598076346514984960' data-widget-id='" & rsCrafts.fields.item("collection") & "'>Mission Timeline</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','twitter-wjs');</script></p>")
+    response.write("<p><center><a href='https://twitter.com/KSA_MissionCtrl' class='twitter-follow-button' data-show-count='true'>Follow @KSA_MissionCtrl</a><script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></center> <a class='twitter-timeline' data-partner='tweetdeck' href='https://twitter.com/KSA_MissionCtrl/timelines/" & rsCrafts.fields.item("collection") & "' height='600'>Curated tweets by KSA_MissionCtrl</a> <script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></p>")
   end if
 end if
 %>
@@ -5574,15 +5627,11 @@ rsMoons.movefirst
 <!-- this script controls the real-time page elements, including the Leaflet map -->
 
 <script>
-  // determine our offset between js and vb time, which can vary from 10-15 seconds
-  // time offset is in favor of vb time, as majority of time stamps are done with dateDiff()
+  // js and vb can vary from 10-15 or more seconds
+  // time is in favor of vb time, as majority of time stamps are done with dateDiff()
+  // 1473739200000 ms = 9/13/16 00:00:00
   var d = new Date();
-  if (d.getSeconds() < <%response.write(Second(Now()))%>) {
-    var timeOffset = ((d.getSeconds() + 60) - <%response.write(Second(Now()))%>) * 1000;
-  } else {
-    var timeOffset = (d.getSeconds() - <%response.write(Second(Now()))%>) * 1000;
-  }
-  d.setTime(d.getTime() - timeOffset);
+  d.setTime(1473739200000 + (UT * 1000));
   var startDate = Math.floor(d.getTime() / 1000);
   
   // decide what kind of dynamic map we are creating, if any
@@ -5610,7 +5659,11 @@ rsMoons.movefirst
     // leaflet.js was modified to remove the biome, slope and elevation data displays
     // show controls only when the cursor is over the map
     if (!is_touch_device()) { 
-      infoControl = new L.KSP.Control.Info();
+      infoControl = new L.KSP.Control.Info({
+          elevInfo: false,
+          biomeInfo: false,
+          slopeInfo: false
+        });
       map.addControl(infoControl);
       $(".leaflet-control-info").css("display", "none");
       $(".leaflet-control-zoom").css("display", "none");
@@ -5748,7 +5801,11 @@ rsMoons.movefirst
     // leaflet.js was modified to remove the biome, slope and elevation data displays
     // show controls only when the cursor is over the map
     if (!is_touch_device()) { 
-      infoControl = new L.KSP.Control.Info();
+      infoControl = new L.KSP.Control.Info({
+          elevInfo: false,
+          biomeInfo: false,
+          slopeInfo: false
+        });
       map.addControl(infoControl);
       $(".leaflet-control-info").css("display", "none");
       $(".leaflet-control-zoom").css("display", "none");
@@ -5925,7 +5982,11 @@ rsMoons.movefirst
       // leaflet.js was modified to remove the biome, slope and elevation data displays
       // show controls only when the cursor is over the map
       if (!is_touch_device()) { 
-        infoControl = new L.KSP.Control.Info();
+        infoControl = new L.KSP.Control.Info({
+          elevInfo: false,
+          biomeInfo: false,
+          slopeInfo: false
+        });
         map.addControl(infoControl);
         $(".leaflet-control-info").css("display", "none");
         $(".leaflet-control-zoom").css("display", "none");
@@ -6109,7 +6170,7 @@ rsMoons.movefirst
   
     // get the difference in time since the page load and use that to find the right data
     var dd = new Date();
-    dd.setTime(dd.getTime() - timeOffset);
+    dd.setTime(1473739200000 + (UT * 1000));
     var currDate = Math.floor(dd.getTime() / 1000);
     var now = currDate - startDate;
 
@@ -6149,7 +6210,7 @@ rsMoons.movefirst
           "|entry.1846932672=" + bWentFullscreen + 
           "|entry.1928928792=" + minimizeChoice + 
           "|entry.1790986671=" + videoLoadTime + 
-          "|entry.667865474=" + formatTime(timeOffset/1000, false)+ 
+          "|entry.667865474=" + formatTime(0, false)+ 
           "|entry.1780703514=" + bVideoLoaded + 
           "|entry.270402597=" + launchVideo.readyState + 
           "|entry.676247940=" + percentLoaded + 

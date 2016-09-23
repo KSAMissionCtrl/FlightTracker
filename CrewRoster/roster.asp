@@ -11,7 +11,7 @@
   <title>KSA Crew Roster</title>
 
   <!-- use this image link to force reddit to use a certain image for its thumbnail -->
-  <meta property="og:image" content="http://i.imgur.com/3zFaENT.jpg" />
+  <meta property="og:image" content="http://i.imgur.com/TLwwOya.png" />
 
   <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
   
@@ -26,7 +26,7 @@
   <script type="text/javascript" src="../jslib/sylvester.src.js"></script>
   <script type="text/javascript" src="../jslib/numeral.min.js"></script>
   <script type="text/javascript" src="../jslib/tipped.js"></script>
-  <script type="text/javascript" src="../jslib/iosbadge.min.js"></script>
+  <script type="text/javascript" src="../jslib/iosbadge.js"></script>
 
   <script>
     // checks for cookies being enabled
@@ -230,22 +230,25 @@
         
         // parse & handle all craft instances
         for (x=0; x<crafts.length; x++) {
-          craftInfo = crafts[x].split(";");
-          
-          // check if this craft was already viewed before
-          if (getCookie(craftInfo[0])) {
-          
-            // if there was a change to any of its records, tally up the amount
-            if (getCookie(craftInfo[0]) < craftInfo[1]) {
-              $("#flightTracker").iosbadge({ theme: 'red', size: 20, content: '+1',  position: 'top-left' });
-            }
-          } else {
-          
-            // this is a new craft - but if it's also a new user's first visit then no point notifying them
-            if (bNewUser) {
-              setCookie(craftInfo[0], UT, true);
+          if (crafts[x] != "null" && crafts[x] != "") {
+            craftInfo = crafts[x].split(";");
+            
+            // check if this craft was already viewed before
+            if (getCookie(craftInfo[0])) {
+            
+              // if there was a change to any of its records, tally up the amount
+              if (parseInt(getCookie(craftInfo[0])) < parseInt(craftInfo[1])) {
+                console.log("old");
+                $("#flightTracker").iosbadge({ theme: 'red', size: 20, content: '+1',  position: 'top-left' });
+              }
             } else {
-              $("#flightTracker").iosbadge({ theme: 'red', size: 20, content: '+1',  position: 'top-left' });
+            
+              // this is a new craft - but if it's also a new user's first visit then no point notifying them
+              if (bNewUser) {
+                setCookie(craftInfo[0], UT, true);
+              } else {
+                $("#flightTracker").iosbadge({ theme: 'red', size: 20, content: '+1',  position: 'top-left' });
+              }
             }
           }
         }
@@ -254,7 +257,7 @@
         for (x=0; x<crew.length; x++) {
           kerbalInfo = crew[x].split(";");
           if (getCookie(kerbalInfo[0])) {
-            if (getCookie(kerbalInfo[0]) < kerbalInfo[1]) {
+            if (parseInt(getCookie(kerbalInfo[0])) < parseInt(kerbalInfo[1])) {
             
               // place a badge over the image of the kerbal in addition to upping the count in the menu
               $("#" + kerbalInfo[0]).iosbadge({ theme: 'red', size: 20, content: 'Update' });
@@ -404,7 +407,7 @@ end if
 
 'calculate the time in seconds since epoch 0 when the game started
 'save the result to JS as well
-UT = datediff("s", "16-Feb-2014 00:00:00", now())
+UT = datediff("s", "13-Sep-2016 00:00:00", now())
 response.write("<script>var UT = " & UT & ";</script>")
 
 'are we showing the full roster or an individual listing?
@@ -443,7 +446,7 @@ if request.querystring("db") = "" then
       end if
       strFilter = ""
       if len(request.querystring("filter")) then strFilter = "&filter=" & request.querystring("filter")
-      response.write("<a id='" & rsCrew.fields.item("Kerbal") & "' style='position: relative;' href='http://www.kerbalspace.agency/Roster/roster.asp?db=" & rsCrew.fields.item("Kerbal") & strFilter & "'><img src='" & rsKerbal.fields.item("Image") & "' width='190px' style='padding: 5px' class='tip' data-tipped-options=""target: 'mouse', detach: false"" title='<b>" & rsKerbal.fields.item("Rank") & " " & rsKerbal.fields.item("Name") & " Kerman</b><p><b>Activation Date:</b><br>" & actDate  & "<br><b>Current Status:</b><br>" & rsKerbal.fields.item("Status") & "<br><b>Current Mission:</b><br>" & rsKerbal.fields.item("Mission") & "'></a>")
+      response.write("<a id='" & rsCrew.fields.item("Kerbal") & "' style='position: relative;' href='http://www.kerbalspace.agency/Roster/roster.asp?db=" & rsCrew.fields.item("Kerbal") & strFilter & "'><img src='" & rsKerbal.fields.item("Image") & "' width='190px' style='padding: 5px' class='tip' data-tipped-options=""target: 'mouse', detach: false, position: 'bottom'"" title='<b>" & rsKerbal.fields.item("Rank") & " " & rsKerbal.fields.item("Name") & " Kerman</b><p><b>Activation Date:</b><br>" & actDate  & "<br><b>Current Status:</b><br>" & rsKerbal.fields.item("Status") & "<br><b>Current Mission:</b><br>" & rsKerbal.fields.item("Mission") & "'></a>")
     end if
     rsCrew.movenext
   loop
@@ -556,7 +559,7 @@ https://github.com/Gaiiden/FlightTracker/wiki/Database-Documentation#karbal-stat
   response.write("<tr><td><b>Total Mission Days:</b> " & rsKerbal.fields.item("TMD") & "</td></tr>")
   response.write("<tr><td><b>Total EVA Time:</b> " & rsKerbal.fields.item("TEVA") & "</td></tr>")
   response.write("<tr><td><b>Current Status:</b> " & rsKerbal.fields.item("StatusHTML") & "</td></tr>")
-  response.write("<tr><td><b>Current Assignment:</b> " & rsKerbal.fields.item("MissionHTML"))
+  response.write("<tr><td><b>Current Mission:</b> " & rsKerbal.fields.item("MissionHTML"))
   
   'when mission start is included, we can determine the time until launch or that the mission has been underway
   if not isnull(rsKerbal.fields.item("MissionStart")) then
@@ -633,7 +636,14 @@ https://github.com/Gaiiden/FlightTracker/wiki/Database-Documentation#ribbons-fie
   response.write("</td></tr></table>")
   response.write("<center><div style='padding: 5px;'>")
 %>
-      
+
+<script>
+// add the kerbal name to the page title
+if (getParameterByName("db")) { 
+  document.title = document.title + " - <%response.write(rsKerbal.fields.item("Rank") & " " & rsKerbal.fields.item("Name") & " Kerman")%>"; 
+}
+</script>
+
 <!-- Idividual Roster Footer -->
 
 <%
@@ -1009,6 +1019,8 @@ if not rsManeuver.eof then
 end if
 %>
 
+<!-- clock and upcoming events -->
+
 <p>
 <table style="width: 100%; border: 1px solid #007FDB;	border-collapse: collapse; background-color: #77C6FF;">
   <tr>
@@ -1029,6 +1041,9 @@ end if
               response.write("var bLaunchCountdown = true;")
               response.write("var bFutureLaunch = false;")
               response.write("var nextLaunchSched = 0;")
+              response.write("var launchLink = '';")
+              response.write("var launchCraft = '';")
+              response.write("var launchSchedUT = -1;")
               response.write("</script>")
               response.write("None Scheduled")
             else
@@ -1086,6 +1101,9 @@ end if
               response.write("var bManeuverCountdown = true;")
               response.write("var bFutureManeuver = false;")
               response.write("var nextManeuverSched = 0;")
+              response.write("var maneuverLink = '';")
+              response.write("var maneuverCraft = '';")
+              response.write("var maneuverUT = -1;")
               response.write("</script>")
               response.write("None Scheduled")
             else
@@ -1146,7 +1164,7 @@ end if
 <%
 'show the main tweet stream if this is the Full Roster
 if len(request.querystring("db")) = 0 then 
-  response.write("<p><a class='twitter-timeline' href='https://twitter.com/KSA_MissionCtrl' data-widget-id='598711760149852163'>Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','twitter-wjs');</script></p>")
+  response.write("<P><center><a href='https://twitter.com/KSA_MissionCtrl' class='twitter-follow-button' data-show-count='true'>Follow @KSA_MissionCtrl</a><script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></center> <a class='twitter-timeline' href='https://twitter.com/KSA_MissionCtrl' data-widget-id='598711760149852163' height='600' data-chrome='noheader'>Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','twitter-wjs');</script>  </p>")
 else
 
   'reset and find the current kerbal
@@ -1158,9 +1176,9 @@ else
 
   'show the kerbal collection timeline if there is one available, or fall back to the main tweet stream
   if isnull(rsCrew.fields.item("collection")) or rsCrew.eof then 
-    response.write("<p><a class='twitter-timeline' href='https://twitter.com/KSA_MissionCtrl' data-widget-id='598711760149852163'>Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','twitter-wjs');</script></p>")
+    response.write("<p><center><a href='https://twitter.com/KSA_MissionCtrl' class='twitter-follow-button' data-show-count='true'>Follow @KSA_MissionCtrl</a><script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></center><a class='twitter-timeline' href='https://twitter.com/KSA_MissionCtrl' data-widget-id='598711760149852163' height='600' data-chrome='noheader'>Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','twitter-wjs');</script></p>")
   else
-    response.write("<p><a class='twitter-timeline' href='/KSA_MissionCtrl/timelines/598076346514984960' data-widget-id='" & rsCrew.fields.item("collection") & "'>Mission Timeline</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','twitter-wjs');</script></p>")
+    response.write("<p><center><a href='https://twitter.com/KSA_MissionCtrl' class='twitter-follow-button' data-show-count='true'>Follow @KSA_MissionCtrl</a><script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></center> <a class='twitter-timeline' data-partner='tweetdeck' href='https://twitter.com/KSA_MissionCtrl/timelines/" & rsCrew.fields.item("collection") & "' height='600'>Curated tweets by KSA_MissionCtrl</a> <script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></p>")
   end if
 end if
 %>
@@ -1184,22 +1202,19 @@ end if
     }
   }
 
-  // determine our offset between js and vb time, which can vary from 10-15+ seconds
-  // time offset is in favor of vb time, as majority of time stamps are done with dateDiff()
+  // js and vb can vary from 10-15 or more seconds
+  // time is in favor of vb time, as majority of time stamps are done with dateDiff()
+  // 1473739200000 ms = 9/13/16 00:00:00
   var d = new Date();
-  if (d.getSeconds() < <%response.write(Second(Now()))%>) {
-    var timeOffset = ((d.getSeconds() + 60) - <%response.write(Second(Now()))%>) * 1000;
-  } else {
-    var timeOffset = (d.getSeconds() - <%response.write(Second(Now()))%>) * 1000;
-  }
-  d.setTime(d.getTime() - timeOffset);
+  d.setTime(1473739200000 + (UT * 1000));
   
   // called every second to update page data
   var tickStartTime = new Date().getTime();
   var tickDelta = 0;
+  var ticktock = 623648;
   (function tick() {
     var dd = new Date();
-    dd.setTime(dd.getTime() - timeOffset);
+    dd.setTime(1473739200000 + (UT * 1000));
     
     // update the clock and any accompanying countdowns
     $('#ksctime').html(dd.toLocaleDateString() + ' ' + Date.toTZString(dd, 'E'));
@@ -1263,6 +1278,9 @@ end if
       $('#met').html(formatTime(MET));
       MET++;
     }
+    
+    // update the UT now that no other calculations depend on it being static
+    UT++;
 
     // ensure timer accuracy, even catch up if browser slows tab in background
     // http://www.sitepoint.com/creating-accurate-timers-in-javascript/

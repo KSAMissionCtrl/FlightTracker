@@ -30,6 +30,10 @@ text-decoration: none;
   color: #000000;
 }
 
+a:visited {
+  color: red;
+}
+
 /* for non href image map links */
 area:hover {
  cursor:pointer;
@@ -96,7 +100,7 @@ a.desclink:hover { color: white }
 /** Caption 1: Simple **/
 #mainwrapper .box .simple-caption {
 	height: 400px;
-	width: 520px;
+	width: 512px;
 	display: block;
 	bottom: -382px;
 	text-align: left;

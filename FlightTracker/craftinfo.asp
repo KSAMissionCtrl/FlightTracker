@@ -31,7 +31,7 @@ else
   crafts = split(request.querystring("crafts"), ",")
   
   'find and return the part details
-  craftData = ""
+  craftData = request.querystring("surfaceMap") & "|"
   for each craft in crafts
   
     'open vessel database. "db" was prepended because without it for some reason I had trouble connecting
@@ -68,38 +68,42 @@ else
       rsComms.open "select * from [craft comms]", connCraft, 2
 
       'calculate the time in seconds since epoch 0 when the game started
-      UT = datediff("s", "16-Feb-2014 00:00:00", now())
+      UT = datediff("s", "13-Sep-2016 00:00:00", now())
 
       'starting from the end, work back to find the first record earlier than or equal to the UT we are looking for
       if not rsCraft.eof then
         rsCraft.MoveLast
         do until rsCraft.fields.item("id") <= UT
           rsCraft.MovePrevious
+          if rsCraft.bof then exit do
         Loop
       end if
       if not rsOrbit.eof then
         rsOrbit.MoveLast
         do until rsOrbit.fields.item("id") <= UT
           rsOrbit.MovePrevious
+          if rsOrbit.bof then exit do
         Loop
       end if
       if not rsResources.eof then
         rsResources.MoveLast
         do until rsResources.fields.item("id") <= UT
           rsResources.MovePrevious
+          if rsResources.bof then exit do
         Loop
       end if
       if not rsCrew.eof then
         rsCrew.MoveLast
         do until rsCrew.fields.item("id") <= UT
           rsCrew.MovePrevious
+          if rsCrew.bof then exit do
         Loop
       end if
 
       'get the record containing the information relative to this vessel
       rsCrafts.movefirst
       rsCrafts.find("db='" & craft & "'")
-      if rsCrafts.eof then 
+      if rsCrafts.eof or rsCrafts.bof then 
 
         'use Kerbin as a default
         ref = 3
@@ -247,7 +251,7 @@ else
       end if
 
       craftData = craftData & ";" & rsCraft.fields.item("LastUpdate")
-      
+
       if not rsComms.eof then
       
         'point to the relevant record for this ut

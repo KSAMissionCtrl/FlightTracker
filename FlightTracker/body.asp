@@ -32,19 +32,38 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
 
   <!-- JS libraries -->
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-  <script type="text/javascript" src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
-  <script type="text/javascript" src="../jslib/leaflet.js"></script>
-  <script type="text/javascript" src="../jslib/leafletembed.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.5.1/leaflet-src.js"></script>
+  <script type="text/javascript" src="../jslib/proj4js-combined.js"></script>
+  <script type="text/javascript" src="../jslib/proj4leaflet.js"></script>
+  <script type="text/javascript" src="../jslib/leaflet.ksp-src.js"></script>
   <script type="text/javascript" src="../jslib/sylvester.js"></script>
   <script type="text/javascript" src="../jslib/sylvester.src.js"></script>
   <script type="text/javascript" src="../jslib/tipped.js"></script>
   <script type="text/javascript" src="../jslib/numeral.min.js"></script>
   <script type="text/javascript" src="../jslib/leaflet.label.js"></script>
-  <script type="text/javascript" src="../jslib/iosbadge.min.js"></script>
+  <script type="text/javascript" src="../jslib/iosbadge.js"></script>
   <script type="text/javascript" src="../jslib/Control.FullScreen.js"></script>
   <script type="text/javascript" src="../jslib/leaflet.groupedlayercontrol.min.js"></script>
 
   <script>
+    // gets values for URL parameters of the same name and returns them in an array
+    // http://stackoverflow.com/questions/22209307/how-to-get-multiple-parameters-with-same-name-from-a-url-in-javascript
+    function getQueryParams(name) {
+      qs = location.search;
+
+      var params = [];
+      var tokens;
+      var re = /[?&]?([^=]+)=([^&]*)/g;
+
+      while (tokens = re.exec(qs))
+      { 
+        if (decodeURIComponent(tokens[1]) == name)
+        params.push(decodeURIComponent(tokens[2]));
+      }
+
+      return params;
+    }
+  
     // small helper function to make sure number calculated is not greater than a certain value
     function maxCalc(eq, val) {
       if (Math.abs(eq) > Math.abs(val)) { return val; } else { return eq; }
@@ -240,7 +259,7 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
     // used by the surface map to calculate ground plots
     function orbitalCalc() {
       if (endTime < 0) {
-      
+        
         // compute 1 orbit, or only up to a future maneuver node
         if (bodyCrafts[currCraft].Node >= 0) {
           if (bodyCrafts[currCraft].Node > 0) {
@@ -478,7 +497,7 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
     // controls drawing of all the orbital plots and markers for the various craft orbiting over this surface
     var pathPopup = null;
     function renderLayers() {
-
+    
       // place the marker at the current Lat/Lon position for this UT, with a high enough Z-index to stay on top of other map markers
       var craftIcon = L.icon({
         iconUrl: 'button_vessel_' + types[currType].toLowerCase() + '.png',
@@ -738,11 +757,12 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
       
       // does this planet even have moons?
       if (!bodiesCatalog[currBodyIndex].Moons.length) { return false; }
-     
+
       // ok, we have moons - locate them and save their orbital data
       for (x=0; x<bodyObtData.length; x++) {
         if (bodiesCatalog[currBodyIndex].Moons.includes(bodyObtData[x].Body)) {
           bodyCrafts.push({Type: "Moon",
+                          DB: bodyObtData[x].Body,
                           Name: bodyObtData[x].Body,
                           Img: bodiesCatalog[x].Image,
                           Ecc: bodyObtData[x].Ecc,
@@ -792,8 +812,9 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
         } else {
         
           // seperate the various craft that were returned by the request and parse them individually
+          // first value is not a craft! Start at index 1
           crafts = ajaxCraftData.responseText.split("|");
-          for (x=0; x<crafts.length; x++) {
+          for (x=1; x<crafts.length; x++) {
             craftInfo = crafts[x].split(";");
             var craftIndex;
             
@@ -848,49 +869,55 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
               }
             });
             
-            // save data for loading the ground map, don't allow dupes
-            var testCount = 0;
-            for (; testCount<bodyCrafts.length; testCount++) {
-              if (bodyCrafts[testCount].DB == craftsCatalog[craftIndex].DB) { break; }
-            }
-            if (testCount == bodyCrafts.length && craftInfo[18] != "null") {
-              bodyCrafts.push({Type: strType,
-                              DB: craftsCatalog[craftIndex].DB,
-                              Img: craftInfo[1],
-                              Desc: craftsCatalog[craftIndex].Desc.replace(/'/g, "&#39;"),
-                              Name: craftsCatalog[craftIndex].Name,
-                              Node: parseInt(craftInfo[17]),
-                              Ecc: parseFloat(craftInfo[18]),
-                              Inc: parseFloat(craftInfo[19]) * .017453292519943295, // OMG forgetting to convert to radians is a mistake made too often
-                              ObtPd: parseFloat(craftInfo[20]),
-                              SMA: parseFloat(craftInfo[21]),
-                              RAAN: parseFloat(craftInfo[22]) * .017453292519943295,
-                              Arg: parseFloat(craftInfo[23]) * .017453292519943295,
-                              Mean: parseFloat(craftInfo[24]) * .017453292519943295,
-                              Eph: parseFloat(craftInfo[25]),
-                              Orbits: 0,
-                              Layer: -1,
-                              Obt: [],
-                              Loaded: false,
-                              Paths: [],
-                              Craft: ''});
+            // save data for loading the ground map, don't allow dupes and don't allow non-orbiting vessels (tests for valid SMA)
+            if (!isNaN(craftInfo[21])) {
+              var testCount = 0;
+              for (; testCount<bodyCrafts.length; testCount++) {
+                if (bodyCrafts[testCount].DB == craftsCatalog[craftIndex].DB) { break; }
+              }
+              if (testCount == bodyCrafts.length && craftInfo[18] != "null") {
+                bodyCrafts.push({Type: strType,
+                                DB: craftsCatalog[craftIndex].DB,
+                                Img: craftInfo[1],
+                                Desc: craftsCatalog[craftIndex].Desc.replace(/'/g, "&#39;"),
+                                Name: craftsCatalog[craftIndex].Name,
+                                Node: parseInt(craftInfo[17]),
+                                Ecc: parseFloat(craftInfo[18]),
+                                Inc: parseFloat(craftInfo[19]) * .017453292519943295, // OMG forgetting to convert to rad is a mistake made too often
+                                ObtPd: parseFloat(craftInfo[20]),
+                                SMA: parseFloat(craftInfo[21]),
+                                RAAN: parseFloat(craftInfo[22]) * .017453292519943295,
+                                Arg: parseFloat(craftInfo[23]) * .017453292519943295,
+                                Mean: parseFloat(craftInfo[24]) * .017453292519943295,
+                                Eph: parseFloat(craftInfo[25]),
+                                Orbits: 0,
+                                Layer: -1,
+                                Obt: [],
+                                Loaded: false,
+                                Paths: [],
+                                Craft: ''});
+              }
             }
           }
           
-// behavior of the tooltip depends on the device
-if (is_touch_device()) {
-  var showOpt = 'click';
-} else {
-  var showOpt = 'mouseenter';
-}
+          // behavior of the tooltip depends on the device
+          if (is_touch_device()) {
+            var showOpt = 'click';
+          } else {
+            var showOpt = 'mouseenter';
+          }
 
-// create all the tooltips using Tipped.js - http://www.tippedjs.com/
-Tipped.create('.tip', {size: 'small', showOn: showOpt, hideOnClickOutside: is_touch_device()});
-Tipped.create('.tip-update', {size: 'small', showOn: showOpt, hideOnClickOutside: is_touch_device()});
-          
-          // load the orbits for the surface map
-          findMoons();
-          renderVesselsOrbit();
+          // create all the tooltips using Tipped.js - http://www.tippedjs.com/
+          Tipped.create('.tip', {size: 'small', showOn: showOpt, hideOnClickOutside: is_touch_device()});
+          Tipped.create('.tip-update', {size: 'small', showOn: showOpt, hideOnClickOutside: is_touch_device()});
+                    
+          // load the orbits for the surface map, if there is one
+          // http://stackoverflow.com/questions/5219105/javascript-parsing-a-string-boolean-value
+          var hasSurfaceMap = crafts[0] == 'true';
+          if (hasSurfaceMap) {
+            findMoons();
+            renderVesselsOrbit();
+          }
         }
       }
     };
@@ -898,7 +925,7 @@ Tipped.create('.tip-update', {size: 'small', showOn: showOpt, hideOnClickOutside
     // handle requests for update information to show notification badges
     ajaxUpdate.onreadystatechange = function() {
       if (ajaxUpdate.readyState == 4 && ajaxUpdate.status == 200) {
-      
+
         // separate the craft and crew strings and parse them
         updates = ajaxUpdate.responseText.split("|");
         crafts = updates[0].split(":");
@@ -906,27 +933,29 @@ Tipped.create('.tip-update', {size: 'small', showOn: showOpt, hideOnClickOutside
 
         // parse & handle all craft instances
         for (x=0; x<crafts.length; x++) {
-          craftInfo = crafts[x].split(";");
-          
-          // check if this craft was already viewed before
-          if (getCookie(craftInfo[0])) {
-          
-            // if there was a change to any of its records, tally up the amount
-            // add a badge to the craft menu item, and also the planet (and moon if required) it is orbiting
-            if (getCookie(craftInfo[0]) < craftInfo[1]) {
-              $("#" + craftInfo[0]).iosbadge({ theme: 'red', size: 20, content: 'Update',  position: 'top-left' });
-              $("#" + craftInfo[2]).iosbadge({ theme: 'red', size: 20, content: '+1',  position: 'top-left' });
-              if (craftInfo[3] != "null") { $("#" + craftInfo[3]).iosbadge({ theme: 'red', size: 20, content: '+1',  position: 'top-left' }); }
-            }
-          } else {
-          
-            // this is a new craft - but if it's also a new user's first visit then no point notifying them
-            if (bNewUser) {
-              setCookie(craftInfo[0], craftInfo[1], true);
+          if (crafts[x] != "null" && crafts[x] != "") {
+            craftInfo = crafts[x].split(";");
+            
+            // check if this craft was already viewed before
+            if (getCookie(craftInfo[0])) {
+            
+              // if there was a change to any of its records, tally up the amount
+              // add a badge to the craft menu item, and also the planet (and moon if required) it is orbiting
+              if (parseInt(getCookie(craftInfo[0])) < parseInt(craftInfo[1])) {
+                $("#" + craftInfo[0]).iosbadge({ theme: 'red', size: 20, content: 'Update',  position: 'top-left' });
+                $("#" + craftInfo[2]).iosbadge({ theme: 'red', size: 20, content: '+1',  position: 'top-left' });
+                if (craftInfo[3] != "null") { $("#" + craftInfo[3]).iosbadge({ theme: 'red', size: 20, content: '+1',  position: 'top-left' }); }
+              }
             } else {
-              $("#" + craftInfo[0]).iosbadge({ theme: 'red', size: 20, content: 'New',  position: 'top-left' });
-              $("#" + craftInfo[2]).iosbadge({ theme: 'red', size: 20, content: '+1',  position: 'top-left' });
-              if (craftInfo[3] != "null") { $("#" + craftInfo[3]).iosbadge({ theme: 'red', size: 20, content: '+1',  position: 'top-left' }); }
+            
+              // this is a new craft - but if it's also a new user's first visit then no point notifying them
+              if (bNewUser) {
+                setCookie(craftInfo[0], craftInfo[1], true);
+              } else {
+                $("#" + craftInfo[0]).iosbadge({ theme: 'red', size: 20, content: 'New',  position: 'top-left' });
+                $("#" + craftInfo[2]).iosbadge({ theme: 'red', size: 20, content: '+1',  position: 'top-left' });
+                if (craftInfo[3] != "null") { $("#" + craftInfo[3]).iosbadge({ theme: 'red', size: 20, content: '+1',  position: 'top-left' }); }
+              }
             }
           }
         }
@@ -935,8 +964,8 @@ Tipped.create('.tip-update', {size: 'small', showOn: showOpt, hideOnClickOutside
         for (x=0; x<crew.length; x++) {
           kerbalInfo = crew[x].split(";");
           if (getCookie(kerbalInfo[0])) {
-            if (getCookie(kerbalInfo[0]) < kerbalInfo[1]) {
-            
+            if (parseInt(getCookie(kerbalInfo[0])) < parseInt(kerbalInfo[1])) {
+
               // tally up the changes to show on the menu item that links to the Crew Roster
               $("#crewRoster").iosbadge({ theme: 'red', size: 20, content: '+1',  position: 'top-left' });
             }
@@ -1056,12 +1085,6 @@ Tipped.create('.tip-update', {size: 'small', showOn: showOpt, hideOnClickOutside
       // create the tooltips if we're not waiting on an AJAX request for any craft details  
       if (bCreateTips) {
       
-        // since we're not waiting for vessel data to load, then go ahead and do the moons
-        // don't bother though if no moons are found
-        if (findMoons()) {
-          renderVesselsOrbit();
-        }
-
         // behavior of the tooltip depends on the device
         if (is_touch_device()) {
           var showOpt = 'click';
@@ -1205,13 +1228,20 @@ Tipped.create('.tip-update', {size: 'small', showOn: showOpt, hideOnClickOutside
         $("#mapholder").css("display", "block");
         $("#key").css("visibility", "hidden");
         $("#utc").css("visibility", "hidden");
-        mapLocation = getParameterByName("loc").split(",");
-        map.setView([mapLocation[0], mapLocation[1]], 2);
-        if (mapLocation.length > 2) {
-          var pin = L.marker([mapLocation[0], mapLocation[1]]).bindPopup(mapLocation[2], {closeButton: false}).addTo(map);
-          pin.openPopup();
-        } else {
-          L.marker([mapLocation[0], mapLocation[1]], {clickable: false}).addTo(map);
+        
+        // get all pin locations and iterate through them
+        mapLocationMulti = getQueryParams("loc");
+        for (index = 0; index < mapLocationMulti.length; index++) {
+          mapLocation = mapLocationMulti[index].split(",");
+          map.setView([mapLocation[0], mapLocation[1]], 2);
+          if (mapLocation.length > 2) {
+            var pin = L.marker([mapLocation[0], mapLocation[1]]).bindPopup(mapLocation[2], {closeButton: false}).addTo(map);
+            
+            // only pop up if a single pin is being placed
+            if (mapLocationMulti.length == 1) { pin.openPopup(); }
+          } else {
+            L.marker([mapLocation[0], mapLocation[1]], {clickable: false}).addTo(map);
+          }
         }
       }
     });
@@ -1290,7 +1320,7 @@ https://github.com/Gaiiden/FlightTracker/wiki/Database-Documentation#dbbodies
 
 <%
 'calculate the time in seconds since epoch 0 when the game started
-UT = datediff("s", "16-Feb-2014 00:00:00", now())
+UT = datediff("s", "13-Sep-2016 00:00:00", now())
 
 'open database. "db" was prepended because without it for some reason I had trouble connecting
 db = "..\..\database\db" & request.querystring("db") & ".mdb"
@@ -1377,6 +1407,11 @@ response.write("&nbsp;<img class='tip' id='tagData' data-tipped-options=""positi
 %>
 </h3>
 
+<script>
+// add the body name to the page title
+document.title = document.title + " - <%response.write(replace(request.querystring("body"), "-", " "))%>";
+</script>
+
 <%
 'image map data for the system
 'image maps created via http://summerstyle.github.io/summer/
@@ -1390,6 +1425,9 @@ else
 end if
 %>
 
+<!-- anchor to pull down page when scrolling through body diagrams -->
+<a name="top">
+
 <!-- 
 hack used to allow collapse of orbital image and still display footer text below dynamic map, 
 as Leaflet map doesn't play nice with the 'display' CSS property
@@ -1397,8 +1435,14 @@ as Leaflet map doesn't play nice with the 'display' CSS property
 <img src="mapholder.png" style="display: none; z-index: -1;" id="mapholder">
 
 <!-- the Key and Timestamp boxes, displayed according to position data from the database -->
-<table id="key" style="border: 1px solid black;	border-collapse: collapse; background-color: #E6E6E6; position: absolute; <%response.write(rsBody.fields.item("Key"))%> "><tr><td style="font-size: 10px;"><b>Color Key</b><br><span style="color: red;">Debris</span><br><span style="color: #00CC00;">Communications</span><br><span style="color: magenta;">Station</span><br><span style="color: blue;">Probe</span><br><span style="color: #33CCFF;">Ship</span><br><span style="color: brown;">Asteroid</span></td></tr></table>
-<table id="utc" style="border: 1px solid black;	border-collapse: collapse; background-color: #E6E6E6; position: absolute; <%response.write(rsBody.fields.item("UTCPos"))%>"><tr><td style="font-size: 10px;">Positions shown as of <%response.write(rsBody.fields.item("UTC"))%></td></tr></table>
+<%
+if not isnull(rsBody.fields.item("Key")) then
+  response.write("<table id='key' style='border: 1px solid black;	border-collapse: collapse; background-color: #E6E6E6; position: absolute; " & rsBody.fields.item("Key") & "'><tr><td style='font-size: 10px;'><b>Orbit Color Key</b><br><span style='color: red;'>Debris</span><br><span style='color: green;'>Communications</span><br><span style='color: magenta;'>Station</span><br><span style='color: blue;'>Probe</span><br><span style='color: #33CCFF;'>Ship</span><br><span style='color: brown;'>Asteroid</span></td></tr></table>")
+end if
+if not isnull(rsBody.fields.item("UTCPos")) then 
+  response.write("<table id='utc' style='border: 1px solid black;	border-collapse: collapse; background-color: #E6E6E6; position: absolute; " & rsBody.fields.item("UTCPos") & "'><tr><td style='font-size: 10px;'>Positions shown as of " & rsBody.fields.item("UTC") & "</td></tr></table>")
+end if
+%>
 
 <!-- map close button -->
 <img id="close" src="close.png" class='tip' data-tipped-options="position: 'left', offset: {y:-6}" title="Close" style="cursor: pointer; z-index: 10; position: absolute; top: 27px; right: 5px; visibility: hidden;" />
@@ -1445,10 +1489,17 @@ end if
 if instr(request.querystring("body"), "Kerbol-System") then
   url = "http://" & Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL") & "?db=" & request.querystring("db") & "&body=" & request.querystring("body")
   
+  'going forward/back a week or day?
+  if instr(request.querystring("body"), "Inner") then
+    timeSpan = "day"
+  else
+    timeSpan = "week"
+  end if
+  
   'determine if we need a Prev button
   if rsBody.AbsolutePosition > 1 then
     rsBody.moveprevious
-    response.write("<table style='border: 1px solid black;	border-collapse: collapse; background-color: #E6E6E6; position: absolute; top: 845px; left: 10px;'><tr><td style='font-size: 10px;'><a style='text-decoration: none; color: black;' class='tip' title='Back one week' href='" & url & "&ut=" & rsBody.fields.item("UT") + 1 & "'><<</a></td></tr></table>")
+    response.write("<table style='border: 1px solid black;	border-collapse: collapse; background-color: #E6E6E6; position: absolute; top: 57px; left: 10px;'><tr><td style='font-size: 10px;'><a style='text-decoration: none; color: black;' class='tip' title='Back one " & timeSpan & "' href='" & url & "&ut=" & rsBody.fields.item("UT") + 1 & "#top'><<</a></td></tr></table>")
     rsBody.movenext
   end if
   
@@ -1456,7 +1507,7 @@ if instr(request.querystring("body"), "Kerbol-System") then
   if rsBody.AbsolutePosition < rsBody.recordcount then
     rsBody.movenext
     if rsBody.fields.item("UT") < UT then
-      response.write("<table style='border: 1px solid black;	border-collapse: collapse; background-color: #E6E6E6; position: absolute; top: 845px; left: 40px;'><tr><td style='font-size: 10px;'><a style='text-decoration: none; color: black;' class='tip' title='Forward one week' href='" & url & "&ut=" & rsBody.fields.item("UT") & "'>>></a></td></tr></table>")
+      response.write("<table style='border: 1px solid black;	border-collapse: collapse; background-color: #E6E6E6; position: absolute; top: 57px; left: 40px;'><tr><td style='font-size: 10px;'><a style='text-decoration: none; color: black;' class='tip' title='Forward one " & timeSpan & "' href='" & url & "&ut=" & rsBody.fields.item("UT") & "#top'>>></a></td></tr></table>")
     end if
   end if
 end if
@@ -1466,7 +1517,7 @@ end if
 
 <span style="font-family:arial;color:black;font-size:12px;">
 <p>
-<a target='_blank' href='http://www.kerbalspace.agency'>KSA Home Page</a> | Orbits rendered with <a target='_blank' href="http://bit.ly/KSPTOT">KSPTOT</a> | Image mapping via <a target='_blank' href="http://summerstyle.github.io/summer/">Summer Image Map Creator</a> | <a href='https://github.com/Gaiiden/FlightTracker/wiki/Flight-Tracker-Documentation'>Flight Tracker Wiki</a>
+<a target='_blank' href='http://www.kerbalspace.agency'>KSA Home Page</a> | Orbit rendering: <a target='_blank' href="http://bit.ly/KSPTOT">KSPTOT</a> | Image mapping: <a target='_blank' href="http://summerstyle.github.io/summer/">Summer Image Map Creator</a> | <a href='https://github.com/Gaiiden/FlightTracker/wiki/Flight-Tracker-Documentation'>Flight Tracker Wiki</a>
 </p>
 </span>
 </center>
@@ -1497,6 +1548,10 @@ https://github.com/Gaiiden/FlightTracker/wiki/Database-Documentation#dbcatalog
 -->
 
 <%
+'calculate the time in seconds since epoch 0 when the game started
+'we need to reset dbUT in case an earlier time was used to access past body map data
+dbUT = datediff("s", "13-Sep-2016 00:00:00", now())
+
 'open catalog database. "db" was prepended because without it for some reason I had trouble connecting
 db = "..\..\database\dbCatalog.mdb"
 Dim connBodies
@@ -1518,6 +1573,10 @@ rsPlanets.open "select * from planets", connBodies, 1, 1
 rsMoons.open "select * from moons", connBodies, 1, 1
 rsCrafts.open "select * from crafts", connBodies, 1, 1
 
+'do a check right away to see if any craft exist before we mess with the recordset pointer
+bCraftExist = true
+if rsCrafts.eof or rsCrafts.bof then bCraftExist = false
+
 'the various types of vessels that can be shown in the menu tree
 filters = Array("debris", "probe", "rover", "lander", "ship", "station", "base", "asteroid")
 
@@ -1526,7 +1585,8 @@ response.write("<ol class='tree'>")
 
 'decide whether we are building a menu for active or inactive vessels
 bEntry = false
-bInactiveVessels = true
+bInactiveVessels = false
+bKerbolUsed = false
 if request.querystring("filter") = "inactive" then
 
   'we can add or remove the craft types to search for by modifying the previously-defined array above
@@ -1685,10 +1745,11 @@ else
         
           'include the planet in the tree if this has not yet been done
           if not bPlanet then
+            if rsPlanets.fields.item("body") = "Kerbol" then bKerbolUsed = true
             url = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=" & rsPlanets.fields.item("body") & "-System"
             if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
             if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
-                  response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show System overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsPlanets.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
+              response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show System overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsPlanets.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
             bPlanet = true
           end if
           
@@ -1696,7 +1757,7 @@ else
           url = "' href='http://www.kerbalspace.agency/Tracker/craft.asp?db=" & rsCrafts.fields.item("db")
           if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
           if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
-          response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & url & "'>" & rsCrafts.fields.item("vessel") & "&nbsp;&nbsp;<span id='" & rsCrafts.fields.item("db") & "' style='position: relative;'></span></a></li>")
+            response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & url & "'>" & rsCrafts.fields.item("vessel") & "&nbsp;&nbsp;<span id='" & rsCrafts.fields.item("db") & "' style='position: relative;'></span></a></li>")
           bEntry = true
               
           'if this craft is orbiting around the body currently being viewed, it will probably need a rich tooltip to be displayed
@@ -1719,7 +1780,17 @@ else
 end if
 
 'let the user know if we did not find anything for this particular filter
-if not bEntry or not bInactiveVessels then response.write("<span style='margin-left: 70px'>No Vessels Found</a>")
+if not bEntry and request.querystring("filter") <> "inactive" then
+  response.write("<span style='margin-left: 70px'>No Vessels Found</a>")
+end if
+
+'also check that if we did not find a ship for Kerbol, we should add that for a way back to the system overview if taken straight to a body overview
+if not bKerbolUsed and request.querystring("filter") <> "inactive" then 
+  url = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=Kerbol-System"
+  if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
+  if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
+    response.write("<li> <label for='Kerbol'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show System overview' href='" & url & "'>Kerbol</a>&nbsp;&nbsp;<span id='Kerbol' style='position: relative;'></span></label> <input type='checkbox' id='' /> </li>")
+end if
 %>
 
 <!-- adds a link to the crew roster to the end of the menu list -->
@@ -1730,35 +1801,57 @@ if not bEntry or not bInactiveVessels then response.write("<span style='margin-l
 
 <%
 'build a URL to use for linking, preserving certain URL variables
-url = "http://" & Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL") & "?db=" & request.querystring("db") & "&body=" & request.querystring("body")
-if request.querystring("ut") then url = url & "&ut=" & request.querystring("ut")
-if request.querystring("pass") then url = url & "&pass=" & request.querystring("pass")
-if request.querystring("popout") then url = url & "&popout=" & request.querystring("popout")
+'but only if there are craft found
+if bEntry or bInactiveVessels then 
+  url = "http://" & Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL") & "?db=" & request.querystring("db") & "&body=" & request.querystring("body")
+  if request.querystring("ut") then url = url & "&ut=" & request.querystring("ut")
+  if request.querystring("pass") then url = url & "&pass=" & request.querystring("pass")
+  if request.querystring("popout") then url = url & "&popout=" & request.querystring("popout")
 
-'decide what filter types to include beneath the menu tree
-response.write("<span style='font-family:arial;color:black;font-size:12px;'>")
-if request.querystring("filter") = "inactive" then
-  response.write("<b>Filter By:</b> <a href='" & url & "'>Active Vessels</a>")
-else
-  response.write("<b>Filter By:</b> ")
-  if len(request.querystring("filter")) then response.write("<a href='" & url & "'>All</a> | ")
-  
-  'print out the available filters depending on what is defined
-  for each x in filters
-  
-    'convert the string to first character upper case
-    letter = left(x, 1)
-    letter = ucase(letter)
-    title = letter & mid(x, 2, len(x)-1)
+  'decide what filter types to include beneath the menu tree
+  response.write("<span style='font-family:arial;color:black;font-size:12px;'>")
+  if request.querystring("filter") = "inactive" then
+    response.write("<b>Filter By:</b> <a href='" & url & "'>Active Vessels</a>")
+  else
+    response.write("<b>Filter By:</b> ")
+    if len(request.querystring("filter")) then response.write("<a href='" & url & "'>All</a> | ")
     
-    'do not link to an active filter
-    if request.querystring("filter") <> x then
-      response.write("<a href='" & url & "&filter=" & x & "'>" & title & "</a> | ")
-    else
-      response.write(title & " | ")
-    end if
-  next
-  response.write("<a href='" & url & "&filter=inactive'>Inactive Vessels</a>")
+    'print out the available filters depending on what is defined
+    for each x in filters
+    
+      'convert the string to first character upper case
+      letter = left(x, 1)
+      letter = ucase(letter)
+      title = letter & mid(x, 2, len(x)-1)
+      
+      'do not link to an active filter
+      if request.querystring("filter") <> x then
+        response.write("<a href='" & url & "&filter=" & x & "'>" & title & "</a> | ")
+      else
+        response.write(title & " | ")
+      end if
+    next
+    response.write("<a href='" & url & "&filter=inactive'>Inactive Vessels</a>")
+  end if
+  
+'in case no craft are found but the user wants to return to active vessel listing
+elseif len(request.querystring("filter")) then
+  url = "http://" & Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL") & "?db=" & request.querystring("db") & "&body=" & request.querystring("body")
+  if request.querystring("ut") then url = url & "&ut=" & request.querystring("ut")
+  if request.querystring("pass") then url = url & "&pass=" & request.querystring("pass")
+  if request.querystring("popout") then url = url & "&popout=" & request.querystring("popout")
+  response.write("<span style='font-family:arial;color:black;font-size:12px;'>")
+  response.write("<b>Filter By:</b> <a href='" & url & "'>Active Vessels</a>")
+  
+'check that there are craft, but if none were found then they must be inactive. Provide link to inactive filter
+'NOTE: this assumes that there are inactive vessels!
+elseif bCraftExist then
+  url = "http://" & Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL") & "?db=" & request.querystring("db") & "&body=" & request.querystring("body")
+  if request.querystring("ut") then url = url & "&ut=" & request.querystring("ut")
+  if request.querystring("pass") then url = url & "&pass=" & request.querystring("pass")
+  if request.querystring("popout") then url = url & "&popout=" & request.querystring("popout")
+  response.write("<span style='font-family:arial;color:black;font-size:12px;'>")
+  response.write("<b>Filter By:</b> <a href='" & url & "&filter=inactive'>Inactive Vessels</a>")
 end if
 %>
 
@@ -2034,7 +2127,8 @@ end if
 </p>
 
 <!-- this will display the recent tweets from @KSA_MissionCtrl --> 
-<p><a class="twitter-timeline" href="https://twitter.com/KSA_MissionCtrl" data-widget-id="598711760149852163">Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>  </p>
+<P><center><a href="https://twitter.com/KSA_MissionCtrl" class="twitter-follow-button" data-show-count="true">Follow @KSA_MissionCtrl</a><script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script></center>
+<a class="twitter-timeline" href="https://twitter.com/KSA_MissionCtrl" data-widget-id="598711760149852163" height="700" data-chrome="noheader">Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>  </p>
 </span></div> </div>
 
 <!-- Setting up known map layers -->
@@ -2097,6 +2191,9 @@ end if
     // check for any available base map layers and add as necessary
     var layerControl = L.control.groupedLayers().addTo(map);
     var bBaseAdded = false;
+    var slopeInfo = false;
+    var elevInfo = false;
+    var biomeInfo = false;
     if (<%if rsBody.fields.item("Map") then response.write(lcase(rsMaps.fields.item("Satellite"))) else response.write("false")%>) {
     layerControl.addBaseLayer(
       L.KSP.tileLayer(L.KSP.TileLayer.TYPE_SATELLITE,
@@ -2122,6 +2219,7 @@ end if
 
     // currently only the relief map can be body-agnostic as it uses a universal legend
     if (<%if rsBody.fields.item("Map") then response.write(lcase(rsMaps.fields.item("Slope"))) else response.write("false")%>) {
+      slopeInfo = true;
       var slopeBase = L.KSP.tileLayer(
         L.KSP.TileLayer.TYPE_COLORRELIEF,
         L.KSP.TileLayer.DEFAULT_URL,
@@ -2141,6 +2239,7 @@ end if
     }
     
     if (<%if rsBody.fields.item("Map") then response.write(lcase(rsMaps.fields.item("Terrain"))) else response.write("false")%>) {
+      elevInfo = true;
       switch(getParameterByName("body").toLowerCase()) {
         case "kerbin":
           var reliefBase = L.KSP.tileLayer(
@@ -2174,6 +2273,7 @@ end if
     }
     
     if (<%if rsBody.fields.item("Map") then response.write(lcase(rsMaps.fields.item("Biome"))) else response.write("false")%>) {
+      biomeInfo = true;
       switch(getParameterByName("body").toLowerCase()) {
         case "kerbin":
           var biomeBase = L.KSP.tileLayer(
@@ -2366,7 +2466,11 @@ end if
     // leaflet.js was modified to remove the biome, slope and elevation data displays
     // show controls only when the cursor is over the map
     if (!is_touch_device()) { 
-      infoControl = new L.KSP.Control.Info();
+      infoControl = new L.KSP.Control.Info({
+          elevInfo: elevInfo,
+          biomeInfo: biomeInfo,
+          slopeInfo: slopeInfo
+        });
       map.addControl(infoControl);
       $(".leaflet-control-info").css("display", "none");
       map.on('mouseover', function(e) {
@@ -2428,23 +2532,29 @@ end if
     
     // wait for an AJAX callback or JQuery setup to begin loading orbital data
   }
-</script>
-
-<!-- AJAX data calls -->
-
-<script>
 
   // take the tally created during the menu build and send out a request for information on the craft orbiting this body
-  var strURL = "craftinfo.asp?crafts=" + craftQuery.toString();
-  ajaxCraftData.open("GET", strURL, true);
-  ajaxCraftData.send();
-
+  if (craftQuery.length) {
+    var strURL = "craftinfo.asp?crafts=" + craftQuery.toString() + "&surfaceMap=<%response.write(lcase(rsBody.fields.item("Map")))%>";
+    ajaxCraftData.open("GET", strURL, true);
+    ajaxCraftData.send();
+  } else {
+  
+    // load the orbits for the surface map, if there is one
+    if (<%response.write(lcase(rsBody.fields.item("Map")))%>) {
+      findMoons();
+      renderVesselsOrbit();
+    }
+  }
+  
   // if the user has cookies enabled, check to see if there are any notifications to display
   if (checkCookies()) {
     ajaxUpdate.open("GET", "update.asp", true);
     ajaxUpdate.send();
   }
 </script>
+
+<!-- ^^ AJAX data calls ^^ -->
 
 <!-- update the clock and page -->
 
@@ -2464,15 +2574,11 @@ end if
     }
   }
 
-  // determine our offset between js and vb time, which can vary from 10-15 seconds
-  // time offset is in favor of vb time, as majority of time stamps are done with dateDiff()
+  // js and vb can vary from 10-15 or more seconds
+  // time is in favor of vb time, as majority of time stamps are done with dateDiff()
+  // 1473739200000 ms = 9/13/16 00:00:00
   var d = new Date();
-  if (d.getSeconds() < <%response.write(Second(Now()))%>) {
-    var timeOffset = ((d.getSeconds() + 60) - <%response.write(Second(Now()))%>) * 1000;
-  } else {
-    var timeOffset = (d.getSeconds() - <%response.write(Second(Now()))%>) * 1000;
-  }
-  d.setTime(d.getTime() - timeOffset);
+  d.setTime(1473739200000 + (UT * 1000));
   
   // called every second to update page data
   var startDate = Math.floor(d.getTime() / 1000);
@@ -2480,7 +2586,7 @@ end if
   var tickDelta = 0;
   (function tick() {
     var dd = new Date();
-    dd.setTime(dd.getTime() - timeOffset);
+    dd.setTime(1473739200000 + (UT * 1000));
     var currDate = Math.floor(dd.getTime() / 1000);
     
     // update the sun/terminator if a surface map is loaded
@@ -2517,7 +2623,7 @@ end if
     }
     
     // update the vessels that are currently loaded and rendered
-    for (x=0; x<bodyCrafts.length; x++) {
+    for (x=bodyCrafts.length-1; x>=0; x--) {
       if (bodyCrafts[x].Loaded) {
       
         // now depends on how many times the vessel has had its orbit redrawn

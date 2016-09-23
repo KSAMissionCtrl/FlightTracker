@@ -27,7 +27,7 @@ else
   rsCraft.open "select * from [craft data]", connCraft, 2
 
   'calculate the time in seconds since epoch 0 when the game started
-  UT = datediff("s", "16-Feb-2014 00:00:00", now())
+  UT = datediff("s", "13-Sep-2016 00:00:00", now())
 
   'starting from the end, work back to find the first record earlier than or equal to the UT we are looking for
   if not rsCraft.eof then

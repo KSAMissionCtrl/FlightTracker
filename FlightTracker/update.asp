@@ -2,7 +2,7 @@
 response.expires=-1
 
 'calculate the time in seconds since epoch 0 when the game started
-UT = datediff("s", "16-Feb-2014 00:00:00", now())
+UT = datediff("s", "13-Sep-2016 00:00:00", now())
 
 'open catalog database. "db" was prepended because without it for some reason I had trouble connecting
 db = "..\..\database\dbCatalog.mdb"
@@ -35,6 +35,7 @@ do while not rsCrafts.eof
   rsMoons.moveprevious
 
   locations = split(rsCrafts.fields.item("SOI"), "|")
+  ref = -1
   for each loc in locations
     values = split(loc, ";")
     if values(0)*1 <= UT then 
@@ -42,17 +43,17 @@ do while not rsCrafts.eof
     end if
   next 
 
-  'create a recordset copy of the moon/planet recordset depending on what is being orbited at this time
-  'moons use 50 or greater for reference numbers
-  if ref < 50 then
-    rsPlanets.find("id=" & ref)
-  else
-    rsMoons.find("id=" & ref)
-    rsPlanets.find("id=" & rsMoons.fields.item("Ref"))
-  end if
-
-  craftUpdate = ""
   if ref >= 0 then
+  
+    'create a recordset copy of the moon/planet recordset depending on what is being orbited at this time
+    'moons use 50 or greater for reference numbers
+    if ref < 50 then
+      rsPlanets.find("id=" & ref)
+    else
+      rsMoons.find("id=" & ref)
+      rsPlanets.find("id=" & rsMoons.fields.item("Ref"))
+    end if
+
     'open vessel database. "db" was prepended because without it for some reason I had trouble connecting
     db = "..\..\database\db" & rsCrafts.fields.item("DB") & ".mdb"
     Dim connCraft, sConnection
@@ -90,13 +91,18 @@ do while not rsCrafts.eof
     if not rsPorts.bof then if rsPorts.fields.item("id") > lastUpdate then lastUpdate = rsPorts.fields.item("id")
 
     'fetch and return the data
+    craftUpdate = ""
     craftUpdate = rsCrafts.fields.item("db") & ";" & lastUpdate & ";" & rsPlanets.fields.item("body") & ";"
     if not rsMoons.bof then craftUpdate = craftUpdate & rsMoons.fields.item("body") else craftUpdate = craftUpdate & "null"
+  
+    rsCrafts.movenext
+    if not rsCrafts.eof and len(craftUpdate) then craftUpdate = craftUpdate & ":"
+    response.write craftUpdate
+  else
+    rsCrafts.movenext
+    response.write("null:")
   end if
   
-  rsCrafts.movenext
-  if not rsCrafts.eof and len(craftUpdate) then craftUpdate = craftUpdate & ":"
-  response.write craftUpdate
 Loop
 
 response.write("|")
@@ -138,7 +144,7 @@ loop
 
 connCatalog.Close
 Set connCatalog = nothing
-connCraft.Close
+if ref >= 0 then connCraft.Close
 Set connCraft = nothing
 conn.Close
 Set conn = nothing
