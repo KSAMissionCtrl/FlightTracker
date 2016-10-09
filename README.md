@@ -71,6 +71,18 @@ Basically you need to install the folders to your server and feed them a databas
 
 ### Change Log
 
+**v4.4** (10/9/16)
+
+Fixes:
+  - [FT] Craft page, like body page, now lists filter option for Inactive Vessels when no active vessels are available
+  - [CR] Crew with ribbons in their DB but none yet ready to be displayed now still show "No Ribbons Yet Awarded" message
+  
+Changes:
+  - [FT] Dynamic map is broken until KerbalMaps is returned to service or self-hosted, so code in place to handle that
+  - [CR] Tired of seeing 0 for service years and changed it to count months of service instead of years, but still shows it in years
+  - [CR] Instead of showing HTML when more detail is needed on a Mission or Status, text is displayed in a tooltip
+  - [CR] All tooltip text for Mission, Status and Ribbons is now centered by default
+
 **v4.3** (9/22/16)
 
 Fixes:
