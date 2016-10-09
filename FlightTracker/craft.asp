@@ -5016,6 +5016,8 @@ response.write("</script>")
 
   'if there is a @ symbol this is a pre-launch state
   elseif left(str,1) = "@" then
+    response.write("<tr style='height:380px'> <td> <center> <b>Dynamic Map Unavailable!</b><br>We are aware of the issue </center> </td> </tr>")
+  elseif left(str,1) = "*" then  
     MapState = "prelaunch"
     response.write("<tr> <td> <div id='map' class='map' style='padding: 0; margin: 0; height: 405px; width: 835px;'></div> </td> </tr>")
     
@@ -5138,6 +5140,10 @@ https://github.com/Gaiiden/FlightTracker/wiki/Database-Documentation#moonplanet-
 -->
 
 <%
+'do a check right away to see if any craft exist before we mess with the recordset pointer
+bCraftExist = true
+if rsCrafts.eof or rsCrafts.bof then bCraftExist = false
+
 'the various types of vessels that can be shown in the menu tree
 filters = Array("debris", "probe", "rover", "lander", "ship", "station", "base", "asteroid")
 

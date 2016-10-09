@@ -550,7 +550,7 @@ https://github.com/Gaiiden/FlightTracker/wiki/Database-Documentation#karbal-stat
   'activation date is not a required field
   response.write("<td valign='top'><table border='1' style='width:100%;'>")
   if not isnull(rsKerbal.fields.item("Activation")) then
-    response.write("<tr><td><b>Activation Date:</b> " & formatdatetime(rsKerbal.fields.item("Activation"),2) & " (Service Years: " & datediff("yyyy", rsKerbal.fields.item("Activation"), now()) & ")</td></tr>")
+    response.write("<tr><td><b>Activation Date:</b> " & formatdatetime(rsKerbal.fields.item("Activation"),2) & " (Service Years: " & formatnumber(datediff("m", rsKerbal.fields.item("Activation"), now())/12, 2) & ")</td></tr>")
   else
     response.write("<tr><td><b>Activation Date:</b> TBD</td></tr>")
   end if
@@ -558,8 +558,18 @@ https://github.com/Gaiiden/FlightTracker/wiki/Database-Documentation#karbal-stat
   response.write("<tr><td><b>Docking Operations:</b> " & rsKerbal.fields.item("Dockings") & "</td></tr>")
   response.write("<tr><td><b>Total Mission Days:</b> " & rsKerbal.fields.item("TMD") & "</td></tr>")
   response.write("<tr><td><b>Total EVA Time:</b> " & rsKerbal.fields.item("TEVA") & "</td></tr>")
-  response.write("<tr><td><b>Current Status:</b> " & rsKerbal.fields.item("StatusHTML") & "</td></tr>")
-  response.write("<tr><td><b>Current Mission:</b> " & rsKerbal.fields.item("MissionHTML"))
+  
+  'add tooltips if there is more details to add to current mission/status
+  if isnull(rsKerbal.fields.item("StatusHTML")) then
+    response.write("<tr><td><b>Current Status:</b> " & rsKerbal.fields.item("Status") & "</td></tr>")
+  else
+    response.write("<tr><td><b>Current Status:</b> <u><span style='cursor:help' class='tip' title='<center>" & rsKerbal.fields.item("StatusHTML") & "</center>'>" & rsKerbal.fields.item("Status") & "</span></u></td></tr>")
+  end if
+  if isnull(rsKerbal.fields.item("MissionHTML")) then
+    response.write("<tr><td><b>Current Mission:</b> " & rsKerbal.fields.item("Mission") & "</td></tr>")
+  else
+    response.write("<tr><td><b>Current Mission:</b> <u><span style='cursor:help' class='tip' title='<center>" & rsKerbal.fields.item("MissionHTML") & "</center>'>" & rsKerbal.fields.item("Mission") & "</span></u></td></tr>")
+  end if
   
   'when mission start is included, we can determine the time until launch or that the mission has been underway
   if not isnull(rsKerbal.fields.item("MissionStart")) then
@@ -573,7 +583,6 @@ https://github.com/Gaiiden/FlightTracker/wiki/Database-Documentation#karbal-stat
     response.write("<script>var bMET = true; var MET = " & MET & ";</script>")
   end if
   response.write("</td></tr>")
-  response.write("<tr><td><b>Past Missions: </b><select id='missionSelect' style='width: 350px'><option value='' selected='selected'></option>")
 %>      
 
 <!-- 
@@ -584,6 +593,7 @@ https://github.com/Gaiiden/FlightTracker/wiki/Database-Documentation#missions-fi
 -->
       
 <%
+  response.write("<tr><td><b>Past Missions: </b><select id='missionSelect' style='width: 350px'><option value='' selected='selected'></option>")
   if not rsMissions.bof then 
     do while rsMissions.fields.item("UT") <= dbUT
     
@@ -609,7 +619,9 @@ https://github.com/Gaiiden/FlightTracker/wiki/Database-Documentation#ribbons-fie
   if rsRibbons.eof then
     response.write("<center>No Ribbons Yet Awarded</center>")
   else
+    bRibbonUsed = false
     do while rsRibbons.fields.item("UT") <= dbUT
+      bRibbonUsed = true
       bOverride = true
       do while bOverride
       
@@ -626,12 +638,13 @@ https://github.com/Gaiiden/FlightTracker/wiki/Database-Documentation#ribbons-fie
       loop
       response.Write "<img src='http://www.blade-edge.com/images/KSA/Roster/Ribbons/"
       response.write rsRibbons.fields.item("Ribbon")
-      response.write ".png' width='109px' class='tip' style='cursor: help', title='"
+      response.write ".png' width='109px' class='tip' style='cursor: help', title='<center>"
       response.write rsRibbons.fields.item("Title")
-      response.write "'>"
+      response.write "</center>'>"
       rsRibbons.MoveNext
       if rsRibbons.eof then exit do
     loop
+    if not bRibbonUsed then response.write("<center>No Ribbons Yet Awarded</center>")
   end if
   response.write("</td></tr></table>")
   response.write("<center><div style='padding: 5px;'>")

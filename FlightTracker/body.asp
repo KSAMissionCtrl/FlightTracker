@@ -1374,8 +1374,10 @@ else
 end if
 %>
 
-<!-- area for surface map display if this body supports it -->
+<!-- area for surface map display if this body supports it 
 <div id='map' class='map' style='z-index: 50; padding: 0; margin: 0; height: 840px; width: 840px; position: absolute; top: 50px; left: 0px; visibility: hidden;'></div>
+-->
+<div id='map' class='map' style='z-index: 50; padding: 0; margin: 0; height: 840px; width: 840px; position: absolute; top: 50px; left: 0px; visibility: hidden;'><tr style='height:380px'> <td> <center> <b>Dynamic Map Unavailable!</b><br>We are aware of the issue </center> </td> </tr></div>
 
 <!-- special notice box for new users to the site -->
 <div id='intro' style='font-family: sans-serif; border-style: solid; border-width: 2px; height: 177px; width: 370px; padding: 0; position: absolute; z-index: 301; margin: 0; top: 330px; left: 240px; background-color: gray; display: none'><center><b>Welcome to the Flight Tracker & Crew Roster!</b><p style='font-size: 14px; text-align: justify; margin-left: 5px; margin-right: 5px'>Here you can learn everything there is to know about the astronauts & vessels involved in our space program. We highly suggest <a target="_blank" href="https://github.com/Gaiiden/FlightTracker/wiki">visiting the wiki</a> for detailed instructions on how to use the many features to be found herein.<p><span id='dismissIntro' style='cursor: pointer;'>Click here to dismiss</span><p style='font-size: 14px; text-align: center;'><span style="cursor: help; text-decoration: underline; text-decoration-style: dotted" class='tip' data-tipped-options="maxWidth: 300" title="The KSA uses cookies stored on your computer via the web browser to enable certain features of the website. It does not store tracking information nor use any third party cookies for analytics or other data gathering. The website's core functionality will not be affected should cookies be disabled, at the expense of certain usability features.">Cookie Use Policy</span></p></center></div>
