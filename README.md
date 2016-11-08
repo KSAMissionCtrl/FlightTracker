@@ -71,6 +71,27 @@ Basically you need to install the folders to your server and feed them a databas
 
 ### Change Log
 
+**v4.5** (11/8/16)
+
+Fixes:
+  - [FT/CR] Clock now shows proper time offset for current daylight savings time. Will probably break again since I just manually added an hour back to the clock. Will keep an eye on it, still don't understand why it broke to begin with
+  - [FT] Stylesheets properly linked for display of the dynamic maps, no longer using the kerbalmaps.com domain to grab the stylesheets
+  - [FT] When setting up a dynamic map for a body that doesn't have a solar day parameter filled out (0) the terminator display will not try to render itself
+  - [FT] Was incorrectly using `bDrawMap` as a flag for whether the map is ready to be drawn (waiting on orbit calculations), instead of whether the map *should* be drawn (no dynamic map available for current body)
+  - [FT] Okay I think I *finally* nailed the launch date display so that it can handle scrubs and show the actual launch date/time when looking at past events
+  - [FT] Moved the definition of `UT` for JS code up a few lines to the top of the start of JS code so all code that needs it can use it. Don't know how the hell this didn't throw an error before
+
+Changes:
+  - [FT] Hyperbolic/SOI escape orbits will now search along their length for any Ap/Pe events and mark them
+  - [FT] When using the `&ut` flag for peering ahead in time the whole page now thinks it's currently that time, not just the database
+  - [FT] Craft image database field can optionally be left blank
+  - [FT] Added a default offset to the dynamic orbit text box so that it only needs to be offset relative to the content area, not the top of the page
+  - [FT] Adjusted the Ap/Pe markers slightly upwards to not get in the way of being able to select points on the orbit line. Also adjusted the popup window anchor position
+
+Additions:
+  - [FT] New default image for craft with no pictures (mainly asteroids)
+  - [FT] New tooltip for the Last Update time that shows the time in the user's local time
+
 **v4.4** (10/9/16)
 
 Fixes:
