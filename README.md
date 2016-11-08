@@ -71,6 +71,11 @@ Basically you need to install the folders to your server and feed them a databas
 
 ### Change Log
 
+**v4.5.1** (11/8/16)
+
+Fixes:
+  - [FT] Setting the whole page to the time of `&ut` now only happens if the event is in the future and not when looking back at past events
+  
 **v4.5** (11/8/16)
 
 Fixes:
