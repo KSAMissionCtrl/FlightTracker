@@ -173,9 +173,11 @@
       if(dstart<= d && dend>= d){
         off+= 60;
         label= '4';
+      } else {
+        off+= 60;
+        label= '5';
       }
-      else label= '5';
-
+      
       //add the adjusted offset to the date and get the hours and minutes:
       d.setUTCMinutes(d.getUTCMinutes()+off);
       h= d.getUTCHours();

@@ -41,7 +41,8 @@ if len(fpsCookie) = 0 then fpsCookie = 30
   <!-- CSS stylesheets -->
   <link href="style.css" rel="stylesheet" type="text/css" media="screen" />
   <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Roboto:900" />
-  <link rel="stylesheet" type="text/css" href="http://static.kerbalmaps.com/leaflet.css" />
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/leaflet@0.5.1/dist/leaflet.css" />
+  <link rel="stylesheet" type="text/css" href="../jslib/leaflet.ksp-src.css" />
   <link rel="stylesheet" type="text/css" href="../jslib/leaflet.label.css" />
   <link rel="stylesheet" type="text/css" href="../jslib/tipped.css" />
   <link href="http://vjs.zencdn.net/5.0.2/video-js.css" rel="stylesheet">
@@ -252,8 +253,10 @@ if len(fpsCookie) = 0 then fpsCookie = 30
       if(dstart<= d && dend>= d){
         off+= 60;
         label= '4';
+      } else {
+        off+= 60;
+        label= '5';
       }
-      else label= '5';
 
       //add the adjusted offset to the date and get the hours and minutes:
       d.setUTCMinutes(d.getUTCMinutes()+off);
@@ -1085,28 +1088,30 @@ if len(fpsCookie) = 0 then fpsCookie = 30
       // check if we are using a dynamic map
       if (bDrawMap) {
         
-        // render the terminator
-        // start by determining the current position of the sun given the body's degree of initial rotation and rotational period
-        currRot = -rotInitDeg - (((localUT / solDay) % 1) * 360);
-        if (currRot < -180) { currRot += 360; }
+        // render the terminator?
+        if (solDay) {
         
-        // create the icon for our sun marker
-        var sunIcon = L.icon({
-          iconUrl: 'sun.png',
-          iconSize: [16, 16],
-          iconAnchor: [8, 8]
-        });
-        
-        // place the sun marker
-        sunMark = L.marker([0,currRot], {icon: sunIcon, clickable: false}).addTo(map);
+          // start by determining the current position of the sun given the body's degree of initial rotation and rotational period
+          currRot = -rotInitDeg - (((localUT / solDay) % 1) * 360);
+          if (currRot < -180) { currRot += 360; }
+          // create the icon for our sun marker
+          var sunIcon = L.icon({
+            iconUrl: 'sun.png',
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+          });
+          
+          // place the sun marker
+          sunMark = L.marker([0,currRot], {icon: sunIcon, clickable: false}).addTo(map);
 
-        // draw the terminators
-        // terminators draw if there is room, extending as much as 180 degrees or to the edge of the map
-        if (currRot - 90 > -180) {
-          terminatorW = L.rectangle([[-90,currRot - 90], [90,maxCalc(currRot - 270, -180)]], {color: "#000000", clickable: false, weight: 1, opacity: 0.5, fillOpacity: 0.5, fill: true}).addTo(map);
-        }
-        if (currRot + 90 < 180) {
-          terminatorE = L.rectangle([[-90,currRot + 90], [90,maxCalc(currRot + 270, 180)]], {color: "#000000", clickable: false, weight: 1, opacity: 0.5, fillOpacity: 0.5, fill: true}).addTo(map);
+          // draw the terminators
+          // terminators draw if there is room, extending as much as 180 degrees or to the edge of the map
+          if (currRot - 90 > -180) {
+            terminatorW = L.rectangle([[-90,currRot - 90], [90,maxCalc(currRot - 270, -180)]], {color: "#000000", clickable: false, weight: 1, opacity: 0.5, fillOpacity: 0.5, fill: true}).addTo(map);
+          }
+          if (currRot + 90 < 180) {
+            terminatorE = L.rectangle([[-90,currRot + 90], [90,maxCalc(currRot + 270, 180)]], {color: "#000000", clickable: false, weight: 1, opacity: 0.5, fillOpacity: 0.5, fill: true}).addTo(map);
+          }
         }
       }
       
@@ -1127,6 +1132,29 @@ if len(fpsCookie) = 0 then fpsCookie = 30
           // close to Ap/Pe we can get a negative value, so handle that by just adding the period
           if (apTime <= 0) { apTime += Math.round(period); }
           if (peTime <= 0) { peTime += Math.round(period); }
+          
+        // hyperbolic/SOI escape - do a check for ap/pe based on orbit info
+        } else {
+          
+          // if altitude is increasing check for Ap
+          if (orbitdata[0].alt < orbitdata[1].alt) {
+            for (x=1; x<orbitdata.length-1; x++) {
+              if (orbitdata[x].alt > orbitdata[x+1].alt) {
+                apTime = x;
+                break;
+              }
+            }
+          }
+
+          // if altitude is decreasing check for Pe
+          if (orbitdata[0].alt > orbitdata[1].alt) {
+            for (x=1; x<orbitdata.length-1; x++) {
+              if (orbitdata[x].alt < orbitdata[x+1].alt) {
+                peTime = x;
+                break;
+              }
+            }
+          }
         }
         
         // check if we are using a dynamic map
@@ -1398,7 +1426,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
           
           // some orbits may be too long to show Ap/Pe markers, so ensure that we can display them at all (also account for SOI exit)
           if (apTime < latlon.length) { 
-            if (bDrawMap && period > 0) {
+            if (bDrawMap) {
             
               // let the user see the exact time of the event in addition to a countdown timer
               apUTC = new Date();
@@ -1423,7 +1451,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             } else { apTime = -1; }
           }
           if (peTime < latlon.length) { 
-            if (bDrawMap && period > 0) {
+            if (bDrawMap) {
               peUTC = new Date();
               peUTC.setTime((startDate + Math.abs(peTime)) * 1000);
               hrs = peUTC.getUTCHours();
@@ -1498,6 +1526,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
           dd.setTime(1473739200000 + (UT * 1000));
           var currDate = Math.floor(dd.getTime() / 1000);
           var now = currDate - startDate;
+
           if (latlon[now].lat < 0) {
             cardinal = "S";
           } else {
@@ -3321,6 +3350,7 @@ if request.querystring("ut") then
 
   'convert the text string into a number
   dbUT = request.querystring("ut") * 1
+  UT = request.querystring("ut") * 1
   
   'do not allow people to abuse the UT query to peek ahead 
   'a passcode query is required when requesting a UT entry later than the current UT
@@ -3593,33 +3623,49 @@ if not rsAscent.bof then
 end if
 response.write("var vidAscentLength = " & vidLength+1 & ";")
 response.write("</script>")
+%>
 
 <!-- setup for craft info text -->
 
+<%
 'assign the launch date, but - 
 'if we are viewing this record as a past event and the launch for this record was scrubbed,
 'the launch time for this record is no longer valid for Mission Elapsed Time calculation
 'so we need to look ahead for the actual launch time, which was one without a scrub
 tzero = true
 fromdate = rsCraft.fields.item("LaunchDate")
-if request.querystring("ut") and rsCraft.fields.item("Scrub") then
+actualdate = ""
+if bPastUT and rsCraft.fields.item("Scrub") then
   bkmark = 0
   
   'do not search past the end of the recordset or the current UT
   'we do not need people to know the actual launch time if that event has not occured yet
+  'basically search for the next unused update and if it has a new launch time, use it
+  'otherwise if we hit the end of the recordset then that last entry must contain whatever launch time was actually used
   tzero = false
-  do while rsCraft.fields.item("id") < UT and not rsCraft.eof
-    bkmark = bkmark - 1
-    rsCraft.movenext
-    if not rsCraft.fields.item("Scrub") then 
-      fromdate = rsCraft.fields.item("LaunchDate")
-      
-      'inform user that displayed time for this record is not accurate
-      msg = "Actual launch time:<br>" & rsCraft.fields.item("LaunchDateUTC") & " UTC<br>"
-      tzero = true
+  rsCraft.movenext
+  bkmark = bkmark - 1
+  do 
+    if rsCraft.eof then
       exit do
+    elseif rsCraft.fields.item("id") > UT then
+      if fromdate <> rsCraft.fields.item("LaunchDate") then exit do
     end if
+    rsCraft.movenext
+    bkmark = bkmark - 1
   loop
+  
+  rsCraft.moveprevious
+  bkmark = bkmark + 1
+  actualdate = rsCraft.fields.item("LaunchDate")
+
+  'inform user that displayed time for this record is not accurate
+  if datediff("s", actualdate, now()) > 0 then
+    msg = "Actual launch time:<br>" & rsCraft.fields.item("LaunchDateUTC") & " UTC<br>"
+  else
+    msg = "New launch time:<br>" & rsCraft.fields.item("LaunchDateUTC") & " UTC<br>"
+  end if 
+  tzero = true
   
   'return the cursor to the proper record
   rsCraft.move bkmark
@@ -3633,23 +3679,28 @@ else
   origMET = 0
 end if
 
-'is it prior to or after launch?
-if origMET <= 0 then
-  MET = origMET * -1
-  msg = msg & "Mission yet to launch<br>T-"
-else
-  MET = origMET
-  msg = msg & "Mission ongoing<br>MET: "
-end if
-
-'redo the message entirely if the mission is over
+'is the mission over?
 bUpdateMET = true
 if not isnull(rsCraft.fields.item("MissionEnd")) then
   values = split(rsCraft.fields.item("MissionEnd"), ";")
   if UT >= values(0)*1 then
     bUpdateMET = false
-    msg = values(2) & "<br>MET: "
-    MET = datediff("s", rsCraft.fields.item("LaunchDate"), values(1))
+    msg = msg & values(2) & "<br>MET: "
+    if len(actualdate) then
+      MET = datediff("s", actualdate, values(1))
+    else
+      MET = datediff("s", rsCraft.fields.item("LaunchDate"), values(1))
+    end if
+  end if
+else
+
+  'is it prior to or after launch?
+  if origMET <= 0 then
+    MET = origMET * -1
+    msg = msg & "Mission yet to launch<br>T-"
+  else
+    MET = origMET
+    msg = msg & "Mission ongoing<br>MET: "
   end if
 end if
 
@@ -3940,28 +3991,36 @@ document.title = document.title + " - <%response.write rsCraft.fields.item("Craf
       <td>
         <div id="mainwrapper">
           <%
-          'get the first craft image
-          images = split(rsCraft.fields.item("CraftImg"), "|")
-          craftImg = split(images(0), "~")(0)
+          'check for a craft image
+          if not isnull(rsCraft.fields.item("CraftImg")) then
           
-          'create the image maps if there are any
-          imgIndex = 0
-          if ubound(split(images(0), "~")) then
-            for each img in images
-              values = split(img, "~")
-              
-              'Other browsers can not display tooltips by default so do not alter title if not in Firefox
-              strContent = Request.ServerVariables("HTTP_USER_AGENT")
-              if instr(strContent, "Firefox") > 0 then
-                response.write("<div id='craftImgOverlay" & imgIndex & "' style='z-index: 125; padding: 0; margin: 0; position: absolute; top: 58px; left: 10px;'>" & replace(values(3), "title", "class='tip' data-tipped-options=""fixed: true, maxWidth: 200, target: 'mouse', behavior: 'hide'"" title") & "</div>")
-              else
-                response.write("<div id='craftImgOverlay" & imgIndex & "' style='z-index: 125; padding: 0; margin: 0; position: absolute; top: 58px; left: 10px;'>" & values(3) & "</div>")
-              end if
-              imgIndex = imgIndex + 1
+            'get the first craft image
+            images = split(rsCraft.fields.item("CraftImg"), "|")
+            craftImg = split(images(0), "~")(0)
+            
+            'create the image maps if there are any
+            imgIndex = 0
+            if ubound(split(images(0), "~")) then
+              for each img in images
+                values = split(img, "~")
+                
+                'Other browsers can not display tooltips by default so do not alter title if not in Firefox
+                strContent = Request.ServerVariables("HTTP_USER_AGENT")
+                if instr(strContent, "Firefox") > 0 then
+                  response.write("<div id='craftImgOverlay" & imgIndex & "' style='z-index: 125; padding: 0; margin: 0; position: absolute; top: 58px; left: 10px;'>" & replace(values(3), "title", "class='tip' data-tipped-options=""fixed: true, maxWidth: 200, target: 'mouse', behavior: 'hide'"" title") & "</div>")
+                else
+                  response.write("<div id='craftImgOverlay" & imgIndex & "' style='z-index: 125; padding: 0; margin: 0; position: absolute; top: 58px; left: 10px;'>" & values(3) & "</div>")
+                end if
+                imgIndex = imgIndex + 1
 
-              'save data to JS
-              response.write("<script>craftImgs.push({Normal: '" & values(0) & "', Burn: '" & values(1) & "', Thrust: '" & values(2) & "'});</script>")
-            next
+                'save data to JS
+                response.write("<script>craftImgs.push({Normal: '" & values(0) & "', Burn: '" & values(1) & "', Thrust: '" & values(2) & "'});</script>")
+              next
+            end if
+          else
+            
+            'load the default image
+            response.write("<div id='craftImgOverlay" & imgIndex & "' style='z-index: 125; padding: 0; margin: 0; position: absolute; top: 58px; left: 10px;'><img src='nada.png'></div>")
           end if
           
           'do not show the info box during an ascent state, just the image
@@ -4758,7 +4817,8 @@ document.title = document.title + " - <%response.write rsCraft.fields.item("Craf
 
           'not able to create this table row if an active ascent is underway
           if not bAscentActive then 
-            response.write("<tr><td><b>Last Update:</b> ")
+            response.write("<div id='localTime' style='display: none'></div>")
+            response.write("<tr><td><b><span style='cursor:help' class='tip-update' data-tipped-options=""inline: 'localTime'""><u>Last Update</u></span>:</b> ")
             
             'field can be left empty, such as prior to or during launch
             if not isnull(rsCraft.fields.item("DistanceTraveled")) then
@@ -5016,8 +5076,6 @@ response.write("</script>")
 
   'if there is a @ symbol this is a pre-launch state
   elseif left(str,1) = "@" then
-    response.write("<tr style='height:380px'> <td> <center> <b>Dynamic Map Unavailable!</b><br>We are aware of the issue </center> </td> </tr>")
-  elseif left(str,1) = "*" then  
     MapState = "prelaunch"
     response.write("<tr> <td> <div id='map' class='map' style='padding: 0; margin: 0; height: 405px; width: 835px;'></div> </td> </tr>")
     
@@ -5062,7 +5120,7 @@ response.write("</script>")
       str = replace(replace(str, "]", ""), "[", "|")
       imgs = split(right(str,len(str)-1), "|")
       pos = split(imgs(2), ",")
-      response.write("<tr> <td> <center> <span id='img' style='cursor:help'><img width='400px' src='" & imgs(0) & "' class='tip' data-tipped-options=""target: 'mouse'"" title='Ecliptic View'>&nbsp;<img width='400px' src='" & imgs(1) & "' class='tip' data-tipped-options=""target: 'mouse'"" title='Polar View'></span> </center> </td> </tr><div id='orbData' style='display: none; text-align: left; padding: 2px; font-family: sans-serif; font-size: 14px; border: 2px solid gray;	border-collapse: collapse; background-color: #E6E6E6; position: absolute; top: " & pos(0) & "px; left: " & pos(1) & "px;'></div>")
+      response.write("<tr> <td> <center> <span id='img' style='cursor:help'><img width='400px' src='" & imgs(0) & "' class='tip' data-tipped-options=""target: 'mouse'"" title='Ecliptic View'>&nbsp;<img width='400px' src='" & imgs(1) & "' class='tip' data-tipped-options=""target: 'mouse'"" title='Polar View'></span> </center> </td> </tr><div id='orbData' style='display: none; text-align: left; padding: 2px; font-family: sans-serif; font-size: 14px; border: 2px solid gray;	border-collapse: collapse; background-color: #E6E6E6; position: absolute; top: " & 445 + (pos(0) * 1) & "px; left: " & pos(1) & "px;'></div>")
     else
     
       'extract the images used to show the static orbits
@@ -5633,18 +5691,28 @@ rsMoons.movefirst
 <!-- this script controls the real-time page elements, including the Leaflet map -->
 
 <script>
+  var UT = <%response.write UT%>;
+  
   // js and vb can vary from 10-15 or more seconds
   // time is in favor of vb time, as majority of time stamps are done with dateDiff()
   // 1473739200000 ms = 9/13/16 00:00:00
   var d = new Date();
   d.setTime(1473739200000 + (UT * 1000));
   var startDate = Math.floor(d.getTime() / 1000);
+
+  // show the local time for the latest update
+  // break it up to show on two lines
+  var lt = new Date();
+  lt.setTime(1473739200000 + (<%response.write rsCraft.fields.item("id")%> * 1000));
+  var ltStr = lt.toString().split(" ");
+  var endStr = "";
+  for (x=5; x<ltStr.length; x++) { endStr += ltStr[x] + " "; }
+  $('#localTime').html(ltStr[0] + " " + ltStr[1] + " " + ltStr[2] + " " + ltStr[3] + " " + ltStr[4] + "<br>" + endStr);
   
   // decide what kind of dynamic map we are creating, if any
   var mapState = "<%response.write MapState%>";
   var latlon = [];
   var orbitdata = [];
-  var UT = <%response.write UT%>;
   if (mapState == "ascent") {
 
     // create the map with some custom options
@@ -5687,30 +5755,32 @@ rsMoons.movefirst
     <%rsCrafts.find("db='" & request.querystring("db") & "'")%>
     var ship = L.icon({iconUrl: 'button_vessel_<%response.write rsCrafts.fields.item("Type")%>.png', iconSize: [16, 16]});
     
-    // render the terminator
+    // render the terminator?
     // start by determining the current position of the sun given the body's degree of initial rotation and rotational period
     <%response.write("var solDay = " & rsBody.fields.item("SolarDay") & ";")%>
     <%response.write("var rotInitDeg = " & rsBody.fields.item("RotIni") & ";")%>
-    currRot = -rotInitDeg - (((parseInt(getParameterByName('ut')) / solDay) % 1) * 360);
-    if (currRot < -180) { currRot += 360; }
-    
-    // create the icon for our sun marker
-    var sunIcon = L.icon({
-      iconUrl: 'sun.png',
-      iconSize: [16, 16],
-      iconAnchor: [8, 8]
-    });
-    
-    // place the sun marker
-    sunMark = L.marker([0,currRot], {icon: sunIcon, clickable: false}).addTo(map);
+    if (solDay) {
+      currRot = -rotInitDeg - (((parseInt(getParameterByName('ut')) / solDay) % 1) * 360);
+      if (currRot < -180) { currRot += 360; }
+      
+      // create the icon for our sun marker
+      var sunIcon = L.icon({
+        iconUrl: 'sun.png',
+        iconSize: [16, 16],
+        iconAnchor: [8, 8]
+      });
+      
+      // place the sun marker
+      sunMark = L.marker([0,currRot], {icon: sunIcon, clickable: false}).addTo(map);
 
-    // draw the terminators
-    // terminators draw if there is room, extending as much as 180 degrees or to the edge of the map
-    if (currRot - 90 > -180) {
-      terminatorW = L.rectangle([[-90,currRot - 90], [90,maxCalc(currRot - 270, -180)]], {color: "#000000", clickable: false, weight: 1, opacity: 0.5, fillOpacity: 0.5, fill: true}).addTo(map);
-    }
-    if (currRot + 90 < 180) {
-      terminatorE = L.rectangle([[-90,currRot + 90], [90,maxCalc(currRot + 270, 180)]], {color: "#000000", clickable: false, weight: 1, opacity: 0.5, fillOpacity: 0.5, fill: true}).addTo(map);
+      // draw the terminators
+      // terminators draw if there is room, extending as much as 180 degrees or to the edge of the map
+      if (currRot - 90 > -180) {
+        terminatorW = L.rectangle([[-90,currRot - 90], [90,maxCalc(currRot - 270, -180)]], {color: "#000000", clickable: false, weight: 1, opacity: 0.5, fillOpacity: 0.5, fill: true}).addTo(map);
+      }
+      if (currRot + 90 < 180) {
+        terminatorE = L.rectangle([[-90,currRot + 90], [90,maxCalc(currRot + 270, 180)]], {color: "#000000", clickable: false, weight: 1, opacity: 0.5, fillOpacity: 0.5, fill: true}).addTo(map);
+      }
     }
     
     // keep the map locked to the ship if we are watching a current launch
@@ -5783,7 +5853,6 @@ rsMoons.movefirst
 
     // okay to update map stuff
     bMapRender = true;
-    bDrawMap = true;
     
   } else if (mapState == "prelaunch") {
 
@@ -5833,30 +5902,32 @@ rsMoons.movefirst
       });
     }
 
-    // render the terminator
+    // render the terminator?
     // start by determining the current position of the sun given the body's degree of initial rotation and rotational period
     <%response.write("var solDay = " & rsBody.fields.item("SolarDay") & ";")%>
     <%response.write("var rotInitDeg = " & rsBody.fields.item("RotIni") & ";")%>
-    currRot = -rotInitDeg - (((UT / solDay) % 1) * 360);
-    if (currRot < -180) { currRot += 360; }
-    
-    // create the icon for our sun marker
-    var sunIcon = L.icon({
-      iconUrl: 'sun.png',
-      iconSize: [16, 16],
-      iconAnchor: [8, 8]
-    });
-    
-    // place the sun marker
-    sunMark = L.marker([0,currRot], {icon: sunIcon, clickable: false}).addTo(map);
+    if (solDay) {
+      currRot = -rotInitDeg - (((UT / solDay) % 1) * 360);
+      if (currRot < -180) { currRot += 360; }
+      
+      // create the icon for our sun marker
+      var sunIcon = L.icon({
+        iconUrl: 'sun.png',
+        iconSize: [16, 16],
+        iconAnchor: [8, 8]
+      });
+      
+      // place the sun marker
+      sunMark = L.marker([0,currRot], {icon: sunIcon, clickable: false}).addTo(map);
 
-    // draw the terminators
-    // terminators draw if there is room, extending as much as 180 degrees or to the edge of the map
-    if (currRot - 90 > -180) {
-      terminatorW = L.rectangle([[-90,currRot - 90], [90,maxCalc(currRot - 270, -180)]], {color: "#000000", clickable: false, weight: 1, opacity: 0.5, fillOpacity: 0.5, fill: true}).addTo(map);
-    }
-    if (currRot + 90 < 180) {
-      terminatorE = L.rectangle([[-90,currRot + 90], [90,maxCalc(currRot + 270, 180)]], {color: "#000000", clickable: false, weight: 1, opacity: 0.5, fillOpacity: 0.5, fill: true}).addTo(map);
+      // draw the terminators
+      // terminators draw if there is room, extending as much as 180 degrees or to the edge of the map
+      if (currRot - 90 > -180) {
+        terminatorW = L.rectangle([[-90,currRot - 90], [90,maxCalc(currRot - 270, -180)]], {color: "#000000", clickable: false, weight: 1, opacity: 0.5, fillOpacity: 0.5, fill: true}).addTo(map);
+      }
+      if (currRot + 90 < 180) {
+        terminatorE = L.rectangle([[-90,currRot + 90], [90,maxCalc(currRot + 270, 180)]], {color: "#000000", clickable: false, weight: 1, opacity: 0.5, fillOpacity: 0.5, fill: true}).addTo(map);
+      }
     }
     
     // set launchsite icon
@@ -5888,7 +5959,6 @@ rsMoons.movefirst
     
     // okay to update map stuff
     bMapRender = true;
-    bDrawMap = true;
     
   // we can have an orbital state that doesn't require a map, so check that the element was created
   } else if (mapState == "orbit" && $("#map").length) {
@@ -5951,12 +6021,14 @@ rsMoons.movefirst
       var apIcon = L.icon({
         iconUrl: 'ap.png',
         iconSize: [16, 16],
-        iconAnchor: [8, 16]
+        iconAnchor: [8, 18],
+        popupAnchor: [0, -4]
       });
       var peIcon = L.icon({
         iconUrl: 'pe.png',
         iconSize: [16, 16],
-        iconAnchor: [8, 16]
+        iconAnchor: [8, 18],
+        popupAnchor: [0, -4]
       });
 
       // allow multiple popups to be open at the same time
@@ -6266,42 +6338,45 @@ rsMoons.movefirst
       // make sure dynamic map is rendered before we bother updating it
       if (bDrawMap && bMapRender) {
 
-        // update the sun marker
-        // tie the time of day to the current playback setting when viewing an old ascent state
-        if (mapState == "ascent" && bPastUT) {
+        // update the sun marker?
+        if (solDay) {
         
-          // elapsed time depends on whether we are in ascent data
-          if (ascentDelta > 0) {
-            currRot = -rotInitDeg - ((((parseInt(getParameterByName('ut')) + (telemetryUT - parseInt(getParameterByName('ut'))) + ascentDelta) / solDay) % 1) * 360);
+          // tie the time of day to the current playback setting when viewing an old ascent state
+          if (mapState == "ascent" && bPastUT) {
+          
+            // elapsed time depends on whether we are in ascent data
+            if (ascentDelta > 0) {
+              currRot = -rotInitDeg - ((((parseInt(getParameterByName('ut')) + (telemetryUT - parseInt(getParameterByName('ut'))) + ascentDelta) / solDay) % 1) * 360);
+            } else {
+              currRot = -rotInitDeg - ((((parseInt(getParameterByName('ut')) + launchCountdown) / solDay) % 1) * 360);
+            }
           } else {
-            currRot = -rotInitDeg - ((((parseInt(getParameterByName('ut')) + launchCountdown) / solDay) % 1) * 360);
+            currRot = -rotInitDeg - (((UT / solDay) % 1) * 360);
           }
-        } else {
-          currRot = -rotInitDeg - (((UT / solDay) % 1) * 360);
-        }
-        if (currRot < -180) { currRot += 360; }
-        sunMark.setLatLng([0,currRot]);
-        
-        // draw/update/remove the terminators
-        if (currRot - 90 > -180) {
-          if (!terminatorW) {
-            terminatorW = L.rectangle([[-90,currRot - 90], [90,maxCalc(currRot - 270, -180)]], {color: "#000000", clickable: false, weight: 1, opacity: 0.5, fillOpacity: 0.5, fill: true}).addTo(map);
-          } else {
-            terminatorW.setBounds([[-90,currRot - 90], [90,maxCalc(currRot - 270, -180)]]);
+          if (currRot < -180) { currRot += 360; }
+          sunMark.setLatLng([0,currRot]);
+          
+          // draw/update/remove the terminators
+          if (currRot - 90 > -180) {
+            if (!terminatorW) {
+              terminatorW = L.rectangle([[-90,currRot - 90], [90,maxCalc(currRot - 270, -180)]], {color: "#000000", clickable: false, weight: 1, opacity: 0.5, fillOpacity: 0.5, fill: true}).addTo(map);
+            } else {
+              terminatorW.setBounds([[-90,currRot - 90], [90,maxCalc(currRot - 270, -180)]]);
+            }
+          } else if ((currRot - 90 < -180) && (terminatorW)) {
+            map.removeLayer(terminatorW);
+            terminatorW = null;
           }
-        } else if ((currRot - 90 < -180) && (terminatorW)) {
-          map.removeLayer(terminatorW);
-          terminatorW = null;
-        }
-        if (currRot + 90 < 180) {
-          if (!terminatorE) {
-            terminatorE = L.rectangle([[-90,currRot + 90], [90,maxCalc(currRot + 270, 180)]], {color: "#000000", clickable: false, weight: 1, opacity: 0.5, fillOpacity: 0.5, fill: true}).addTo(map);
-          } else {
-            terminatorE.setBounds([[-90,currRot + 90], [90,maxCalc(currRot + 270, 180)]]);
+          if (currRot + 90 < 180) {
+            if (!terminatorE) {
+              terminatorE = L.rectangle([[-90,currRot + 90], [90,maxCalc(currRot + 270, 180)]], {color: "#000000", clickable: false, weight: 1, opacity: 0.5, fillOpacity: 0.5, fill: true}).addTo(map);
+            } else {
+              terminatorE.setBounds([[-90,currRot + 90], [90,maxCalc(currRot + 270, 180)]]);
+            }
+          } else if ((currRot + 90 > 180) && (terminatorE)) {
+            map.removeLayer(terminatorE);
+            terminatorE = null;
           }
-        } else if ((currRot + 90 > 180) && (terminatorE)) {
-          map.removeLayer(terminatorE);
-          terminatorE = null;
         }
         
         // only update if a maneuver node hasn't executed and rendered all this invalid
@@ -6348,7 +6423,7 @@ rsMoons.movefirst
           // remove the marker entirely if it's past the end of the current plot
           if (now > apTime && apTime >= 0) {
             apTime += Math.round(period);
-            if (apTime <= latlon.length) {
+            if (apTime <= latlon.length && period > 0) {
               apMark.setLatLng(latlon[apTime]);
               apUTC = new Date();
               apUTC.setTime((startDate + Math.abs(apTime)) * 1000);
@@ -6366,7 +6441,7 @@ rsMoons.movefirst
           }
           if (now > peTime && peTime >= 0) {
             peTime += Math.round(period);
-            if (peTime <= latlon.length) {
+            if (peTime <= latlon.length && period > 0) {
               peMark.setLatLng(latlon[peTime]);
               peUTC = new Date();
               peUTC.setTime((startDate + Math.abs(peTime)) * 1000);
@@ -6535,7 +6610,7 @@ rsMoons.movefirst
         
       // we have an orbital overlay to update, no dynamic map content
       } else if ($("#orbData").length) {
-      
+
         // non maneuver telemetry
         if (!bNodeExecution) {
         
