@@ -3350,7 +3350,6 @@ if request.querystring("ut") then
 
   'convert the text string into a number
   dbUT = request.querystring("ut") * 1
-  UT = request.querystring("ut") * 1
   
   'do not allow people to abuse the UT query to peek ahead 
   'a passcode query is required when requesting a UT entry later than the current UT
@@ -3361,6 +3360,8 @@ if request.querystring("ut") then
       'passcode incorrect or not supplied. Revert back to current UT
       dbUT = UT
       passcode = false
+    else
+      UT = request.querystring("ut") * 1
     end if
   end if
 else
