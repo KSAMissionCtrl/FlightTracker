@@ -68,8 +68,13 @@ else
       rsComms.open "select * from [craft comms]", connCraft, 2
 
       'calculate the time in seconds since epoch 0 when the game started
-      UT = datediff("s", "13-Sep-2016 00:00:00", now())
-
+      'or use a custom UT
+      if request.querystring("ut") then
+        UT = request.querystring("ut") * 1
+      else
+        UT = datediff("s", "13-Sep-2016 00:00:00", now())
+      end if
+      
       'starting from the end, work back to find the first record earlier than or equal to the UT we are looking for
       if not rsCraft.eof then
         rsCraft.MoveLast
@@ -133,7 +138,11 @@ else
 
       'fetch and return the data
       craftData = craftData & craft
-      craftData = craftData & ";" & split(split(rsCraft.fields.item("CraftImg"), "|")(0), "~")(0)
+      if isnull(rsCraft.fields.item("CraftImg")) then
+        craftData = craftData & ";null"
+      else
+        craftData = craftData & ";" & split(split(rsCraft.fields.item("CraftImg"), "|")(0), "~")(0)
+      end if
       craftData = craftData & ";" & formatnumber(rsOrbit.fields.item("Apoapsis")*1000,0)
       craftData = craftData & ";" & formatnumber(rsOrbit.fields.item("Periapsis")*1000,0)
       craftData = craftData & ";" & formatnumber(rsOrbit.fields.item("Eccentricity"),3)

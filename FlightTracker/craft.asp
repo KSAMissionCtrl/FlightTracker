@@ -2448,8 +2448,8 @@ if len(fpsCookie) = 0 then fpsCookie = 30
       
       // open new windows for related website entries/flickr photos
       $("#tagData").click(function () {
-        window.open("http://www.kerbalspace.agency/?tag=" + tagData.replace(/ /g, "-"));
-        window.open("https://www.flickr.com/search/?user_id=kerbal_space_agency&tags=" + tagData.replace(/-/g, " ") + "&view_all=1");
+        window.open("http://www.kerbalspace.agency/?tag=" + tagData.replace(/\.| /g, "-"));
+        window.open("https://www.flickr.com/search/?user_id=kerbal_space_agency&tags=" + tagData.replace(/-|\.| /g, "") + "&view_all=1");
       });
 
       // does away with the notification for orbital plot length
@@ -3967,7 +3967,17 @@ if (bLaunchVideo) {
 
 <!-- header for craft information section with tag link to show related website entries/flickr photos -->
 <center>
-<h3><%response.write rsCraft.fields.item("CraftName")%>&nbsp;<img id="tagData"  class="tip" data-tipped-options="position: 'righttop'" style="margin-bottom: 10px; cursor: pointer;" title="view all tagged archive entries & flickr images" src="http://www.blade-edge.com/Tracker/tag.png"></a></h3><script>var tagData="<%response.write lcase(rsCraft.fields.item("CraftName"))%>";</script>
+<h3><%response.write rsCraft.fields.item("CraftName")%>&nbsp;<img id="tagData"  class="tip" data-tipped-options="position: 'righttop'" style="margin-bottom: 10px; cursor: pointer;" title="view all tagged archive entries & flickr images" src="http://www.blade-edge.com/Tracker/tag.png"></a></h3>
+<script>
+  // store the craft name for use in finding tagged website entries and flickr photos
+  var tagData = "<%response.write lcase(rsCraft.fields.item("CraftName"))%>"; 
+  
+  // prune out any additional info in ()
+  if (tagData.includes("(")) { 
+    tagData = tagData.slice(0, tagData.indexOf("("));
+    tagData.trim();
+  }
+</script>
 
 <script>
 // add the craft name and currently viewed state to the page title
@@ -3999,12 +4009,13 @@ document.title = document.title + " - <%response.write rsCraft.fields.item("Craf
             images = split(rsCraft.fields.item("CraftImg"), "|")
             craftImg = split(images(0), "~")(0)
             
-            'create the image maps if there are any
+            'sort out the various image angles
             imgIndex = 0
-            if ubound(split(images(0), "~")) then
-              for each img in images
-                values = split(img, "~")
-                
+            for each img in images
+              values = split(img, "~")
+              
+              'create the image maps if there are any
+              if values(3) <> "null" then
                 'Other browsers can not display tooltips by default so do not alter title if not in Firefox
                 strContent = Request.ServerVariables("HTTP_USER_AGENT")
                 if instr(strContent, "Firefox") > 0 then
@@ -4013,11 +4024,11 @@ document.title = document.title + " - <%response.write rsCraft.fields.item("Craf
                   response.write("<div id='craftImgOverlay" & imgIndex & "' style='z-index: 125; padding: 0; margin: 0; position: absolute; top: 58px; left: 10px;'>" & values(3) & "</div>")
                 end if
                 imgIndex = imgIndex + 1
-
-                'save data to JS
-                response.write("<script>craftImgs.push({Normal: '" & values(0) & "', Burn: '" & values(1) & "', Thrust: '" & values(2) & "'});</script>")
-              next
-            end if
+              end if
+              
+              'save data to JS
+              response.write("<script>craftImgs.push({Normal: '" & values(0) & "', Burn: '" & values(1) & "', Thrust: '" & values(2) & "'});</script>")
+            next
           else
             
             'load the default image
@@ -4920,11 +4931,15 @@ document.title = document.title + " - <%response.write rsCraft.fields.item("Craf
               'what is the current status of the mission?
               if not isnull(rsCraft.fields.item("MissionReport")) then
                 values = split(rsCraft.fields.item("MissionReport"), ";")
-                response.write("<span class='tip' title='")
-                response.write values(0)
-                response.write("'><b><a" & close & "target='_blank' href='")
-                response.write values(1)
-                response.write("'>Mission Report</a></b></span> ")
+                if values(0) * 1 < UT then
+                  response.write("<span class='tip' title='")
+                  response.write values(1)
+                  response.write("'><b><a" & close & "target='_blank' href='")
+                  response.write values(2)
+                  response.write("'>Mission Report</a></b></span> ")
+                else
+                  response.write("<b><span class='tip' title='Updates on twitter'><a" & close & "target='_blank' href='https://twitter.com/KSA_MissionCtrl'>Mission Ongoing</a></span></b> ")
+                end if
               else
                 response.write("<b><span class='tip' title='Updates on twitter'><a" & close & "target='_blank' href='https://twitter.com/KSA_MissionCtrl'>Mission Ongoing</a></span></b> ")
               end if

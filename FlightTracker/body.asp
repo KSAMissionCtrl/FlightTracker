@@ -169,6 +169,7 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
     function getCookie(cname) {
       var name = cname + "=";
       var ca = document.cookie.split(';');
+      console.log(ca);
       for(var i=0; i<ca.length; i++) {
         var c = ca[i];
         while (c.charAt(0)==' ') c = c.substring(1);
@@ -827,7 +828,11 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
             
             // create the HTML for the tooltip that describes the craft details
             strHTML = "<table style='border: 0px; border-collapse: collapse;'><tr><td style='vertical-align: top; width: 256px;'>";
-            strHTML += "<img src='" + craftInfo[1] + "' width='256px'>";
+            if (craftInfo[1] != 'null') {
+              strHTML += "<img src='" + craftInfo[1] + "' width='256px'>";
+            } else {
+              strHTML += "<img src='nada.png' width='256px'>";
+            }
             strHTML += "<i><p>&quot;" + craftsCatalog[craftIndex].Desc.replace(/'/g, "&#39;") + "&quot;</p></i></td>";
             strHTML += "<td style='vertical-align: top;'><h1>" + craftsCatalog[craftIndex].Name + "</h1><b>Orbital Data</b><p>";
             strHTML += "Apoapsis: " + craftInfo[2] + " m<br>";
@@ -848,6 +853,8 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
             strHTML += "Crew: " + craftInfo[14] + "<br>";
             if (craftInfo[16] > 0.002) {
               strHTML += "Signal Delay: " + formatTime(craftInfo[16], true) + "<br>";
+            } else if (craftInfo[16] == 0) {
+              strHTML += "Signal Delay: N/A<br>";
             } else {
               strHTML += "Signal Delay: <0.002s<br>";
             }
@@ -1065,11 +1072,12 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
           }
           
           // if this tag doesn't have an href attribute, don't let people think there is a link to click through to
-          if (!$(this ).attr("href")) { $(this ).css("cursor", "default"); }
+          if (!$(this).attr("href")) { $(this).css("cursor", "default"); }
           
         // this tooltip should hold craft data. Craft data can change often, so we need to AJAX query the latest record
         // hold off on initializing the tooltips until the AJAX request is completed
-        } else if ($(this ).attr("title").substr(0,1) == "#") {
+        } else if ($(this).attr("title").substr(0,1) == "#") {
+          $(this).attr("href", "http://www.kerbalspace.agency/Tracker/craft.asp?db=" + $(this).attr("title").substr(1, $(this).attr("title").length));
           bCreateTips = false;
         }
       });      
@@ -1357,6 +1365,8 @@ if request.querystring("ut") then
     
       'passcode incorrect or not supplied. Revert back to current UT
       dbUT = UT
+    else
+      UT = request.querystring("ut") * 1
     end if
   end if
 else
@@ -1554,6 +1564,28 @@ https://github.com/Gaiiden/FlightTracker/wiki/Database-Documentation#dbcatalog
 'calculate the time in seconds since epoch 0 when the game started
 'we need to reset dbUT in case an earlier time was used to access past body map data
 dbUT = datediff("s", "13-Sep-2016 00:00:00", now())
+
+'what record are we looking to pull from the DB, the one that is most recent to the current UT or a specific entry?
+if request.querystring("ut") then
+
+  'convert the text string into a number
+  dbUT = request.querystring("ut") * 1
+  
+  'do not allow people to abuse the UT query to peek ahead 
+  'a passcode query is required for when requesting a UT entry later than the current UT
+  if dbUT > UT then
+    if request.querystring("pass") <> "2725" then 
+    
+      'passcode incorrect or not supplied. Revert back to current UT
+      dbUT = datediff("s", "13-Sep-2016 00:00:00", now())
+    else
+      UT = request.querystring("ut") * 1
+    end if
+  end if
+else
+  dbUT = UT
+end if
+
 
 'open catalog database. "db" was prepended because without it for some reason I had trouble connecting
 db = "..\..\database\dbCatalog.mdb"
@@ -2538,7 +2570,7 @@ end if
 
   // take the tally created during the menu build and send out a request for information on the craft orbiting this body
   if (craftQuery.length) {
-    var strURL = "craftinfo.asp?crafts=" + craftQuery.toString() + "&surfaceMap=<%response.write(lcase(rsBody.fields.item("Map")))%>";
+    var strURL = "craftinfo.asp?crafts=" + craftQuery.toString() + "&surfaceMap=<%response.write(lcase(rsBody.fields.item("Map")))%>&ut=" + UT;
     ajaxCraftData.open("GET", strURL, true);
     ajaxCraftData.send();
   } else {
