@@ -71,6 +71,22 @@ Basically you need to install the folders to your server and feed them a databas
 
 ### Change Log
 
+**v4.6** (11/22/16)
+
+Fixes:
+  - [FT] Craft tooltip in orbital display now shows "N/A" when the craft's signal delay is returned as 0, which means it has no connection
+  - [FT] Code to create the various static image angles of craft now better handles craft that have no images at all
+
+Changes:
+  - [FT] Craft displayed in the orbital overview tooltips can now use the default "no image available" picture
+  - [FT] Orbital overview/body overview pages can now also use the `&ut` parameter to make everything on the page move ahead in time not just the DB queries
+  - [FT] Updated the tagging replacement code to properly format tag requests to flickr, and also to handle "." in craft names
+
+Additions:
+  - [FT] Debug code to see if I can determin why the FT/CR is doing something to my cookies - suspect tho it may be FF
+  - [FT] Craft names can now include additional data in () that will not be included in tag requests
+  - [FT] Mission Report entries can now be scheduled instead of needed to be added manually at the time the mission report is published online
+
 **v4.5.1** (11/8/16)
 
 Fixes:
