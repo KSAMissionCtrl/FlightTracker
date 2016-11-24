@@ -71,6 +71,11 @@ Basically you need to install the folders to your server and feed them a databas
 
 ### Change Log
 
+**v4.6.2** (11/23/16)
+
+Fixes:
+  - [CR] Search algorithm for Mission/Status/Rank filters now properly sorts out copies and only shows one of each type of entry for the filter
+
 **v4.6.1** (11/23/16)
 
 Fixes:
