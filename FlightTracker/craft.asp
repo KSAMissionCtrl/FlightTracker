@@ -3692,6 +3692,16 @@ if not isnull(rsCraft.fields.item("MissionEnd")) then
     else
       MET = datediff("s", rsCraft.fields.item("LaunchDate"), values(1))
     end if
+  else
+  
+    'is it prior to or after launch?
+    if origMET <= 0 then
+      MET = origMET * -1
+      msg = msg & "Mission yet to launch<br>T-"
+    else
+      MET = origMET
+      msg = msg & "Mission ongoing<br>MET: "
+    end if
   end if
 else
 
@@ -5242,7 +5252,7 @@ if request.querystring("filter") = "inactive" then
       locations = split(rsCrafts.fields.item("SOI"), "|")
       for each loc in locations
         values = split(loc, ";")
-        if values(0)*1 <= dbUT then 
+        if values(0)*1 <= UT then 
           ref = values(1)*1
         end if
       next 
@@ -5292,7 +5302,7 @@ else
           locations = split(rsCrafts.fields.item("SOI"), "|")
           for each loc in locations
             values = split(loc, ";")
-            if values(0)*1 <= dbUT then 
+            if values(0)*1 <= UT then 
               ref = values(1)*1
             end if
           next 
@@ -5368,7 +5378,7 @@ else
       locations = split(rsCrafts.fields.item("SOI"), "|")
       for each loc in locations
         values = split(loc, ";")
-        if values(0)*1 <= dbUT then 
+        if values(0)*1 <= UT then 
           ref = values(1)*1
         end if
       next 
@@ -5719,11 +5729,12 @@ rsMoons.movefirst
   // show the local time for the latest update
   // break it up to show on two lines
   var lt = new Date();
-  lt.setTime(1473739200000 + (<%response.write rsCraft.fields.item("id")%> * 1000));
-  var ltStr = lt.toString().split(" ");
-  var endStr = "";
-  for (x=5; x<ltStr.length; x++) { endStr += ltStr[x] + " "; }
-  $('#localTime').html(ltStr[0] + " " + ltStr[1] + " " + ltStr[2] + " " + ltStr[3] + " " + ltStr[4] + "<br>" + endStr);
+  var newTime = 1473739200000 + (<%response.write rsCraft.fields.item("id")%> * 1000);
+  lt.setTime(newTime);
+  if (lt.toString().includes("Standard")) { lt.setTime(newTime + 3600000); }
+  var ltStr = lt.toString().slice(0, lt.toString().indexOf("GMT"));
+  var endStr = lt.toString().slice(lt.toString().indexOf("GMT"), lt.toString().length);
+  $('#localTime').html(ltStr + "<br>" + endStr);
   
   // decide what kind of dynamic map we are creating, if any
   var mapState = "<%response.write MapState%>";
