@@ -71,6 +71,13 @@ Basically you need to install the folders to your server and feed them a databas
 
 ### Change Log
 
+**v4.6.1** (11/23/16)
+
+Fixes:
+  - [FT] Mission status tooltip now shows "mission ongoing"/"yet to launch" status text again when mission end time is included but scheduled for a future time
+  - [FT] Vessel menu was using `dbUT` instead of `UT` to check for available vessels, which meant looking back at previous events would only load craft valid at that event time rather than the current time. Now all crafts for the actual time are loaded.
+  - [FT] Local time conversion for Last Update time now properly handles daylight savings offset
+  
 **v4.6** (11/22/16)
 
 Fixes:
