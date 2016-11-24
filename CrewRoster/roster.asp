@@ -915,9 +915,12 @@ elseif len(request.querystring("filter")) then
       redim preserve filter(count)
       
       'check if the value of this kerbals field is a unique entry and add it if so
-      bNew = false
+      bNew = true
       for i=0 to ubound(unique)
-        if unique(i) <> rsKerbal.fields.item(strFilter) then bNew = true
+        if unique(i) = rsKerbal.fields.item(strFilter) then 
+          bNew = false
+          exit for
+        end if
       next
       if bNew then
         redim preserve unique(count)
