@@ -71,6 +71,14 @@ Basically you need to install the folders to your server and feed them a databas
 
 ### Change Log
 
+**v4.7** (11/25/16)
+
+Changes:
+  - [CR] DB template updated
+  
+Additions:
+  - [CR] The total amount of science each crew member collects on missions is now shown in their stats view
+
 **v4.6.2** (11/23/16)
 
 Fixes:
