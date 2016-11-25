@@ -560,6 +560,7 @@ https://github.com/Gaiiden/FlightTracker/wiki/Database-Documentation#karbal-stat
   response.write("<tr><td><b>Docking Operations:</b> " & rsKerbal.fields.item("Dockings") & "</td></tr>")
   response.write("<tr><td><b>Total Mission Days:</b> " & rsKerbal.fields.item("TMD") & "</td></tr>")
   response.write("<tr><td><b>Total EVA Time:</b> " & rsKerbal.fields.item("TEVA") & "</td></tr>")
+  response.write("<tr><td><b>Total Science Collected:</b> " & rsKerbal.fields.item("Science") & "</td></tr>")
   
   'add tooltips if there is more details to add to current mission/status
   if isnull(rsKerbal.fields.item("StatusHTML")) then
