@@ -34,7 +34,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
   <title>KSA Flight Tracker</title>
 
   <!-- use this image link to force reddit to use a certain image for its thumbnail -->
-  <meta property="og:image" content="http://i.imgur.com/Yol0Gf0.png" />
+  <meta property="og:image" content="http://i.imgur.com/n68Qrsg.png" />
   
   <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 
@@ -2449,7 +2449,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
       // open new windows for related website entries/flickr photos
       $("#tagData").click(function () {
         window.open("http://www.kerbalspace.agency/?tag=" + tagData.replace(/\.| /g, "-"));
-        window.open("https://www.flickr.com/search/?user_id=kerbal_space_agency&tags=" + tagData.replace(/-|\.| /g, "") + "&view_all=1");
+        window.open("https://www.flickr.com/search/?user_id=kerbal_space_agency&tags=" + tagData.replace(/-|\.| /g, "") + ",-archive&view_all=1");
       });
 
       // does away with the notification for orbital plot length
@@ -2836,6 +2836,16 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             $("#sketchfabBUtton").css("width", "40px");
           });
       }, 1000);
+      
+      // takes the user to the program page
+      $("#programPatch").click(function(){
+        window.open($("#programPatch").attr("href"));
+      });
+      
+      // takes the user to the vessel page
+      $("#vesselPatch").click(function(){
+        window.open($("#vesselPatch").attr("href"));
+      });
       
       // controls the playback of telemetry data when viewing a past launch
       $("#telemData").click(function(){
@@ -3636,6 +3646,8 @@ response.write("</script>")
 tzero = true
 fromdate = rsCraft.fields.item("LaunchDate")
 actualdate = ""
+actualdateUTC = ""
+bUpdateMET = true
 if bPastUT and rsCraft.fields.item("Scrub") then
   bkmark = 0
   
@@ -3649,23 +3661,36 @@ if bPastUT and rsCraft.fields.item("Scrub") then
   do 
     if rsCraft.eof then
       exit do
+    'checking for events past the current UT means we are going to pull a future one, but also ensures it is latest data before it
     elseif rsCraft.fields.item("id") > UT then
-      if fromdate <> rsCraft.fields.item("LaunchDate") then exit do
+      if fromdate <> rsCraft.fields.item("LaunchDate") and not isnull(rsCraft.fields.item("LaunchDate")) then exit do
     end if
     rsCraft.movenext
     bkmark = bkmark - 1
   loop
   
-  rsCraft.moveprevious
-  bkmark = bkmark + 1
+  'always go back at least one because the record we found is a future event
+  'step back as needed in case the previous entry is empty for a TBD event
+  'do not step back further than current UT however!
+  do
+    rsCraft.moveprevious
+    bkmark = bkmark + 1
+    if rsCraft.fields.item("ID") < UT then exit do
+    if not isnull(rsCraft.fields.item("LaunchDate")) then exit do
+  loop
   actualdate = rsCraft.fields.item("LaunchDate")
+  actualdateUTC = rsCraft.fields.item("LaunchDateUTC")
 
   'inform user that displayed time for this record is not accurate
-  if datediff("s", actualdate, now()) > 0 then
-    msg = "Actual launch time:<br>" & rsCraft.fields.item("LaunchDateUTC") & " UTC<br>"
+  if isnull(rsCraft.fields.item("LaunchDate")) then
+    msg = "Actual launch time:<br>To Be Determined<br>"
   else
-    msg = "New launch time:<br>" & rsCraft.fields.item("LaunchDateUTC") & " UTC<br>"
-  end if 
+    if datediff("s", actualdate, now()) > 0 then
+      msg = "Actual launch time:<br>" & rsCraft.fields.item("LaunchDateUTC") & " UTC<br>"
+    else
+      msg = "New launch time:<br>" & rsCraft.fields.item("LaunchDateUTC") & " UTC<br>"
+    end if 
+  end if
   tzero = true
   
   'return the cursor to the proper record
@@ -3674,19 +3699,23 @@ end if
     
 'calculate the time since the start of the mission
 'this field could be blank if a new entry was created in Craft Data after a scrub with no new launch time
-if not isnull(rsCraft.fields.item("LaunchDate")) then 
+if len(actualdate) then
+  origMET = datediff("s", actualdate, now())
+elseif not isnull(rsCraft.fields.item("LaunchDate")) and not len(actualdate) then 
   origMET = datediff("s", fromdate, now())
 else
   origMET = 0
+  bUpdateMET = false
 end if
 
 'is the mission over?
-bUpdateMET = true
 if not isnull(rsCraft.fields.item("MissionEnd")) then
   values = split(rsCraft.fields.item("MissionEnd"), ";")
   if UT >= values(0)*1 then
     bUpdateMET = false
     msg = msg & values(2) & "<br>MET: "
+    
+    'do we calc from a date other than the launch date given in the record?
     if len(actualdate) then
       MET = datediff("s", actualdate, values(1))
     else
@@ -3695,10 +3724,10 @@ if not isnull(rsCraft.fields.item("MissionEnd")) then
   else
   
     'is it prior to or after launch?
-    if origMET <= 0 then
+    if origMET < 0 then
       MET = origMET * -1
-      msg = msg & "Mission yet to launch<br>T-"
-    else
+      msg = msg & "Mission yet to launch<br>L-"
+    elseif origMET > 0 then
       MET = origMET
       msg = msg & "Mission ongoing<br>MET: "
     end if
@@ -3706,10 +3735,10 @@ if not isnull(rsCraft.fields.item("MissionEnd")) then
 else
 
   'is it prior to or after launch?
-  if origMET <= 0 then
+  if origMET < 0 then
     MET = origMET * -1
-    msg = msg & "Mission yet to launch<br>T-"
-  else
+    msg = msg & "Mission yet to launch<br>L-"
+  elseif origMET > 0 then
     MET = origMET
     msg = msg & "Mission ongoing<br>MET: "
   end if
@@ -3756,8 +3785,11 @@ datestamp = "UTC"
 if isnull(rsCraft.fields.item("LaunchDate")) or not tzero then
 
   'launch has been scrubbed but a new launch time has not yet been announced
-  launchmsg = "To Be Determined"
-  if isnull(rsCraft.fields.item("LaunchDate")) then	datestamp = ""
+  'ignore this if viewing a past event, in which case TBD will be replaced by the new/actual date
+  if not len(actualdate) then
+    launchmsg = "To Be Determined"
+    if isnull(rsCraft.fields.item("LaunchDate")) then	datestamp = ""
+  end if
 else
 
   'launch is a go!
@@ -3975,9 +4007,31 @@ if (bLaunchVideo) {
 <!-- create the page section for craft information -->
 <div style="width: 840px; float: left;">
 
+<center><h3>
 <!-- header for craft information section with tag link to show related website entries/flickr photos -->
-<center>
-<h3><%response.write rsCraft.fields.item("CraftName")%>&nbsp;<img id="tagData"  class="tip" data-tipped-options="position: 'righttop'" style="margin-bottom: 10px; cursor: pointer;" title="view all tagged archive entries & flickr images" src="http://www.blade-edge.com/Tracker/tag.png"></a></h3>
+<%
+'are there program/vessel/mission patches?
+if not isnull(rsCraft.fields.item("Patches")) then 
+
+  'parse the patches
+  patchData = split(rsCraft.fields.item("Patches"), "|")
+
+  'show the program patch
+  patch = split(patchData(0), ";")
+  response.write("<img id=""programPatch"" class=""tip"" data-tipped-options=""position: 'bottom'"" style=""height: 35px; cursor: pointer;"" title=""<center>Click to view the " & patch(0) & " Program page</center><br /><img src='" & patch(1) & "'>"" href=""" & patch(2) & """ src=""" & patch(1) & """>&nbsp;")
+  
+  'show the vessel patch
+  patch = split(patchData(1), ";")
+  response.write("<img id=""vesselPatch"" class=""tip"" data-tipped-options=""position: 'bottom'"" style=""height: 35px; cursor: pointer;"" title=""<center>Click to view the " & patch(0) & " vessel page</center><br /><img src='" & patch(1) & "'>"" href=""" & patch(2) & """ src=""" & patch(1) & """>&nbsp;")
+
+  'show the mission patch?
+  if ubound(patchData) = 2 then
+    patch = split(patchData(2), ";")
+    response.write("<img id=""missionPatch"" class=""tip"" data-tipped-options=""position: 'bottom'"" style=""height: 35px; cursor: help;"" title=""<img src='" & patch(1) & "'><br /><center>" & patch(0) & "</center>"" src=""" & patch(1) & """>&nbsp;")
+  end if
+end if
+%>
+<%response.write rsCraft.fields.item("CraftName")%>&nbsp;<img id="tagData"  class="tip" data-tipped-options="position: 'righttop'" style="margin-bottom: 10px; cursor: pointer;" title="view all related website<br />content and flickr images" src="http://www.blade-edge.com/Tracker/tag.png"></h3>
 <script>
   // store the craft name for use in finding tagged website entries and flickr photos
   var tagData = "<%response.write lcase(rsCraft.fields.item("CraftName"))%>"; 
@@ -5741,7 +5795,10 @@ rsMoons.movefirst
   var latlon = [];
   var orbitdata = [];
   if (mapState == "ascent") {
-
+    
+    // always true since only done on Kerbin
+    var bDrawMap = true;
+    
     // create the map with some custom options
     // details on Leaflet API can be found here - http://leafletjs.com/reference.html
     var map = new L.KSP.Map('map', {
@@ -5883,6 +5940,9 @@ rsMoons.movefirst
     
   } else if (mapState == "prelaunch") {
 
+    // always true since only done on Kerbin
+    var bDrawMap = true;
+    
     // create the map with some custom options
     // details on Leaflet API can be found here - http://leafletjs.com/reference.html
     var map = new L.KSP.Map('map', {
@@ -6361,10 +6421,10 @@ rsMoons.movefirst
           cardinalLon = "E";
         }
       }
-      
+
       // make sure dynamic map is rendered before we bother updating it
       if (bDrawMap && bMapRender) {
-
+        
         // update the sun marker?
         if (solDay) {
         
@@ -6925,7 +6985,7 @@ rsMoons.movefirst
           camCaption.addCue(cue);
           for (x=0; x<ascentData.length; x++) {
             if (launchUT - (videoStartUT + x) > 0) {
-              cue = new VTTCue(x, x + 0.999, 'T-' + formatTime(launchUT - (videoStartUT + x), false));
+              cue = new VTTCue(x, x + 0.999, 'L-' + formatTime(launchUT - (videoStartUT + x), false));
               cue.line = -2;
               eventCaption.addCue(cue);
             } else {
