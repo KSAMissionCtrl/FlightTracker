@@ -351,10 +351,36 @@ if len(fpsCookie) = 0 then fpsCookie = 30
     
     // this function will continually call itself to batch-run orbital calculations and not completely lock up the browser
     function orbitalCalc() {
+
+      ////////////////////////////
+      // computeMeanFromTrueAnom() <-- refers to a function in KSPTOT code: https://github.com/Arrowstar/ksptot
+      ////////////////////////////
+      // needed until Mean field of DB can be fully deprecated
+      if (truA) {
+        if (ecc < 1.0) {
+          var EA = (Math.atan2(Math.sqrt(1-(Math.pow(ecc,2)))*Math.sin(tru), ecc+Math.cos(tru)));
+          if (tru < 2*Math.PI) {
+            EA = Math.abs(EA - (2*Math.PI) * Math.floor(EA / (2*Math.PI)));
+          }
+          mean = EA - ecc*Math.sin(EA);
+          mean = Math.abs(mean - (2*Math.PI) * Math.floor(mean / (2*Math.PI)));
+        } else {
+
+          //////////////////////////////
+          // computeHyperAFromTrueAnom()
+          //////////////////////////////
+          var num = Math.tan(tru/2);
+          var denom = Math.pow((ecc+1)/(ecc-1),(1/2));
+          var HA = 2*Math.atanh(num/denom);
+
+          mean = ecc*Math.sinh(HA)-HA;
+        }
+      }
+
       for (x=0; x<=1500; x++) {
       
         //////////////////////
-        // computeMeanMotion() <-- refers to a function in KSPTOT code: https://github.com/Arrowstar/ksptot
+        // computeMeanMotion()
         //////////////////////
         
         // adjust for motion since the time of this orbit
@@ -4934,10 +4960,10 @@ document.title = document.title + " - <%response.write rsCraft.fields.item("Craf
               'dynamic tooltip to update in our tick function
               response.write("<div id='distance' style='display: none'>" & strAccDst & strEstDst & "</div>")
               response.write("<span style='cursor:help' class='tip-update' data-tipped-options=""inline: 'distance'""><u>")
-              response.write(rsCraft.fields.item("LastUpdate") & " UTC")
+              response.write("<span id='lastUpdate'></span>")
               response.write("</u></span>")
             else
-              response.write(rsCraft.fields.item("LastUpdate") & " UTC")
+              response.write("<span id='lastUpdate'></span>")
             end if
             response.write("</td></tr>")
           end if
@@ -5205,7 +5231,15 @@ response.write("</script>")
     
       'extract the images used to show the static orbits
       imgs = split(right(str,len(str)-1), "|")
-      response.write("<tr> <td> <center> <span id='img' style='cursor:help'><img width='400px' src='" & imgs(0) & "' class='tip' data-tipped-options=""target: 'mouse'"" title='Ecliptic View" & mapMsg & "'>&nbsp;<img width='400px' src='" & imgs(1) & "' class='tip' data-tipped-options=""target: 'mouse'"" title='Polar View" & mapMsg & "'></span> </center> </td> </tr>")
+      
+      'if only one image, show it centered w/caption
+      if instr(imgs(1), "http") = 0 then
+        response.write("<tr> <td> <center> <span id='img' style='cursor:help'><img src='" & imgs(0) & "' class='tip' data-tipped-options=""target: 'mouse'"" title='" & imgs(1) & mapMsg & "'></span> </center> </td> </tr>")
+      
+      'if two images, then show the normal dual display
+      else
+        response.write("<tr> <td> <center> <span id='img' style='cursor:help'><img width='400px' src='" & imgs(0) & "' class='tip' data-tipped-options=""target: 'mouse'"" title='Ecliptic View" & mapMsg & "'>&nbsp;<img width='400px' src='" & imgs(1) & "' class='tip' data-tipped-options=""target: 'mouse'"" title='Polar View" & mapMsg & "'></span> </center> </td> </tr>")
+      end if
     end if
     
   'HTML formatted data, just spit it out
@@ -5790,6 +5824,14 @@ rsMoons.movefirst
   var endStr = lt.toString().slice(lt.toString().indexOf("GMT"), lt.toString().length);
   $('#localTime').html(ltStr + "<br>" + endStr);
   
+  // show the time/date this was posted
+  // put a zero before hours and minutes if needed
+  var lastUpdatehr = lt.getUTCHours();
+  var lastUpdateMin = lt.getUTCMinutes();
+  if (lastUpdatehr < 10) { lastUpdatehr = "0" + lastUpdatehr; }
+  if (lastUpdateMin < 10) { lastUpdateMin = "0" + lastUpdateMin; }
+  $('#lastUpdate').html((lt.getUTCMonth() + 1) + "/" + lt.getUTCDate() + "/" + (lt.getUTCFullYear() - 2000) + " @ " + lastUpdatehr + ":" + lastUpdateMin + " UTC");
+  
   // decide what kind of dynamic map we are creating, if any
   var mapState = "<%response.write MapState%>";
   var latlon = [];
@@ -6058,6 +6100,7 @@ rsMoons.movefirst
     var raan = 5.77553709561526;
     var arg = 4.71418317885574;
     var mean = 6.15350210776865;
+    var truA;
     var eph = 37819923.931;
     var period = 17759.7;
     var ap = 0;
@@ -6088,7 +6131,14 @@ rsMoons.movefirst
       response.write("var inc = " & rsOrbit.fields.item("Inclination") * .017453292519943295 & ";")
       response.write("var raan = " & rsOrbit.fields.item("RAAN") * .017453292519943295 & ";")
       response.write("var arg = " & rsOrbit.fields.item("Arg") * .017453292519943295 & ";")
-      response.write("var mean = " & rsOrbit.fields.item("Mean") * .017453292519943295 & ";")
+      'soon to be deprecated for use of true anomaly
+      if isnull(rsOrbit.fields.item("Mean")) then
+        response.write("var truA = " & rsOrbit.fields.item("TrueAnom") * .017453292519943295 & ";")
+        response.write("var mean;")
+      else
+        response.write("var mean = " & rsOrbit.fields.item("Mean") * .017453292519943295 & ";")
+        response.write("var truA;")
+      end if
       response.write("var eph = " & rsOrbit.fields.item("Eph") & ";")
       response.write("var period = " & rsOrbit.fields.item("Orbital Period") & ";")
       response.write("var atmoHeight = " & rsBody.fields.item("AtmoHeight") & ";")
@@ -6228,7 +6278,7 @@ rsMoons.movefirst
       inc = parseFloat(data[4]) * .017453292519943295;
       raan = parseFloat(data[7]) * .017453292519943295;
       arg = parseFloat(data[8]) * .017453292519943295;
-      mean = parseFloat(data[9]) * .017453292519943295;
+      truA = parseFloat(data[9]) * .017453292519943295;
       eph = parseFloat(data[10]);
       currUT = Math.floor(parseFloat(data[10]));
       endTime = Math.floor(currUT + parseFloat(data[5]));
@@ -6584,7 +6634,7 @@ rsMoons.movefirst
               inc = parseFloat(data[4]) * .017453292519943295;
               raan = parseFloat(data[7]) * .017453292519943295;
               arg = parseFloat(data[8]) * .017453292519943295;
-              mean = parseFloat(data[9]) * .017453292519943295;
+              truA = parseFloat(data[9]) * .017453292519943295;
               eph = parseFloat(data[10]);
               currUT = Math.floor(parseFloat(data[10]));
               endTime = Math.floor(currUT + parseFloat(data[5]));
@@ -6646,7 +6696,7 @@ rsMoons.movefirst
                 inc = parseFloat(data[4]) * .017453292519943295;
                 raan = parseFloat(data[7]) * .017453292519943295;
                 arg = parseFloat(data[8]) * .017453292519943295;
-                mean = parseFloat(data[9]) * .017453292519943295;
+                truA = parseFloat(data[9]) * .017453292519943295;
                 eph = parseFloat(data[10]);
                 currUT = Math.floor(parseFloat(data[10]));
                 endTime = Math.floor(currUT + parseFloat(data[5]));

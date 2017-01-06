@@ -284,7 +284,15 @@
       // upon selection of a new list item, take the user to that mission report
       $("#missionSelect")
         .change(function () {
-          if ($("#missionSelect").val().length) { window.open($("#missionSelect").val(), '_blank'); }
+          if ($("#missionSelect").val().length) { 
+            
+            // could be missing a link still if report was filed but not created
+            if ($("#missionSelect").val() == 'null') {
+              alert("This report is not yet uploaded. Please check again later or let us know it is missing! Sorry for the inconvenience");
+            } else {
+              window.open($("#missionSelect").val(), '_blank'); 
+            }
+          }
         })
         .change();
         
@@ -448,7 +456,7 @@ if request.querystring("db") = "" then
       end if
       strFilter = ""
       if len(request.querystring("filter")) then strFilter = "&filter=" & request.querystring("filter")
-      response.write("<a id='" & rsCrew.fields.item("Kerbal") & "' style='position: relative;' href='http://www.kerbalspace.agency/Roster/roster.asp?db=" & rsCrew.fields.item("Kerbal") & strFilter & "'><img src='" & rsKerbal.fields.item("Image") & "' width='190px' style='padding: 5px' class='tip' data-tipped-options=""target: 'mouse', detach: false, position: 'bottom'"" title='<b>" & rsKerbal.fields.item("Rank") & " " & rsKerbal.fields.item("Name") & " Kerman</b><p><b>Activation Date:</b><br>" & actDate  & "<br><b>Current Status:</b><br>" & rsKerbal.fields.item("Status") & "<br><b>Current Mission:</b><br>" & rsKerbal.fields.item("Mission") & "'></a>")
+      response.write("<a id='" & rsCrew.fields.item("Kerbal") & "' style='position: relative;' href='http://www.kerbalspace.agency/Roster/roster.asp?db=" & rsCrew.fields.item("Kerbal") & strFilter & "'><img src='" & rsKerbal.fields.item("Image") & "' width='190px' style='padding: 5px' class='tip' data-tipped-options=""target: 'mouse', detach: false, position: 'bottom'"" title='<b>" & rsKerbal.fields.item("Rank") & " " & rsKerbal.fields.item("Name") & " Kerman</b><p><b>Activation Date:</b><br>" & actDate  & "<br><b>Current Status:</b><br>" & rsKerbal.fields.item("Status") & "<br><b>Current Assignment:</b><br>" & rsKerbal.fields.item("Assignment") & "'></a>")
     end if
     rsCrew.movenext
   loop
@@ -557,7 +565,9 @@ https://github.com/Gaiiden/FlightTracker/wiki/Database-Documentation#karbal-stat
     response.write("<tr><td><b>Activation Date:</b> TBD</td></tr>")
   end if
   response.write("<tr><td><b>Completed Missions:</b> " & rsMissions.RecordCount & "</td></tr>")
-  response.write("<tr><td><b>Docking Operations:</b> " & rsKerbal.fields.item("Dockings") & "</td></tr>")
+  if not isnull(rsKerbal.fields.item("Dockings")) then
+    response.write("<tr><td><b>Docking Operations:</b> " & rsKerbal.fields.item("Dockings") & "</td></tr>")
+  end if
   response.write("<tr><td><b>Total Mission Days:</b> " & rsKerbal.fields.item("TMD") & "</td></tr>")
   response.write("<tr><td><b>Total EVA Time:</b> " & rsKerbal.fields.item("TEVA") & "</td></tr>")
   response.write("<tr><td><b>Total Science Collected:</b> " & rsKerbal.fields.item("Science") & "</td></tr>")
@@ -569,10 +579,10 @@ https://github.com/Gaiiden/FlightTracker/wiki/Database-Documentation#karbal-stat
   else
     response.write("<tr><td><b>Current Status:</b> <u><span style='cursor:help' class='tip' title='<center>" & rsKerbal.fields.item("StatusHTML") & "</center>'>" & rsKerbal.fields.item("Status") & "</span></u></td></tr>")
   end if
-  if isnull(rsKerbal.fields.item("MissionHTML")) then
-    response.write("<tr><td><b>Current Mission:</b> " & rsKerbal.fields.item("Mission") & "</td></tr>")
+  if isnull(rsKerbal.fields.item("AssignmentHTML")) then
+    response.write("<tr><td><b>Current Assignment:</b> " & rsKerbal.fields.item("Assignment") & "</td></tr>")
   else
-    response.write("<tr><td><b>Current Mission:</b> <u><span style='cursor:help' class='tip' title='<center>" & rsKerbal.fields.item("MissionHTML") & "</center>'>" & rsKerbal.fields.item("Mission") & "</span></u></td></tr>")
+    response.write("<tr><td><b>Current Assignment:</b> <u><span style='cursor:help' class='tip' title='<center>" & rsKerbal.fields.item("AssignmentHTML") & "</center>'>" & rsKerbal.fields.item("Assignment") & "</span></u></td></tr>")
   end if
   
   'when mission start is included, we can determine the time until launch or that the mission has been underway
@@ -602,7 +612,12 @@ https://github.com/Gaiiden/FlightTracker/wiki/Database-Documentation#missions-fi
     do while rsMissions.fields.item("UT") <= dbUT
     
       'fill in the dropdown list box with mission entries
-      response.write("<option value='" & rsMissions.fields.item("Link") & "'>" & rsMissions.fields.item("Title") & "</option>")
+      if isnull(rsMissions.fields.item("Link")) then
+        strLink = "null"
+      else
+        strLink = rsMissions.fields.item("Link")
+      end if
+      response.write("<option value='" & strLink & "'>" & rsMissions.fields.item("Title") & "</option>")
       rsMissions.MoveNext
       if rsMissions.eof then exit do
     loop
@@ -697,7 +712,7 @@ end if
 <!-- menu tree -->
 
 <%
-filters = Array("name", "status", "rank", "mission")
+filters = Array("name", "status", "rank", "assignment")
 %>
 
 <!-- shows all the kerbals on one page -->

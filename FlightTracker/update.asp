@@ -70,7 +70,6 @@ do while not rsCrafts.eof
     'create the tables
     set rsCraft = Server.CreateObject("ADODB.recordset")
     set rsResources = Server.CreateObject("ADODB.recordset")
-    set rsOrbit = Server.CreateObject("ADODB.recordset")
     set rsCrew = Server.CreateObject("ADODB.recordset")
     set rsComms = Server.CreateObject("ADODB.recordset")
     set rsPorts = Server.CreateObject("ADODB.recordset")
@@ -78,14 +77,12 @@ do while not rsCrafts.eof
     'query the data
     rsCraft.open "select top 1 * from [craft data] where ID <= " & UT & " order by ID desc", connCraft, 1, 1
     rsResources.open "select top 1 * from [craft resources] where ID <= " & UT & " order by ID desc", connCraft, 1, 1
-    rsOrbit.open "select top 1 * from [flight data] where ID <= " & UT & " order by ID desc", connCraft, 1, 1
     rsCrew.open "select top 1 * from [crew manifest] where ID <= " & UT & " order by ID desc", connCraft, 1, 1
     rsComms.open "select top 1 * from [craft comms] where ID <= " & UT & " order by ID desc", connCraft, 1, 1
     rsPorts.open "select top 1 * from [craft ports] where ID <= " & UT & " order by ID desc", connCraft, 1, 1
 
     lastUpdate = rsCraft.fields.item("id")
     if not rsResources.bof then if rsResources.fields.item("id") > lastUpdate then lastUpdate = rsResources.fields.item("id")
-    if not rsOrbit.bof then if rsOrbit.fields.item("id") > lastUpdate then lastUpdate = rsOrbit.fields.item("id")
     if not rsCrew.bof then if rsCrew.fields.item("id") > lastUpdate then lastUpdate = rsCrew.fields.item("id")
     if not rsComms.bof then if rsComms.fields.item("id") > lastUpdate then lastUpdate = rsComms.fields.item("id")
     if not rsPorts.bof then if rsPorts.fields.item("id") > lastUpdate then lastUpdate = rsPorts.fields.item("id")

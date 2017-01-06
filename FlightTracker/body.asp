@@ -169,7 +169,6 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
     function getCookie(cname) {
       var name = cname + "=";
       var ca = document.cookie.split(';');
-      console.log(ca);
       for(var i=0; i<ca.length; i++) {
         var c = ca[i];
         while (c.charAt(0)==' ') c = c.substring(1);
@@ -512,7 +511,11 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
       
       // create the popup text and bind it to the marker
       strHTML = "<table style='border: 0px; border-collapse: collapse;'><tr><td style='vertical-align: top; width: 200px;'>";
-      strHTML += "<img src='" + bodyCrafts[currCraft].Img + "' width='200px'>";
+      if (bodyCrafts[currCraft].Img != 'null') {
+        strHTML += "<img src='" + bodyCrafts[currCraft].Img + "' width='200px'>";
+      } else {
+        strHTML += "<img src='nada.png' width='200px'>";
+      }
       if (bodyCrafts[currCraft].Type != "Moon") {
         strHTML += "<i><p>&quot;" + bodyCrafts[currCraft].Desc + "&quot;</p></i>";
         strHTML += "<p><a href='http://www.kerbalspace.agency/Tracker/craft.asp?db=" + bodyCrafts[currCraft].DB + "'>View Craft Page</a></p>";
@@ -858,7 +861,17 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
             } else {
               strHTML += "Signal Delay: <0.002s<br>";
             }
-            strHTML += "Last Updated: " + craftInfo[15] + "</p></td></tr></table>";
+
+            // show the time/date this was posted
+            // put a zero before hours and minutes if needed
+            // 1473739200000 ms = 9/13/16 00:00:00
+            var lt = new Date();
+            lt.setTime(1473739200000 + (craftInfo[15] * 1000));
+            var lastUpdatehr = lt.getUTCHours();
+            var lastUpdateMin = lt.getUTCMinutes();
+            if (lastUpdatehr < 10) { lastUpdatehr = "0" + lastUpdatehr; }
+            if (lastUpdateMin < 10) { lastUpdateMin = "0" + lastUpdateMin; }
+            strHTML += "Last Updated: " + (lt.getUTCMonth() + 1) + "/" + lt.getUTCDate() + "/" + (lt.getUTCFullYear() - 2000) + " @ " + lastUpdatehr + ":" + lastUpdateMin + " UTC</p></td></tr></table>";
             
             // search for multiple instances of the craft represented on the orbital diagram to assign the content to
             $("area").each(function(index) {
@@ -1040,7 +1053,11 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
           for (bodyIndex=0; bodyIndex<bodiesCatalog.length; bodyIndex++) {
             if (strBodyName == bodiesCatalog[bodyIndex].Name) { break; }
           }
-          strHTML += "<img src='" + bodiesCatalog[bodyIndex].Image + "'>";
+          if (bodiesCatalog[bodyIndex].Image != 'null') {
+            strHTML += "<img src='" + bodiesCatalog[bodyIndex].Image + "'>";
+          } else {
+            strHTML += "<img src='nada.png'>";
+          }
           strHTML += "<i><p>&quot;" + bodiesCatalog[bodyIndex].Desc + "&quot;</p></i><p><b>- Kerbal Astronomical Society</b></p></td>";
           strHTML += "<td style='vertical-align: top;'><h1>" + bodiesCatalog[bodyIndex].Name + "</h1><b>Orbital Data</b>";
           strHTML += "<p>Apoapsis: " + bodiesCatalog[bodyIndex].Ap + " m<br>";
