@@ -71,6 +71,22 @@ Basically you need to install the folders to your server and feed them a databas
 
 ### Change Log
 
+**v4.9** (1/6/17)
+
+Fixes:
+  - [CR] Updated the FF ribbons as some newer ones were missing and causing broken image links in crew profiles
+  - [FT] Dynamic tooltip for a vessel shown on the surface map now properly displays the default "no image" image
+  
+Changes:
+  - [CR] Mission reports are what update the mission counter so when scheduling mission reports ahead of time to ensure mission count is accurate, the report itself may not yet be created by the time the link is available. If this is the case a message box will pop up to inform the user the report has yet to be uploaded
+  - [CR] "Current Mission" label has been changed to "Current Assignment" to better align with the use of Programs. "Current Status" will now be used to define missions
+  - [CR] "Docking Operations" field will now only display for pilots
+  - [FT] Removed some cookie debug code left over from v4.8
+  - [FT] "Last Updated" time field is now dynamically created based off the UT of the record, deprecating the `LastUpdate` field of craft databases
+  - [FT] Orbital calculations are now derived from True Anomaly rather than Mean Anomaly, allowing for greater precision and easier orbit value input
+  - [FT] A single image is now allowed to be used for the static orbits display if two images are not needed
+  - [FT] Updated orbital data only will no longer trigger an update badge for vessels
+
 **v4.8** (12/12/16)
 
 Fixes:
