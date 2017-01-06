@@ -71,6 +71,23 @@ Basically you need to install the folders to your server and feed them a databas
 
 ### Change Log
 
+**v4.8** (12/12/16)
+
+Fixes:
+  - [FT/CR] The tag search for crew/vessels now excludes tagged archived images from the results when looking for content on flickr
+  - [CR] Ribbon image path was pointing to an old location and wasn't picking up ribbons added to the newer location now in use
+  - [FT] Launch date/MET tooltip fixed *again* to now hopefully, finally, handle all various scenarios that involve a launch with multiple scrubs when looking at past events
+  - [FT] Dynamic map terminator display now updates in real time when viewing a launch location map
+  
+Changes:
+  - [CR] Ribbon tooltip `maxwidth` set to 150 for better formatting
+  - [FT] New database templates added with blank records to replace files that actually had future KSA information available in them
+  - [FT] Countdown clocks in use anywhere now read "L-" instead of "T-"
+  
+Additions:
+  - [CR] A new field for tracking the distance a kerbal has traveled. Is not additive, each entry should include total travel distance not change in travel distance
+  - [FT] Vessels can now display patches to the left of their titles which will link to the vessel/program pages on the website and also show the full-sized patch image in a tooltip
+
 **v4.7** (11/25/16)
 
 Changes:
