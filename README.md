@@ -51,6 +51,7 @@ Basically you need to install the folders to your server and feed them a databas
 - [FT] Engine/Thruster overlay during a maneuver only has a single image and can't account for rotation
 - [FT] *Chrome Only* launch video replays do not always load fully
 - [FT] *Non-Firefox Only* some system overview pages show an empty tooltip when hovering over a body in addition to the rich HTML tooltip
+- [FT] *Firefox Only* if a tooltip appears in the very middle of the screen, it can sometimes appear to the left and not be formatted properly (too narrow)
 
 ### Future Fixes/Changes/Additions
 
@@ -70,6 +71,26 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] Proper terminator display taking orbital inclination into account ([Leaflet.Curve](https://github.com/elfalem/Leaflet.curve))
 
 ### Change Log
+
+**v4.10** (2/5/17)
+
+Fixes:
+  - [FT] Adjusted the number of milliseconds that was used to get the current time in javascript, which was causing conversion from UTC to local time to be off by one hour
+  - [FT] SOI mark is now removed properly after a craft traveles out of the SOI when viewing it on the surface map
+  - [FT] No longer comparing a string to a number in one instance when looking for a database entry before a given UT time
+  
+Changes:
+  - [CR] Crew rollup-text now has to be clicked to show rather than just rolling up on a mouseover (same behavior now as craft description roll-up text)
+  - [FT] Flight Template database updated to remove deprecated fields
+  - [FT] Orbital calculations for Mean Anomaly now fully deprecated and removed, only looks for database field with True Anomaly values
+  - [FT] Tooltips showing craft/mission/body data are now much better formatted, with the `<h1>` styling removed and replaced with custom CSS in a `<span>` tag so it doesn't have the large vertical padding the `<h1>` tag comes with, better aligning the name of the craft/mission/body with the image to the left
+  - [FT] Tipped.js tooltip creation changed so that I could use the `class='close-tooltip'` option in the new tags listing feature without the tooltip closing when the mouse moved off the tag image
+  
+Additions:
+  - [FT] Template database for surface tracks
+  - [FT] Surface map can now show ground tracks. This is initially designed for aircraft flights but can be expanded later for rovers and other surface travel. Allows for links in the mission description to display markers on the map in groups or individually, with multiple links in the description supported. Map markers can be removed individually. This should also be the perfect groundwork for enabling real-time mission tracking in the future.
+  - [FT] When viewing a system overview map, clicking on the tag image to the right of the name now shows a tooltip that lists all the bodies in the system, so you can select one to view tagged entries on the website and flickr. This not only makes it easier to get to tagged content, but more accessible as bodies without moons or vessels in orbit do not have individual pages yet from which you can get a link to just that tagged body. The only exception to this is when viewing the Kerbol or Inner Kerbol systems, in which case the tag link will search for content for just Kerbol.
+  - [FT] New known issue: *Firefox Only* if a tooltip appears in the very middle of the screen, it can sometimes appear to the left and not be formatted properly (too narrow)
 
 **v4.9** (1/6/17)
 
