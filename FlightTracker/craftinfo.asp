@@ -354,12 +354,7 @@ else
         craftData = craftData & ";" & rsOrbit.fields.item("SMA")
         craftData = craftData & ";" & rsOrbit.fields.item("RAAN")
         craftData = craftData & ";" & rsOrbit.fields.item("Arg")
-        'deprecating mean anomaly for true anomaly
-        if isnull(rsOrbit.fields.item("Mean")) then
-          craftData = craftData & ";" & rsOrbit.fields.item("TrueAnom")
-        else 
-          craftData = craftData & ";" & rsOrbit.fields.item("Mean")
-        end if
+        craftData = craftData & ";" & rsOrbit.fields.item("TrueAnom")
         craftData = craftData & ";" & rsOrbit.fields.item("Eph") & "|"
       else
         craftData = craftData & ";null|"

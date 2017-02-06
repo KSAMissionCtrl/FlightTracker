@@ -279,6 +279,7 @@
 
     // JQuery setup
     var bMET = false;
+    var bDescOpen = false;
     $(document).ready(function(){
     
       // upon selection of a new list item, take the user to that mission report
@@ -302,6 +303,25 @@
         window.open("https://www.flickr.com/search/?user_id=kerbal_space_agency&tags=" + tagData + ",-archive&view_all=1");
       });
 
+      // scroll up the kerbal description text when the header is clicked
+      $("#kerbalDesc").click(function(){
+        if (!bDescOpen) {
+          $("#kerbalDesc").css("transform", "translateY(-555px)");
+          $("#kerbalDesc").css("cursor", "default");
+          bDescOpen = true;
+        }
+      });
+
+      // return description text to normal on hover off
+      $("#mainwrapper").hover(function(){
+      }, function(){
+        if (bDescOpen) {
+          $("#kerbalDesc").css("cursor", "pointer");
+          $("#kerbalDesc").css("transform", "translateY(0px)");
+          bDescOpen = false;
+        }
+      });
+      
       // behavior of tooltips depends on the device
       if (is_touch_device()) {
         var showOpt = 'click';
@@ -539,7 +559,7 @@ https://github.com/Gaiiden/FlightTracker/wiki/Database-Documentation#background-
   'all info is written out to scroll-up caption text over the kerbal photo
   response.write("<td style='width: 370px'><div id='mainwrapper'><div id='box-1' class='box'>")
   response.write("<img id='image-1' src='" & rsKerbal.fields.item("Image") & "'/>")
-  response.write("<span class='caption simple-caption'><center><b>^^ Additional Information ^^</b></center>")
+  response.write("<span id='kerbalDesc' style='cursor: pointer;' class='caption simple-caption'><center><b>^^ Additional Information ^^</b></center>")
   response.write("<p><b>Birth Date:</b> " & formatdatetime(rsBackground.fields.item("BirthDate"),2) & " (Age: " & datediff("yyyy", rsBackground.fields.item("BirthDate"), now()) & ")</p>")
   response.write("<p><b>Family Name:</b> " & rsBackground.fields.item("FamName") & "&nbsp;<img src='qmark.png' style='left: initial; cursor: help' class='tip' data-tipped-options=""position: 'right', maxWidth: 160"" title='as a show of global unity, all adult kerbals take the surname of the first planetary leader'></p>")
   response.write("<p><b>Specialty:</b> " & rsBackground.fields.item("Speciality") & "</p>")

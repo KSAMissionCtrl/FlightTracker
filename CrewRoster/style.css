@@ -100,7 +100,7 @@ p,fieldset {
 	padding: 5px 5px 5px 5px;
 }
 
-/** Simple Caption :hover Behaviour **/
+/** Simple Caption :hover Behaviour 
 #mainwrapper .box:hover .simple-caption {
 	-moz-transform: translateY(-93%);
 	-o-transform: translateY(-93%);
@@ -114,7 +114,7 @@ p,fieldset {
 	-o-transform: translateX(200px);
 	-webkit-transform: translateX(200px);
 	transform: translateX(200px);
-}
+}**/
 
 #container
 {

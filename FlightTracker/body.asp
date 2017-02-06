@@ -16,7 +16,7 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
   <title>KSA Flight Tracker</title>
 
   <!-- use this image link to force reddit to use a certain image for its thumbnail -->
-  <meta property="og:image" content="http://i.imgur.com/ajoNdn8.png" />
+  <meta property="og:image" content="http://i.imgur.com/Or7L6Dd.png" />
 
   <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
   
@@ -30,6 +30,7 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
   <link rel="stylesheet" type="text/css" href="../jslib/iosbadge.css" />
   <link rel="stylesheet" type="text/css" href="../jslib/Control.FullScreen.css" />
   <link rel="stylesheet" type="text/css" href="../jslib/leaflet.groupedlayercontrol.min.css" />
+  <link rel="stylesheet" type="text/css" href="../jslib/leaflet.rrose.css" />
 
   <!-- JS libraries -->
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
@@ -45,6 +46,7 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
   <script type="text/javascript" src="../jslib/iosbadge.js"></script>
   <script type="text/javascript" src="../jslib/Control.FullScreen.js"></script>
   <script type="text/javascript" src="../jslib/leaflet.groupedlayercontrol.min.js"></script>
+  <script type="text/javascript" src="../jslib/leaflet.rrose-src.js"></script>
 
   <script>
     // gets values for URL parameters of the same name and returns them in an array
@@ -286,16 +288,39 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
         if (bodyCrafts[currCraft].ObtPd < 0) { endTime = Math.abs(bodyCrafts[currCraft].ObtPd); }
       }
       
+      ////////////////////////////
+      // computeMeanFromTrueAnom() <-- refers to a function in KSPTOT code: https://github.com/Arrowstar/ksptot
+      ////////////////////////////
+      var mean;
+      if (bodyCrafts[currCraft].Ecc < 1.0) {
+        var EA = (Math.atan2(Math.sqrt(1-(Math.pow(bodyCrafts[currCraft].Ecc,2)))*Math.sin(bodyCrafts[currCraft].TruA), bodyCrafts[currCraft].Ecc+Math.cos(bodyCrafts[currCraft].TruA)));
+        if (bodyCrafts[currCraft].TruA < 2*Math.PI) {
+          EA = Math.abs(EA - (2*Math.PI) * Math.floor(EA / (2*Math.PI)));
+        }
+        mean = EA - bodyCrafts[currCraft].Ecc*Math.sin(EA);
+        mean = Math.abs(mean - (2*Math.PI) * Math.floor(mean / (2*Math.PI)));
+      } else {
+
+        //////////////////////////////
+        // computeHyperAFromTrueAnom()
+        //////////////////////////////
+        var num = Math.tan(bodyCrafts[currCraft].TruA/2);
+        var denom = Math.pow((bodyCrafts[currCraft].Ecc+1)/(bodyCrafts[currCraft].Ecc-1),(1/2));
+        var HA = 2*Math.atanh(num/denom);
+
+        mean = bodyCrafts[currCraft].Ecc*Math.sinh(HA)-HA;
+      }
+
       // calculate plots in batches of 1500 (each plot represents a second)
       for (x=0; x<=1500; x++) {
       
         //////////////////////
-        // computeMeanMotion() <-- refers to a function in KSPTOT code: https://github.com/Arrowstar/ksptot
+        // computeMeanMotion()
         //////////////////////
         
         // adjust for motion since the time of this orbit
         n = Math.sqrt(gmu/(Math.pow(Math.abs(bodyCrafts[currCraft].SMA),3)));
-        var newMean = bodyCrafts[currCraft].Mean + n * (currUT - bodyCrafts[currCraft].Eph);
+        var newMean = mean + n * (currUT - bodyCrafts[currCraft].Eph);
 
         ////////////////
         // solveKepler()
@@ -520,7 +545,7 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
         strHTML += "<i><p>&quot;" + bodyCrafts[currCraft].Desc + "&quot;</p></i>";
         strHTML += "<p><a href='http://www.kerbalspace.agency/Tracker/craft.asp?db=" + bodyCrafts[currCraft].DB + "'>View Craft Page</a></p>";
       }
-      strHTML += "</td><td style='vertical-align: top;'><h1>" + bodyCrafts[currCraft].Name + "</h1><b>Current Orbital Data</b><p>";
+      strHTML += "</td><td style='vertical-align: top;'><b><span style='font-size: 24px; line-height: 20px'>" + bodyCrafts[currCraft].Name + "</span><p>Current Orbital Data</b></p><p>";
       if (bodyCrafts[currCraft].Obt[0].Lat < 0) {
         cardinalLat = "S";
       } else {
@@ -724,7 +749,7 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
             } else {
               var txtColor = colors[currType];
             }
-            layerControl.addOverlay(overlays[currType], "<img src='button_vessel_" + types[currType] + ".png' width='10px' style='vertical-align: 1px;'> <span style='color: " + txtColor + ";'>" + types[currType] + "</span>", "Orbital Plots");
+            layerControl.addOverlay(overlays[currType], "<img src='button_vessel_" + types[currType] + ".png' width='10px' style='vertical-align: 1px;'> <span style='color: " + txtColor + ";'>" + types[currType] + "</span>", "Orbital Tracks");
             bCraftAdded = false;
             
             // if there is a layers URL variable, see if any of the layer names match this one and show it if so
@@ -738,7 +763,7 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
           // if there are more types to look at, update & reset to prep for the next group
           if (currType < types.length) {
             plzWait = L.layerGroup();
-            layerControl.addOverlay(plzWait, "Loading orbits...", "Orbital Plots");
+            layerControl.addOverlay(plzWait, "Loading orbits...", "Orbital Tracks");
             overlays.push(L.layerGroup());
             currType++;
             currCraft = 0;
@@ -775,7 +800,7 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
                           SMA: bodyObtData[x].SMA,
                           RAAN: bodyObtData[x].RAAN * .017453292519943295,
                           Arg: bodyObtData[x].Arg * .017453292519943295,
-                          Mean: bodyObtData[x].Mean * .017453292519943295,
+                          TruA: bodyObtData[x].TruA * .017453292519943295,
                           ObtPd: parseFloat(bodiesCatalog[x].ObtPeriod),
                           Eph: 0,
                           Node: -1,
@@ -791,17 +816,93 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
       return true;
     }
     
+    // places a pin or group of pins when a link is clicked in a surface path mission data window
+    function popupMarkerOpen(indexFlt, linkNum) {
+      map.closePopup(positionPopup);
+
+      for (pinIndex=0; pinIndex<flightData[indexFlt].Pins.length; pinIndex++) {
+      
+        // don't create this pin if it is already created
+        if (!flightData[indexFlt].Pins[linkNum].Group[pinIndex].Pin) {
+          flightData[indexFlt].Pins[linkNum].Group[pinIndex].Pin = L.marker([flightData[indexFlt].Pins[linkNum].Group[pinIndex].Lat, flightData[indexFlt].Pins[linkNum].Group[pinIndex].Lng]).bindPopup(decodeURI(flightData[indexFlt].Pins[linkNum].Group[pinIndex].HTML) + "<p><center><span onclick='popupMarkerClose(" + indexFlt + "," + linkNum + "," + pinIndex + ")' style='color: blue; cursor: pointer;'>Remove Pin</span></center></p>", {closeButton: false}).addTo(map);
+          
+          // if there is just one pin, open the popup
+          if (flightData[indexFlt].Pins.length == 1) { flightData[indexFlt].Pins[linkNum].Group[pinIndex].Pin.openPopup(); }
+          
+        // if the pin is already created, open the popup
+        } else {
+          flightData[indexFlt].Pins[linkNum].Group[pinIndex].Pin.openPopup();
+        }
+      }
+      
+      return;
+    }
+
+    // removes a single pin when user clicks link in pin popup
+    function popupMarkerClose(indexFlt, linkNum, pinIndex) {
+      map.removeLayer(flightData[indexFlt].Pins[linkNum].Group[pinIndex].Pin);
+      flightData[indexFlt].Pins[linkNum].Group[pinIndex].Pin = null;
+      
+      return;
+    }
+    
+     // open new windows for related website entries/flickr photos
+    function viewTag(tag) {
+
+      // is this a tag for a system, then include all the moons in the system as well
+      if (tag.includes("system")) {
+      
+        // special case for Kerbol
+        if (tag.includes("kerbol")) {
+          viewTag("kerbol");
+          return;
+        }
+      
+        // remove the "-system"
+        tag = tag.slice(0, tag.indexOf("-"));
+        
+        // find the body in the catalog, replacing the first letter with an uppercase one to ensure a match
+        var bodyIndex;
+        for (bodyIndex=0; bodyIndex<bodiesCatalog.length; bodyIndex++) { if (bodiesCatalog[bodyIndex].Name.includes(tag.replace(tag.substr(0,1), tag.substr(0,1).toUpperCase()))) { break; } }
+      
+        // get the moons
+        var moons = bodiesCatalog[bodyIndex].Moons.split(",");
+        
+        // add the bodies to a list selection in the tooltip
+        var strHTML = "Select one of the following bodies below to<br>view all tagged website entries & flickr images<p><span onclick='viewTag(&quot;" + tag + "&quot;)' class='close-tooltip' style='cursor: pointer; text-decoration: underline;'>" + tag.replace(tag.substr(0,1), tag.substr(0,1).toUpperCase()) + "</span><br>";
+        for (bodyIndex=0; bodyIndex<moons.length; bodyIndex++) {
+          moons[bodyIndex].trim();
+          strHTML += "<span onclick='viewTag(&quot;" + moons[bodyIndex] + "&quot;)' class='close-tooltip' style='cursor: pointer; text-decoration: underline;'>" + moons[bodyIndex] + "</span><br>";
+        }
+        strHTML += "</p>";
+        $("#tagDataTip").html(strHTML);
+        
+        Tipped.refresh(".tip-update");
+        
+      // just get the tags for the body & reset the text
+      } else {
+        window.open("https://www.flickr.com/search/?user_id=kerbal_space_agency&tags=" + tag + ",-archive&view_all=1");
+        window.open("http://www.kerbalspace.agency/?tag=" + tag.replace(/ /g, "-"));
+      }
+      
+      return;
+    }
+
+
     // set up for AJAX requests
     // http://www.w3schools.com/ajax/
     var ajaxCraftData;
     var ajaxUpdate;
+    var ajaxFlightPath;
     if (window.XMLHttpRequest) {
       ajaxCraftData = new XMLHttpRequest();
       ajaxUpdate = new XMLHttpRequest();
+      ajaxFlightPath = new XMLHttpRequest();
     } else {
       // code for IE6, IE5
       ajaxCraftData = new ActiveXObject("Microsoft.XMLHTTP");
       ajaxUpdate = new ActiveXObject("Microsoft.XMLHTTP");
+      ajaxFlightPath = new ActiveXObject("Microsoft.XMLHTTP");
     }
     
     // don't allow AJAX to cache data, which mainly screws up requests for updated vessel times for notifications
@@ -837,7 +938,7 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
               strHTML += "<img src='nada.png' width='256px'>";
             }
             strHTML += "<i><p>&quot;" + craftsCatalog[craftIndex].Desc.replace(/'/g, "&#39;") + "&quot;</p></i></td>";
-            strHTML += "<td style='vertical-align: top;'><h1>" + craftsCatalog[craftIndex].Name + "</h1><b>Orbital Data</b><p>";
+            strHTML += "<td style='vertical-align: top;'><b><span style='font-size: 24px; line-height: 20px'>" + craftsCatalog[craftIndex].Name + "</span><p>Orbital Data</b></p><p>";
             strHTML += "Apoapsis: " + craftInfo[2] + " m<br>";
             strHTML += "Periapsis: " + craftInfo[3] + " m<br>";
             strHTML += "Eccentricity: " + craftInfo[4] + "<br>";
@@ -864,9 +965,9 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
 
             // show the time/date this was posted
             // put a zero before hours and minutes if needed
-            // 1473739200000 ms = 9/13/16 00:00:00
+            // 1473742800000 ms = 9/13/16 00:00:00
             var lt = new Date();
-            lt.setTime(1473739200000 + (craftInfo[15] * 1000));
+            lt.setTime(1473742800000 + (craftInfo[15] * 1000));
             var lastUpdatehr = lt.getUTCHours();
             var lastUpdateMin = lt.getUTCMinutes();
             if (lastUpdatehr < 10) { lastUpdatehr = "0" + lastUpdatehr; }
@@ -909,7 +1010,7 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
                                 SMA: parseFloat(craftInfo[21]),
                                 RAAN: parseFloat(craftInfo[22]) * .017453292519943295,
                                 Arg: parseFloat(craftInfo[23]) * .017453292519943295,
-                                Mean: parseFloat(craftInfo[24]) * .017453292519943295,
+                                TruA: parseFloat(craftInfo[24]) * .017453292519943295,
                                 Eph: parseFloat(craftInfo[25]),
                                 Orbits: 0,
                                 Layer: -1,
@@ -921,16 +1022,15 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
             }
           }
           
+          // create all the tooltips using Tipped.js - http://www.tippedjs.com/
           // behavior of the tooltip depends on the device
           if (is_touch_device()) {
-            var showOpt = 'click';
+            Tipped.create('.tip', {size: 'small', showOn: 'click', hideOnClickOutside: true});
+            Tipped.create('.tip-update', {size: 'small', showOn: 'click', hideOnClickOutside: true});
           } else {
-            var showOpt = 'mouseenter';
+            Tipped.create('.tip', {size: 'small'});
+            Tipped.create('.tip-update', {size: 'small'});
           }
-
-          // create all the tooltips using Tipped.js - http://www.tippedjs.com/
-          Tipped.create('.tip', {size: 'small', showOn: showOpt, hideOnClickOutside: is_touch_device()});
-          Tipped.create('.tip-update', {size: 'small', showOn: showOpt, hideOnClickOutside: is_touch_device()});
                     
           // load the orbits for the surface map, if there is one
           // http://stackoverflow.com/questions/5219105/javascript-parsing-a-string-boolean-value
@@ -1001,6 +1101,241 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
       }
     };
 
+    // handle requests for flight path information for surface map
+    var flightData = [];
+    var timePopup = null;
+    var positionPopup = L.popup({offset: new L.Point(0,-1), closeButton: false, maxWidth: 500});
+    var positionPopupisOpen = false;
+    ajaxFlightPath.onreadystatechange = function() {
+      if (ajaxFlightPath.readyState == 4 && ajaxFlightPath.status == 200) {
+        
+        // get the separate data sets
+        var dataSets = ajaxFlightPath.responseText.split("~");
+        
+        // get the initial flight data
+        var fltData = dataSets[0].split("`");
+        for (fltIndex=0; fltIndex<fltData.length; fltIndex++) {
+          var info = fltData[fltIndex].split("|");
+          flightData.push({Name: info[0],
+                           Img: info[1],
+                           Desc: info[2],
+                           Link: info[3],
+                           Data: [],
+                           Paths: [],
+                           Pins: [],
+                           HTML: null,
+                           Layer: L.layerGroup()});
+        }
+        
+        // separate the flight data string
+        var flights = dataSets[1].split(";");
+        for (fltIndex=0; fltIndex<flights.length; fltIndex++) {
+          var path = flights[fltIndex].split("|");
+          for (pathIndex=0; pathIndex<path.length; pathIndex++) {
+            var data = path[pathIndex].split(",");
+            flightData[fltIndex].Data.push({UT: parseInt(data[0]), 
+                                            ASL: parseFloat(data[1]), 
+                                            AGL: parseFloat(data[2]),
+                                            Lat: parseFloat(data[3]),
+                                            Lng: parseFloat(data[4]),
+                                            Spd: parseFloat(data[5]),
+                                            Dist: parseFloat(data[6])});
+          }
+        }
+        
+        // draw the flight paths
+        var surfacePathColors = ["#FF0000", "#FFD800", "#4CFF00", "#00FFFF", "#0094FF", "#0026FF", "#4800FF", "#B200FF", "#FF00DC", "#FF006E"];
+        var colorIndex = 0;
+        for (fltIndex=0; fltIndex<flightData.length; fltIndex++) {
+          var coord = 0;
+          var coordStart = 0;
+          while (coord < flightData[fltIndex].Data.length) {
+            var path = [];
+            while (coord < flightData[fltIndex].Data.length) {
+            
+              // create a new array entry for this location, then advance the array counter
+              path.push({lat: flightData[fltIndex].Data[coord].Lat, lng: flightData[fltIndex].Data[coord].Lng});
+              coord++;
+              
+              // use with hotline leaflet plugin when upgraded to leaflet 1.0
+              // path.push([flightData[fltIndex].Data[coord].Lat, flightData[fltIndex].Data[coord].Lng, flightData[fltIndex].Data[coord].Alt / 1000]);
+
+              // detect if we've crossed off the edge of the map and need to cut the line
+              // compare this lng to the prev and if it changed from negative to positive or vice versa, we hit the edge  
+              // (check if the lng is over 100 to prevent detecting a sign change while crossing the meridian)
+              if (coord < flightData[fltIndex].Data.length) {
+                if (((flightData[fltIndex].Data[coord].Lng < 0 && flightData[fltIndex].Data[coord-1].Lng > 0) && Math.abs(flightData[fltIndex].Data[coord].Lng) > 100) || ((flightData[fltIndex].Data[coord].Lng > 0 && flightData[fltIndex].Data[coord-1].Lng < 0) && Math.abs(flightData[fltIndex].Data[coord].Lng) > 100)) { break; }
+              }
+            }
+            
+            // create the path for this section
+            if (colorIndex >= surfacePathColors.length) { colorIndex = 0; }
+            flightData[fltIndex].Paths.push(L.polyline(path, {smoothFactor: 1.75, clickable: true, color: surfacePathColors[colorIndex], weight: 3, opacity: 1}));
+            
+            // use with hotline leaflet plugin when upgraded to leaflet 1.0
+            // flightData[fltIndex].Paths.push(L.hotline(path, {smoothFactor: 0.25, clickable: true, palette: {0.0: '#FF0000', 0.15: '#FF6A00', 0.3: '#FFD800', 0.45: '#00AE21', 0.6: '#0094FF', 0.75: '#0026FF', 0.9: '#4800FF', 1.0: '#B200FF'}, min: 0, max: 45, weight: 3, opacity: 1}));            
+            
+            // save the beginning index of this line to make it faster when searching for a data point by not having to look at all paths
+            // also save the current flight index to identify the data needed for the popups
+            // and save the current path index this is
+            flightData[fltIndex].Paths[flightData[fltIndex].Paths.length-1]._myId = flightData[fltIndex].Paths.length-1 + "," + coordStart + "," + fltIndex
+            
+            // show the time and data for this position
+            flightData[fltIndex].Paths[flightData[fltIndex].Paths.length-1].on('mouseover mousemove', function(e) {
+              
+              // do not execute if the clicked popup is still open
+              if (!positionPopupisOpen) {
+                var idStr = e.target._myId.split(",");
+                var index = parseInt(idStr[1]);
+                var indexFlt = parseInt(idStr[2]);
+                var indexPath = parseInt(idStr[0]);
+                var margin = 0.1;
+                
+                // traverse the latlon array and get the diff between the current index and the location hovered
+                // if it is smaller than the margin, stop. If the entire orbit is searched, increase the margin and try again
+                while (true) {
+                  if (Math.abs(flightData[indexFlt].Data[index].Lat - e.latlng.lat) < margin && Math.abs(flightData[indexFlt].Data[index].Lng - e.latlng.lng) < margin) { break; }
+                  index++;
+                  
+                  // be sure to account for running to the end of the current path or end of array
+                  if (index - parseInt(idStr[1]) >= flightData[indexFlt].Paths[indexPath].length || index >= flightData[indexFlt].Data.length) {
+                    index = parseInt(idStr[1]);
+                    margin += 0.1;
+                  }
+                }
+                
+                // set the current time
+                var dd = new Date();
+                dd.setTime(1473742800000 + (flightData[indexFlt].Data[index].UT * 1000));
+
+                // compose the popup HTML and place it on the cursor location then display it
+                if (flightData[indexFlt].Data[index].Lat < 0) {
+                  var cardinalLat = "S";
+                } else {
+                  var cardinalLat = "N";
+                }
+                if (flightData[indexFlt].Data[index].Lng < 0) {
+                  var cardinalLng = "W";
+                } else {
+                  var cardinalLng = "E";
+                }
+                var hrs = dd.getUTCHours();
+                if (hrs < 10) { hrs = '0' + hrs; }
+                var mins = dd.getUTCMinutes();
+                if (mins < 10) { mins = '0' + mins; }
+                var secs = dd.getUTCSeconds();
+                if (secs < 10) { secs = '0' + secs; }
+                if (timePopup) { map.closePopup(timePopup); }
+                timePopup = new L.Rrose({ offset: new L.Point(0,-1), closeButton: false, autoPan: false });
+                timePopup.setLatLng(e.latlng);
+                timePopup.setContent(dd.getUTCMonth() + 1 + '/' + dd.getUTCDate() + '/' + dd.getUTCFullYear() + ' @ ' + hrs + ':' + mins + ':' + secs + ' UTC<br>Latitude: ' + numeral(flightData[indexFlt].Data[index].Lat).format('0.0000') + '&deg;' + cardinalLat + '<br>Longitutde: ' + numeral(flightData[indexFlt].Data[index].Lng).format('0.0000') + '&deg;' + cardinalLng + '<br>Altitude ASL: ' + numeral(flightData[indexFlt].Data[index].ASL/1000).format('0,0.000') + ' km<br>Altitude AGL: ' + numeral(flightData[indexFlt].Data[index].AGL/1000).format('0,0.000') + " km<br>Velocity: " + numeral(flightData[indexFlt].Data[index].Spd).format('0,0.000') + " m/s" + '<br>Downrange Distance: ' + numeral(flightData[indexFlt].Data[index].Dist/1000).format('0,0.000') + " km<p>Click for additional flight information</p>");
+                timePopup.openOn(map);
+              }
+            });
+            
+            // remove the mouseover popup
+            flightData[fltIndex].Paths[flightData[fltIndex].Paths.length-1].on('mouseout', function(e) {
+              if (timePopup) { map.closePopup(timePopup); }
+              timePopup = null;
+            });
+            
+            // when clicking along this line, display the mission data info
+            flightData[fltIndex].Paths[flightData[fltIndex].Paths.length-1].on('click', function(e) {
+              map.closePopup(timePopup);
+              timePopup = null;
+              positionPopupisOpen = true;
+              var idStr = e.target._myId.split(",");
+              var index = parseInt(idStr[1]);
+              var indexFlt = parseInt(idStr[2]);
+              var indexPath = parseInt(idStr[0]);
+
+              // compose the popup HTML only if it has not been done so already
+              if (!flightData[indexFlt].HTML) {
+                var strHTML = "<table style='border: 0px; border-collapse: collapse;'><tr><td style='vertical-align: top; width: 256px;'>";
+                strHTML += "<img src='" + flightData[indexFlt].Img + "' width='256px'></td>";
+                strHTML += "<td style='vertical-align: top;'><b><span style='font-size: 24px; line-height: 20px'>" + flightData[indexFlt].Name + "</span></b><p>";
+                
+                // see if there is a marker link in the description
+                if (flightData[indexFlt].Desc.indexOf("loc=") >= 0) {
+                  
+                  // cut up to the link
+                  strHTML += flightData[indexFlt].Desc.slice(0, flightData[indexFlt].Desc.indexOf("<a"));
+                  
+                  // extract the popup data, checking for multiple links
+                  var charLinkIndex = 0;
+                  for (linkNum=0; linkNum<flightData[indexFlt].Desc.match("<a").length; linkNum++) {
+                    
+                    // push a new pin group to the list
+                    flightData[indexFlt].Pins.push({Group: []});
+                    
+                    // get the full link text
+                    var linkStr = flightData[indexFlt].Desc.slice(flightData[indexFlt].Desc.indexOf("<a", charLinkIndex), flightData[indexFlt].Desc.indexOf('">', charLinkIndex));
+                    
+                    // iterate through all the pins
+                    var charPinIndex = 0;
+                    for (pinNum=0; pinNum<linkStr.match("loc=").length; pinNum++) {
+                    
+                      // get the pin from the link
+                      var pinData = flightData[indexFlt].Desc.slice(flightData[indexFlt].Desc.indexOf("loc=", charPinIndex)+4, flightData[indexFlt].Desc.indexOf('"', flightData[indexFlt].Desc.indexOf("loc=", charPinIndex))).split(",");
+                      
+                      // push the data to the group
+                      flightData[indexFlt].Pins[pinNum].Group.push({Lat: pinData[0],
+                                                                    Lng: pinData[1],
+                                                                    HTML: pinData[2],
+                                                                    Pin: null});
+                                                                                          
+                      // set the index so we search past the previous location
+                      charPinIndex = flightData[indexFlt].Desc.indexOf("loc=", charPinIndex)+4;
+                    }
+
+                    // set the link name
+                    strHTML += "<span onclick='popupMarkerOpen(" + indexFlt + "," + linkNum + ")' style='color: blue; cursor: pointer'>" + flightData[indexFlt].Desc.slice(flightData[indexFlt].Desc.indexOf('">', charLinkIndex)+2, flightData[indexFlt].Desc.indexOf('</a>', charLinkIndex)) + "</span>";
+                    
+                    // set the index so we search past the previous link
+                    charLinkIndex = flightData[indexFlt].Desc.indexOf("<a", charLinkIndex)+2;
+                  }
+                    
+                  // get the rest of the text
+                  strHTML += flightData[indexFlt].Desc.slice(flightData[indexFlt].Desc.indexOf('</a>', charLinkIndex)+4, flightData[indexFlt].Desc.length) + "</p><p>";
+                } else {
+                  strHTML += flightData[indexFlt].Desc + "</p><p>";
+                }
+                strHTML += "<a href='" + flightData[indexFlt].Link + "' target='_blank'>Mission Report</a></p></td></tr></table>";
+                positionPopup.setContent(strHTML);
+                flightData[indexFlt].HTML = strHTML;
+              } else {
+                positionPopup.setContent(flightData[indexFlt].HTML);
+              }
+              
+              // position and display the popup
+              positionPopup.setLatLng(e.latlng);
+              positionPopup.openOn(map);
+            });
+            
+            // we're about to maybe start a new path, so update the starting location of the next path
+            coordStart = coord;
+
+            // add this to the layer
+            flightData[fltIndex].Layer.addLayer(flightData[fltIndex].Paths[flightData[fltIndex].Paths.length-1]);
+          }
+          
+          // add the layer to the layer control
+          layerControl.addOverlay(flightData[fltIndex].Layer, "<span style='vertical-align: -8px; line-height: 5px; font-size: 36px; color: " + surfacePathColors[colorIndex] + "'>&#8226;</span>" + flightData[fltIndex].Name, "Surface Tracks");
+          colorIndex++;
+        }
+        
+        // if there was only one track, make it visible and zoom in on it
+        if (fltIndex < 2) {
+          flightData[0].Layer.addTo(map);
+          map.setView([flightData[0].Data[0].Lat, flightData[0].Data[0].Lng], 3);
+        }
+        
+        // get rid of the wait message
+        layerControl.removeLayer(plzWaitFlt);
+      }
+    };
+
+
     // JQuery setup
     var bCreateTips = true;
     $(document).ready(function(){
@@ -1059,7 +1394,7 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
             strHTML += "<img src='nada.png'>";
           }
           strHTML += "<i><p>&quot;" + bodiesCatalog[bodyIndex].Desc + "&quot;</p></i><p><b>- Kerbal Astronomical Society</b></p></td>";
-          strHTML += "<td style='vertical-align: top;'><h1>" + bodiesCatalog[bodyIndex].Name + "</h1><b>Orbital Data</b>";
+          strHTML += "<td style='vertical-align: top;'><b><span style='font-size: 24px; line-height: 20px'>" + bodiesCatalog[bodyIndex].Name + "</span><p>Orbital Data</b></p>";
           strHTML += "<p>Apoapsis: " + bodiesCatalog[bodyIndex].Ap + " m<br>";
           strHTML += "Periapsis: " + bodiesCatalog[bodyIndex].Pe + " m<br>";
           strHTML += "Eccentricity: " + bodiesCatalog[bodyIndex].Ecc + "<br>";
@@ -1111,16 +1446,15 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
       // create the tooltips if we're not waiting on an AJAX request for any craft details  
       if (bCreateTips) {
       
+        // create all the tooltips using Tipped.js - http://www.tippedjs.com/
         // behavior of the tooltip depends on the device
         if (is_touch_device()) {
-          var showOpt = 'click';
+          Tipped.create('.tip', {size: 'small', showOn: 'click', hideOnClickOutside: true});
+          Tipped.create('.tip-update', {size: 'small', showOn: 'click', hideOnClickOutside: true});
         } else {
-          var showOpt = 'mouseenter';
+          Tipped.create('.tip', {size: 'small'});
+          Tipped.create('.tip-update', {size: 'small'});
         }
-        
-        // create all the tooltips using Tipped.js - http://www.tippedjs.com/
-        Tipped.create('.tip', {size: 'small', showOn: showOpt, hideOnClickOutside: is_touch_device()});
-        Tipped.create('.tip-update', {size: 'small', showOn: showOpt, hideOnClickOutside: is_touch_device()});
       }
          
       // check on cookies
@@ -1147,12 +1481,6 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
           $("#key").css("visibility", "hidden");
           $("#utc").css("visibility", "hidden");
         }
-      });
-
-      // open new windows for related website entries/flickr photos
-      $("#tagData").click(function () {
-        window.open("http://www.kerbalspace.agency/?tag=" + tagData.replace(/ /g, "-"));
-        window.open("https://www.flickr.com/search/?user_id=kerbal_space_agency&tags=" + tagData + "&view_all=1");
       });
 
       // close button for surface map, hides either map or KSC image depending on situation
@@ -1308,10 +1636,8 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
 
       // if the date passed in is between dst start and dst end, adjust the offset and label:
       if(dstart<= d && dend>= d){
-        off+= 60;
         label= '4';
       } else {
-        off+= 60;
         label= '5';
       }
 
@@ -1425,15 +1751,8 @@ end if
 <%
 response.write(replace(request.querystring("body"), "-", " "))
 
-'if this is a "system" then grab only the name of the body. Assumes the title is "[body] System"
-if instr(request.querystring("body"), "System") > 0 then
-  header = split(request.querystring("body"), " ")
-  tag = header(0)
-else
-  tag = request.querystring("body")
-end if
-  
-response.write("&nbsp;<img class='tip' id='tagData' data-tipped-options=""position: 'righttop'"" style='margin-bottom: 10px; cursor: pointer;' title='view all tagged archive entries & flickr images' src='http://www.blade-edge.com/Tracker/tag.png'><script>var tagData='" & lcase(tag) & "';</script>")
+response.write("<div id='tagDataTip' style='display: none'>view all tagged website entries & flickr images</div>")
+response.write("&nbsp;<span><img class='tip-update' onclick=""viewTag('" & lcase(request.querystring("body")) & "')"" data-tipped-options=""inline: 'tagDataTip', position: 'righttop'"" style='margin-bottom: 10px; cursor: pointer;' src='http://www.blade-edge.com/Tracker/tag.png'></span>")
 %>
 </h3>
 
@@ -1729,14 +2048,16 @@ else
                   url = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=" & rsPlanets.fields.item("body") & "-System"
                   if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
                   if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
-                  response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show System overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsPlanets.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
+                  response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""showOn: 'mouseover', position: 'right'"" title='Show System overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsPlanets.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
                   bPlanet = true
                 end if
                 
-                url = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=" & rsMoons.fields.item("body")
-                if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
-                if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
-                response.write("<li><label for='" & rsMoons.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show body overview' href='" & url & "'>" & rsMoons.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsMoons.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
+                // disable the ability to click on moon links to go to there body pages
+                //url = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=" & rsMoons.fields.item("body")
+                //if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
+                //if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
+                //response.write("<li><label for='" & rsMoons.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""showOn: 'mouseover', position: 'right'"" title='Show body overview' href='" & url & "'>" & rsMoons.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsMoons.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
+                response.write("<li><label for='" & rsMoons.fields.item("body") & "'>" & rsMoons.fields.item("body") & "&nbsp;&nbsp;<span id='" & rsMoons.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
                 bVessels = true
               end if
               
@@ -1744,7 +2065,7 @@ else
               url = "http://www.kerbalspace.agency/Tracker/craft.asp?db=" & rsCrafts.fields.item("db")
               if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
               if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
-              response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 255, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "' href='" & url & "'>" & rsCrafts.fields.item("vessel") & "&nbsp;&nbsp;<span id='" & rsCrafts.fields.item("db") & "' style='position: relative;'></span></a></li>")
+              response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""showOn: 'mouseover', offset: { x: -10 }, maxWidth: 255, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "' href='" & url & "'>" & rsCrafts.fields.item("vessel") & "&nbsp;&nbsp;<span id='" & rsCrafts.fields.item("db") & "' style='position: relative;'></span></a></li>")
               bEntry = true
               
               'if this craft is orbiting around the body currently being viewed, it will probably need a rich tooltip to be displayed
@@ -1801,7 +2122,7 @@ else
             url = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=" & rsPlanets.fields.item("body") & "-System"
             if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
             if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
-              response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show System overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsPlanets.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
+              response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""showOn: 'mouseover', position: 'right'"" title='Show System overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsPlanets.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
             bPlanet = true
           end if
           
@@ -1809,7 +2130,7 @@ else
           url = "' href='http://www.kerbalspace.agency/Tracker/craft.asp?db=" & rsCrafts.fields.item("db")
           if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
           if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
-            response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & url & "'>" & rsCrafts.fields.item("vessel") & "&nbsp;&nbsp;<span id='" & rsCrafts.fields.item("db") & "' style='position: relative;'></span></a></li>")
+            response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""showOn: 'mouseover', offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & url & "'>" & rsCrafts.fields.item("vessel") & "&nbsp;&nbsp;<span id='" & rsCrafts.fields.item("db") & "' style='position: relative;'></span></a></li>")
           bEntry = true
               
           'if this craft is orbiting around the body currently being viewed, it will probably need a rich tooltip to be displayed
@@ -1841,12 +2162,12 @@ if not bKerbolUsed and request.querystring("filter") <> "inactive" then
   url = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=Kerbol-System"
   if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
   if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
-    response.write("<li> <label for='Kerbol'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show System overview' href='" & url & "'>Kerbol</a>&nbsp;&nbsp;<span id='Kerbol' style='position: relative;'></span></label> <input type='checkbox' id='' /> </li>")
+    response.write("<li> <label for='Kerbol'><a id='link' class='tip' data-tipped-options=""showOn: 'mouseover', position: 'right'"" title='Show System overview' href='" & url & "'>Kerbol</a>&nbsp;&nbsp;<span id='Kerbol' style='position: relative;'></span></label> <input type='checkbox' id='' /> </li>")
 end if
 %>
 
 <!-- adds a link to the crew roster to the end of the menu list -->
-<li> <labelRoster for='Roster'><a href="http://www.kerbalspace.agency/Roster/roster.asp" style="text-decoration: none; color: black" class="tip" data-tipped-options="position: 'right'" title="Information on KSA astronauts">Crew Roster</a>&nbsp;&nbsp;<span id='crewRoster' style='position: relative;'></span></labelRoster> </li>
+<li> <labelRoster for='Roster'><a href="http://www.kerbalspace.agency/Roster/roster.asp" style="text-decoration: none; color: black" class="tip" data-tipped-options="showOn: 'mouseover', position: 'right'" title="Information on KSA astronauts">Crew Roster</a>&nbsp;&nbsp;<span id='crewRoster' style='position: relative;'></span></labelRoster> </li>
 </ol>
 
 <!-- menu filter options -->
@@ -1993,7 +2314,7 @@ do while not rsMoons.eof
                   ", RAAN: " & rsMoons.fields.item("RAAN") & _
                   ", Arg: " & rsMoons.fields.item("Arg") & _
                   ", SMA: " & rsMoons.fields.item("SMA") & _
-                  ", Mean: " & rsMoons.fields.item("Mean") & _
+                  ", TruA: " & rsMoons.fields.item("TrueAnom") & _
                   ", Color: '#" & rsMoons.fields.item("Color") & _
                   "', Radius: " & rsMoons.fields.item("Radius") & "});")                  
   rsMoons.movenext
@@ -2539,7 +2860,7 @@ end if
     
     // if the popup was opened for a vessel, change all its lines to yellow and render them atop the rest
     map.on('popupopen', function(e) {
-      if (e.popup._source._myId >= 0) {
+      if (e.popup._source && !isNaN(e.popup._source._myId) && e.popup._source._myId >= 0) {
         for (p=0; p<bodyCrafts[e.popup._source._myId].Paths.length; p++) {
           bodyCrafts[e.popup._source._myId].Paths[p].setStyle({color: '#ffff00', weight: 5});
           bodyCrafts[e.popup._source._myId].Paths[p].bringToFront();
@@ -2549,7 +2870,8 @@ end if
    
     // if the popup was closed for a vessel, return its lines back to the proper color for its type
     map.on('popupclose', function(e) {
-      if (e.popup._source._myId >= 0) {
+      positionPopupisOpen = false;
+      if (e.popup._source && !isNaN(e.popup._source._myId) && e.popup._source._myId >= 0) {
         for (p=0; p<bodyCrafts[e.popup._source._myId].Paths.length; p++) {
           if (bodyCrafts[e.popup._source._myId].Type == "Moon") {
             bodyCrafts[e.popup._source._myId].Paths[p].setStyle({color: bodyCrafts[e.popup._source._myId].Color, weight: 3});
@@ -2569,6 +2891,14 @@ end if
      }
     }, 3000);
     
+    // check if we need to send for any flight path data
+    if (getParameterByName("flt")) {
+      var plzWaitFlt = L.layerGroup();
+      layerControl.addOverlay(plzWaitFlt, "Loading paths...", "Surface Tracks");
+      ajaxFlightPath.open("GET", "fltpath.asp?data=" + getQueryParams("flt").toString(), true);
+      ajaxFlightPath.send();
+    }
+  
     // set up variables for adding vessels to the dynamic map
     var bTruncOrbit = false;
     var n;
@@ -2580,7 +2910,7 @@ end if
     var currCraft = 0;
     var endTime = -1;
     var plzWait = L.layerGroup();
-    layerControl.addOverlay(plzWait, "Loading orbits...", "Orbital Plots");
+    layerControl.addOverlay(plzWait, "Loading orbits...", "Orbital Tracks");
     
     // wait for an AJAX callback or JQuery setup to begin loading orbital data
   }
@@ -2604,6 +2934,7 @@ end if
     ajaxUpdate.open("GET", "update.asp", true);
     ajaxUpdate.send();
   }
+  
 </script>
 
 <!-- ^^ AJAX data calls ^^ -->
@@ -2628,9 +2959,9 @@ end if
 
   // js and vb can vary from 10-15 or more seconds
   // time is in favor of vb time, as majority of time stamps are done with dateDiff()
-  // 1473739200000 ms = 9/13/16 00:00:00
+  // 1473742800000 ms = 9/13/16 00:00:00
   var d = new Date();
-  d.setTime(1473739200000 + (UT * 1000));
+  d.setTime(1473742800000 + (UT * 1000));
   
   // called every second to update page data
   var startDate = Math.floor(d.getTime() / 1000);
@@ -2638,7 +2969,7 @@ end if
   var tickDelta = 0;
   (function tick() {
     var dd = new Date();
-    dd.setTime(1473739200000 + (UT * 1000));
+    dd.setTime(1473742800000 + (UT * 1000));
     var currDate = Math.floor(dd.getTime() / 1000);
     
     // update the sun/terminator if a surface map is loaded
@@ -2710,21 +3041,25 @@ end if
           }
           
         // put in a request to render a new orbit, can only do one at a time, when currCraft is not being used
-        // re-render only if a maneuver node, SOI exit or atmo interface is not on this plot
-        } else if (bodyCrafts[x].Node < 0 && bodyCrafts[x].ObtPd > 0 && bodyCrafts[x].Obt[bodyCrafts[x].Obt.length-1].Alt > bodiesCatalog[currBodyIndex].AtmoHeight) {
-          if (currCraft < 0) { 
+        } else {
+
+          // reset/update variables and clear path data before sending out the callback to render a new orbit
+          currCraft = x; 
+          currType = bodyCrafts[x].Layer;
+          currUT = UT;
+          bodyCrafts[x].Orbits++;
+          bodyCrafts[x].Obt = [];
+          overlays[bodyCrafts[x].Layer].removeLayer(bodyCrafts[x].Craft);
+          for (p=0; p<bodyCrafts[x].Paths.length; p++) {
+            overlays[bodyCrafts[x].Layer].removeLayer(bodyCrafts[x].Paths[p]);
+          }
+          bodyCrafts[x].Paths = [];
           
-            // reset/update variables and clear path data before sending out the callback to render a new orbit
-            currCraft = x; 
-            currType = bodyCrafts[x].Layer;
-            currUT = UT;
-            bodyCrafts[x].Orbits++;
-            bodyCrafts[x].Obt = [];
-            overlays[bodyCrafts[x].Layer].removeLayer(bodyCrafts[x].Craft);
-            for (p=0; p<bodyCrafts[x].Paths.length; p++) {
-              overlays[bodyCrafts[x].Layer].removeLayer(bodyCrafts[x].Paths[p]);
-            }
-            bodyCrafts[x].Paths = [];
+          // will probably need to change at some point when multiple SOI need to be displayed...
+          overlays[bodyCrafts[x].Layer].removeLayer(SOIMark);
+          
+          // re-render only if a maneuver node, SOI exit or atmo interface is not on this plot
+          if (bodyCrafts[x].Node < 0 && bodyCrafts[x].ObtPd > 0 && bodyCrafts[x].Obt[bodyCrafts[x].Obt.length-1].Alt > bodiesCatalog[currBodyIndex].AtmoHeight && currCraft < 0) {
             renderVesselOrbit();
           }
         }

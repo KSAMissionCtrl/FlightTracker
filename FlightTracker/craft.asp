@@ -251,10 +251,8 @@ if len(fpsCookie) = 0 then fpsCookie = 30
 
       // if the date passed in is between dst start and dst end, adjust the offset and label:
       if(dstart<= d && dend>= d){
-        off+= 60;
         label= '4';
       } else {
-        off+= 60;
         label= '5';
       }
 
@@ -355,28 +353,25 @@ if len(fpsCookie) = 0 then fpsCookie = 30
       ////////////////////////////
       // computeMeanFromTrueAnom() <-- refers to a function in KSPTOT code: https://github.com/Arrowstar/ksptot
       ////////////////////////////
-      // needed until Mean field of DB can be fully deprecated
-      if (truA) {
-        if (ecc < 1.0) {
-          var EA = (Math.atan2(Math.sqrt(1-(Math.pow(ecc,2)))*Math.sin(tru), ecc+Math.cos(tru)));
-          if (tru < 2*Math.PI) {
-            EA = Math.abs(EA - (2*Math.PI) * Math.floor(EA / (2*Math.PI)));
-          }
-          mean = EA - ecc*Math.sin(EA);
-          mean = Math.abs(mean - (2*Math.PI) * Math.floor(mean / (2*Math.PI)));
-        } else {
-
-          //////////////////////////////
-          // computeHyperAFromTrueAnom()
-          //////////////////////////////
-          var num = Math.tan(tru/2);
-          var denom = Math.pow((ecc+1)/(ecc-1),(1/2));
-          var HA = 2*Math.atanh(num/denom);
-
-          mean = ecc*Math.sinh(HA)-HA;
+      if (ecc < 1.0) {
+        var EA = (Math.atan2(Math.sqrt(1-(Math.pow(ecc,2)))*Math.sin(truA), ecc+Math.cos(truA)));
+        if (truA < 2*Math.PI) {
+          EA = Math.abs(EA - (2*Math.PI) * Math.floor(EA / (2*Math.PI)));
         }
-      }
+        mean = EA - ecc*Math.sin(EA);
+        mean = Math.abs(mean - (2*Math.PI) * Math.floor(mean / (2*Math.PI)));
+      } else {
 
+        //////////////////////////////
+        // computeHyperAFromTrueAnom()
+        //////////////////////////////
+        var num = Math.tan(truA/2);
+        var denom = Math.pow((ecc+1)/(ecc-1),(1/2));
+        var HA = 2*Math.atanh(num/denom);
+
+        mean = ecc*Math.sinh(HA)-HA;
+      }
+      
       for (x=0; x<=1500; x++) {
       
         //////////////////////
@@ -596,15 +591,38 @@ if len(fpsCookie) = 0 then fpsCookie = 30
     var latlon2 = [];
     var orbitdata2 = [];
     function orbitalCalc2() {
+
+      ////////////////////////////
+      // computeMeanFromTrueAnom() <-- refers to a function in KSPTOT code: https://github.com/Arrowstar/ksptot
+      ////////////////////////////
+      if (ecc < 1.0) {
+        var EA = (Math.atan2(Math.sqrt(1-(Math.pow(ecc,2)))*Math.sin(truA2), ecc+Math.cos(truA2)));
+        if (truA2 < 2*Math.PI) {
+          EA = Math.abs(EA - (2*Math.PI) * Math.floor(EA / (2*Math.PI)));
+        }
+        mean = EA - ecc*Math.sin(EA);
+        mean = Math.abs(mean - (2*Math.PI) * Math.floor(mean / (2*Math.PI)));
+      } else {
+
+        //////////////////////////////
+        // computeHyperAFromTrueAnom()
+        //////////////////////////////
+        var num = Math.tan(truA2/2);
+        var denom = Math.pow((ecc+1)/(ecc-1),(1/2));
+        var HA = 2*Math.atanh(num/denom);
+
+        mean = ecc*Math.sinh(HA)-HA;
+      }
+      
       for (x=0; x<=1500; x++) {
       
         //////////////////////
-        // computeMeanMotion() <-- refers to a function in KSPTOT code: https://github.com/Arrowstar/ksptot
+        // computeMeanMotion()
         //////////////////////
         
         // adjust for motion since the time of this orbit
         n = Math.sqrt(gmu/(Math.pow(Math.abs(sma2),3)));
-        var newMean = mean2 + n * (currUT - eph2);
+        var newMean = mean + n * (currUT - eph2);
 
         ////////////////
         // solveKepler()
@@ -879,14 +897,14 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             // functions will make sure fresh data is loaded when the popup displays and not just when the update tick happens
             atmoMark.on('click', function(e) {
               var dd = new Date();
-              dd.setTime(1473739200000 + (UT * 1000));
+              dd.setTime(1473742800000 + (UT * 1000));
               var currDate = Math.floor(dd.getTime() / 1000);
               var now = currDate - startDate;
               $('#atmoEntryTime').html("Time to Atmosphere<br>" + formatTime((latlon.length + latlon2.length)-now, false));
             });
             atmoMark.on('popupopen', function(e) {
               var dd = new Date();
-              dd.setTime(1473739200000 + (UT * 1000));
+              dd.setTime(1473742800000 + (UT * 1000));
               var currDate = Math.floor(dd.getTime() / 1000);
               var now = currDate - startDate;
               $('#atmoEntryTime').html("Time to Atmosphere<br>" + formatTime((latlon.length + latlon2.length)-now, false));
@@ -905,7 +923,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             
             // provide the full date and time of the event
             soiUTC = new Date();
-            soiUTC.setTime((startDate + latlon2.length) * 1000);
+            soiUTC.setTime(1473742800000 + (Math.abs(period2) * 1000));
             hrs = soiUTC.getUTCHours();
             if (hrs < 10) { hrs = '0' + hrs; }
             mins = soiUTC.getUTCMinutes();
@@ -920,14 +938,14 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             // functions will make sure fresh data is loaded when the popup displays and not just when the update tick happens
             SOIMark.on('click', function(e) {
               var dd = new Date();
-              dd.setTime(1473739200000 + (UT * 1000));
+              dd.setTime(1473742800000 + (UT * 1000));
               var currDate = Math.floor(dd.getTime() / 1000);
               var now = currDate - startDate;
               $('#SOIExitTime').html("Time to SOI Exit<br>" + formatTime((Math.abs(period2) - initialUT)-now, false));
             });
             SOIMark.on('popupopen', function(e) {
               var dd = new Date();
-              dd.setTime(1473739200000 + (UT * 1000));
+              dd.setTime(1473742800000 + (UT * 1000));
               var currDate = Math.floor(dd.getTime() / 1000);
               var now = currDate - startDate;
               $('#SOIExitTime').html("Time to SOI Exit<br>" + formatTime((Math.abs(period2) - initialUT)-now, false));
@@ -1062,7 +1080,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
           cardinal = "";
           rvMarker.on('click', function(e) {
             var dd = new Date();
-            dd.setTime(1473739200000 + (UT * 1000));
+            dd.setTime(1473742800000 + (UT * 1000));
             var currDate = Math.floor(dd.getTime() / 1000);
             var now = currDate - startDate;
             if (now < latlon2.length) {
@@ -1195,7 +1213,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
           cardinal = "";
           craft.on('click', function(e) {
             var dd = new Date();
-            dd.setTime(1473739200000 + (UT * 1000));
+            dd.setTime(1473742800000 + (UT * 1000));
             var currDate = Math.floor(dd.getTime() / 1000);
             var now = currDate - startDate;
             if (now < latlon.length) {
@@ -1371,14 +1389,14 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             // functions will make sure fresh data is loaded when the popup displays and not just when the update tick happens
             atmoMark.on('click', function(e) {
               var dd = new Date();
-              dd.setTime(1473739200000 + (UT * 1000));
+              dd.setTime(1473742800000 + (UT * 1000));
               var currDate = Math.floor(dd.getTime() / 1000);
               var now = currDate - startDate;
               $('#atmoEntryTime').html("Time to Atmosphere<br>" + formatTime((latlon.length)-now, false));
             });
             atmoMark.on('popupopen', function(e) {
               var dd = new Date();
-              dd.setTime(1473739200000 + (UT * 1000));
+              dd.setTime(1473742800000 + (UT * 1000));
               var currDate = Math.floor(dd.getTime() / 1000);
               var now = currDate - startDate;
               $('#atmoEntryTime').html("Time to Atmosphere<br>" + formatTime((latlon.length)-now, false));
@@ -1429,7 +1447,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
                 sma2 = parseFloat(nodeData[3]);
                 raan2 = parseFloat(nodeData[4]) * .017453292519943295;
                 arg2 = parseFloat(nodeData[5]) * .017453292519943295;
-                mean2 = parseFloat(nodeData[6]) * .017453292519943295;
+                truA2 = parseFloat(nodeData[6]) * .017453292519943295;
                 currUT = eph2 = parseFloat(nodeData[7]);
                 if (period2 > 0) {
                   if (period2 > maxDeltaTime) { endTime = currUT + maxDeltaTime; }
@@ -1469,7 +1487,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
               apMark.bindPopup("<center><span id='apTime'>Time to Apoapsis<br>" + formatTime(apTime, false) + "</span><br><span id='apDate'>" + (apUTC.getUTCMonth() + 1) + '/' + apUTC.getUTCDate() + '/' + apUTC.getUTCFullYear() + '<br>' + hrs + ':' + mins + ':' + secs + " UTC</span></center>", {closeButton: true});
               apMark.on('click', function(e) {
                 var dd = new Date();
-                dd.setTime(1473739200000 + (UT * 1000));
+                dd.setTime(1473742800000 + (UT * 1000));
                 var currDate = Math.floor(dd.getTime() / 1000);
                 var now = currDate - startDate;
                 $('#apTime').html("Time to Apoapsis<br>" + formatTime(apTime-now, false));
@@ -1490,7 +1508,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
               peMark.bindPopup("<center><span id='peTime'>Time to Periapsis<br>" + formatTime(peTime, false) + "</span><br><span id='peDate'>" + (peUTC.getUTCMonth() + 1) + '/' + peUTC.getUTCDate() + '/' + peUTC.getUTCFullYear() + '<br>' + hrs + ':' + mins + ':' + secs + " UTC</span></center>", {closeButton: true});
               peMark.on('click', function(e) {
                 var dd = new Date();
-                dd.setTime(1473739200000 + (UT * 1000));
+                dd.setTime(1473742800000 + (UT * 1000));
                 var currDate = Math.floor(dd.getTime() / 1000);
                 var now = currDate - startDate;
                 $('#peTime').html("Time to Periapsis<br>" + formatTime(peTime-now, false));
@@ -1510,7 +1528,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             
             // let the user see the exact time of the event in addition to a countdown timer
             soiUTC = new Date();
-            soiUTC.setTime((startDate + latlon.length) * 1000);
+            soiUTC.setTime(1473742800000 + (Math.abs(period) * 1000));
             hrs = soiUTC.getUTCHours();
             if (hrs < 10) { hrs = '0' + hrs; }
             mins = soiUTC.getUTCMinutes();
@@ -1525,14 +1543,14 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             // functions will make sure fresh data is loaded when the popup displays and not just when the update tick happens
             SOIMark.on('click', function(e) {
               var dd = new Date();
-              dd.setTime(1473739200000 + (UT * 1000));
+              dd.setTime(1473742800000 + (UT * 1000));
               var currDate = Math.floor(dd.getTime() / 1000);
               var now = currDate - startDate;
               $('#SOIExitTime').html("Time to SOI Exit<br>" + formatTime((Math.abs(period) - initialUT)-now, false));
             });
             SOIMark.on('popupopen', function(e) {
               var dd = new Date();
-              dd.setTime(1473739200000 + (UT * 1000));
+              dd.setTime(1473742800000 + (UT * 1000));
               var currDate = Math.floor(dd.getTime() / 1000);
               var now = currDate - startDate;
               $('#SOIExitTime').html("Time to SOI Exit<br>" + formatTime((Math.abs(period) - initialUT)-now, false));
@@ -1549,7 +1567,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
           
           // update the marker popup data now for when it is automatically shown
           var dd = new Date();
-          dd.setTime(1473739200000 + (UT * 1000));
+          dd.setTime(1473742800000 + (UT * 1000));
           var currDate = Math.floor(dd.getTime() / 1000);
           var now = currDate - startDate;
 
@@ -1597,7 +1615,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
         // no dynamic map, so setup static orbit info box
         } else {
           var dd = new Date();
-          dd.setTime(1473739200000 + (UT * 1000));
+          dd.setTime(1473742800000 + (UT * 1000));
           var currDate = Math.floor(dd.getTime() / 1000);
           var now = currDate - startDate;
           if (latlon[now].lat < 0) {
@@ -1617,10 +1635,10 @@ if len(fpsCookie) = 0 then fpsCookie = 30
           
           // SOI exit event?
           if (period < 0) {
-          
+
             // let the user see the exact time of the event in addition to a countdown timer
             soiUTC = new Date();
-            soiUTC.setTime((startDate + latlon.length) * 1000);
+            soiUTC.setTime(1473742800000 + (Math.abs(period) * 1000));
             hrs = soiUTC.getUTCHours();
             if (hrs < 10) { hrs = '0' + hrs; }
             mins = soiUTC.getUTCMinutes();
@@ -1766,7 +1784,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             sma2 = parseFloat(nodeData[3]);
             raan2 = parseFloat(nodeData[4]) * .017453292519943295;
             arg2 = parseFloat(nodeData[5]) * .017453292519943295;
-            mean2 = parseFloat(nodeData[6]) * .017453292519943295;
+            truA2 = parseFloat(nodeData[6]) * .017453292519943295;
             currUT = eph2 = parseFloat(nodeData[7]);
             if (period2 > maxDeltaTime) { endTime = currUT + maxDeltaTime; }
             else { endTime = currUT + period2; }
@@ -2238,7 +2256,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
     var inc2;
     var raan2;
     var arg2;
-    var mean2;
+    var truA2;
     var eph2;
     var period2;
     var bRV = false;
@@ -2259,7 +2277,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
           sma2 = parseFloat(rvData[3]);
           raan2 = parseFloat(rvData[4]) * .017453292519943295;
           arg2 = parseFloat(rvData[5]) * .017453292519943295;
-          mean2 = parseFloat(rvData[6]) * .017453292519943295;
+          truA2 = parseFloat(rvData[6]) * .017453292519943295;
           eph2 = parseFloat(rvData[7]);
           rvCraft = rvData[8];
           rvType = rvData[9];
@@ -3407,7 +3425,7 @@ end if
 'starting from the end, work back to find the first record earlier than or equal to the UT we are looking for
 if not rsCraft.eof then
   rsCraft.MoveLast
-  do until rsCraft.fields.item("id") <= dbUT
+  do until (rsCraft.fields.item("id") * 1) <= dbUT
     rsCraft.MovePrevious
   Loop
 end if
@@ -5420,10 +5438,11 @@ else
                   bPlanet = true
                 end if
                 
-                url = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=" & rsMoons.fields.item("body")
-                if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
-                if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
-                response.write("<li><label for='" & rsMoons.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show body overview' href='" & url & "'>" & rsMoons.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsMoons.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
+                //url = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=" & rsMoons.fields.item("body")
+                //if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
+                //if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
+                //response.write("<li><label for='" & rsMoons.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show body overview' href='" & url & "'>" & rsMoons.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsMoons.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
+                response.write("<li><label for='" & rsMoons.fields.item("body") & "'>" & rsMoons.fields.item("body") & "&nbsp;&nbsp;<span id='" & rsMoons.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
                 bVessels = true
               end if
               
@@ -5809,17 +5828,16 @@ rsMoons.movefirst
   
   // js and vb can vary from 10-15 or more seconds
   // time is in favor of vb time, as majority of time stamps are done with dateDiff()
-  // 1473739200000 ms = 9/13/16 00:00:00
+  // 1473742800000 ms = 9/13/16 00:00:00
   var d = new Date();
-  d.setTime(1473739200000 + (UT * 1000));
+  d.setTime(1473742800000 + (UT * 1000));
   var startDate = Math.floor(d.getTime() / 1000);
 
   // show the local time for the latest update
   // break it up to show on two lines
   var lt = new Date();
-  var newTime = 1473739200000 + (<%response.write rsCraft.fields.item("id")%> * 1000);
+  var newTime = 1473742800000 + (<%response.write rsCraft.fields.item("id")%> * 1000);
   lt.setTime(newTime);
-  if (lt.toString().includes("Standard")) { lt.setTime(newTime + 3600000); }
   var ltStr = lt.toString().slice(0, lt.toString().indexOf("GMT"));
   var endStr = lt.toString().slice(lt.toString().indexOf("GMT"), lt.toString().length);
   $('#localTime').html(ltStr + "<br>" + endStr);
@@ -6131,14 +6149,8 @@ rsMoons.movefirst
       response.write("var inc = " & rsOrbit.fields.item("Inclination") * .017453292519943295 & ";")
       response.write("var raan = " & rsOrbit.fields.item("RAAN") * .017453292519943295 & ";")
       response.write("var arg = " & rsOrbit.fields.item("Arg") * .017453292519943295 & ";")
-      'soon to be deprecated for use of true anomaly
-      if isnull(rsOrbit.fields.item("Mean")) then
-        response.write("var truA = " & rsOrbit.fields.item("TrueAnom") * .017453292519943295 & ";")
-        response.write("var mean;")
-      else
-        response.write("var mean = " & rsOrbit.fields.item("Mean") * .017453292519943295 & ";")
-        response.write("var truA;")
-      end if
+      response.write("var truA = " & rsOrbit.fields.item("TrueAnom") * .017453292519943295 & ";")
+      response.write("var mean;")
       response.write("var eph = " & rsOrbit.fields.item("Eph") & ";")
       response.write("var period = " & rsOrbit.fields.item("Orbital Period") & ";")
       response.write("var atmoHeight = " & rsBody.fields.item("AtmoHeight") & ";")
@@ -6385,7 +6397,7 @@ rsMoons.movefirst
   
     // get the difference in time since the page load and use that to find the right data
     var dd = new Date();
-    dd.setTime(1473739200000 + (UT * 1000));
+    dd.setTime(1473742800000 + (UT * 1000));
     var currDate = Math.floor(dd.getTime() / 1000);
     var now = currDate - startDate;
 
