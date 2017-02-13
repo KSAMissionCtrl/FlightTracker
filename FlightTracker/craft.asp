@@ -1645,8 +1645,13 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             if (mins < 10) { mins = '0' + mins; }
             secs = soiUTC.getUTCSeconds();
             if (secs < 10) { secs = '0' + secs; }
-            
-            // show this info in place of Ap/Pe timings
+
+            // show time remaining until Pe?
+            if (peTime-now > 0) {
+              strHTML += "<b>Time to Pe:</b> <span id='peTime'>" + formatTime(peTime-now, false) + "</span><br>";
+            }
+
+            // show time remaining until exit
             strHTML += "<b>SOI Exit:</b><br>" + (soiUTC.getUTCMonth() + 1) + '/' + soiUTC.getUTCDate() + '/' + soiUTC.getUTCFullYear() + ' @ ' + hrs + ':' + mins + ':' + secs + " UTC<br><b>Time Remaining:</b><br><span id='soiTime'>" + formatTime(Math.abs(period) - localUT, false) + "</span>";
 
           // atmo entry?
@@ -5800,14 +5805,14 @@ rsCrafts.find("db='" & request.querystring("db") & "'")
 'if we are watching a live launch, show the main twitter stream even if there is a mission timeline so it auto-updates with launch tweets
 'we should also hide the timeline if the currect craft record is telling us to do so
 if (bAscentActive and len(request.querystring("ut")) = 0) or (rsCraft.fields.item("HideTimeline")) then
-  response.write("<p><center><a href='https://twitter.com/KSA_MissionCtrl' class='twitter-follow-button' data-show-count='true'>Follow @KSA_MissionCtrl</a><script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></center> <a class='twitter-timeline' href='https://twitter.com/KSA_MissionCtrl' data-widget-id='598711760149852163' height='700' data-chrome='noheader'>Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','twitter-wjs');</script></p>")
+  response.write("<p><center><a href='https://twitter.com/KSA_MissionCtrl' class='twitter-follow-button' data-show-count='true'>Follow @KSA_MissionCtrl</a><script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></center> <a class='twitter-timeline' href='https://twitter.com/KSA_MissionCtrl' data-widget-id='598711760149852163' height='700' data-chrome='nofooter noheader'>Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','twitter-wjs');</script></p>")
 else
   
   'show the mission collection timeline if there is one available, or fall back to the main tweet stream
   if isnull(rsCrafts.fields.item("collection")) or rsCrafts.eof then 
-    response.write("<p><center><a href='https://twitter.com/KSA_MissionCtrl' class='twitter-follow-button' data-show-count='true'>Follow @KSA_MissionCtrl</a><script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></center> <a class='twitter-timeline' href='https://twitter.com/KSA_MissionCtrl' data-widget-id='598711760149852163' height='700' data-chrome='noheader'>Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','twitter-wjs');</script></p>")
+    response.write("<p><center><a href='https://twitter.com/KSA_MissionCtrl' class='twitter-follow-button' data-show-count='true'>Follow @KSA_MissionCtrl</a><script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></center> <a class='twitter-timeline' href='https://twitter.com/KSA_MissionCtrl' data-widget-id='598711760149852163' height='700' data-chrome='nofooter noheader'>Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','twitter-wjs');</script></p>")
   else
-    response.write("<p><center><a href='https://twitter.com/KSA_MissionCtrl' class='twitter-follow-button' data-show-count='true'>Follow @KSA_MissionCtrl</a><script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></center> <a class='twitter-timeline' data-partner='tweetdeck' href='https://twitter.com/KSA_MissionCtrl/timelines/" & rsCrafts.fields.item("collection") & "' height='600'>Curated tweets by KSA_MissionCtrl</a> <script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></p>")
+    response.write("<p><center><a href='https://twitter.com/KSA_MissionCtrl' class='twitter-follow-button' data-show-count='true'>Follow @KSA_MissionCtrl</a><script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></center> <a class='twitter-timeline' data-partner='tweetdeck' href='https://twitter.com/KSA_MissionCtrl/timelines/" & rsCrafts.fields.item("collection") & "' height='600' data-chrome='nofooter noheader'>>Curated tweets by KSA_MissionCtrl</a> <script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></p>")
   end if
 end if
 %>
@@ -6782,7 +6787,17 @@ rsMoons.movefirst
           // SOI exit event? update time remaining
           if (period < 0) {
             $('#soiTime').html(formatTime(Math.abs(period) - UT, false));
-
+            
+            // remove the Pe timer when it is reached
+            if (peTime-now == 0) {
+              strHTML = $("#orbData").html();
+              $("#orbData").html(strHTML.slice(0, strHTML.indexOf("Time to Pe")-3) + strHTML.slice(strHTML.indexOf("<br>",strHTML.indexOf("Time to Pe"))+4));
+              console.log(strHTML);
+              console.log(strHTML.slice(0, strHTML.indexOf("Time to Pe")));
+              console.log(strHTML.slice(strHTML.indexOf("<br>",strHTML.indexOf("Time to Pe"))+4));
+            } else if (peTime-now > 0) {
+              $('#peTime').html(formatTime(peTime-now, false));
+            }
           // atmo entry event? update time remaining
           } else if (orbitdata[orbitdata.length-1].alt <= atmoHeight) {
             $('#atmoTime').html(formatTime((latlon.length + initialUT) - UT, false));

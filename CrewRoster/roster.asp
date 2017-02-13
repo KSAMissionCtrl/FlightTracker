@@ -597,12 +597,12 @@ https://github.com/Gaiiden/FlightTracker/wiki/Database-Documentation#karbal-stat
   if isnull(rsKerbal.fields.item("StatusHTML")) then
     response.write("<tr><td><b>Current Status:</b> " & rsKerbal.fields.item("Status") & "</td></tr>")
   else
-    response.write("<tr><td><b>Current Status:</b> <u><span style='cursor:help' class='tip' title='<center>" & rsKerbal.fields.item("StatusHTML") & "</center>'>" & rsKerbal.fields.item("Status") & "</span></u></td></tr>")
+    response.write("<tr><td><b>Current Status:</b> <u><span style='cursor:help' class='tip' data-tipped-options=""position: 'top'"" title='<center>" & rsKerbal.fields.item("StatusHTML") & "</center>'>" & rsKerbal.fields.item("Status") & "</span></u></td></tr>")
   end if
   if isnull(rsKerbal.fields.item("AssignmentHTML")) then
     response.write("<tr><td><b>Current Assignment:</b> " & rsKerbal.fields.item("Assignment") & "</td></tr>")
   else
-    response.write("<tr><td><b>Current Assignment:</b> <u><span style='cursor:help' class='tip' title='<center>" & rsKerbal.fields.item("AssignmentHTML") & "</center>'>" & rsKerbal.fields.item("Assignment") & "</span></u></td></tr>")
+    response.write("<tr><td><b>Current Assignment:</b> <u><span style='cursor:help' class='tip' data-tipped-options=""position: 'top'"" title='<center>" & rsKerbal.fields.item("AssignmentHTML") & "</center>'>" & rsKerbal.fields.item("Assignment") & "</span></u></td></tr>")
   end if
   
   'when mission start is included, we can determine the time until launch or that the mission has been underway
@@ -677,7 +677,7 @@ https://github.com/Gaiiden/FlightTracker/wiki/Database-Documentation#ribbons-fie
       loop
       response.Write "<img src='http://www.blade-edge.com/Roster/Ribbons/"
       response.write rsRibbons.fields.item("Ribbon")
-      response.write ".png' width='109px' class='tip' style='cursor: help', data-tipped-options='maxWidth: 150' title='<center>"
+      response.write ".png' width='109px' class='tip' style='cursor: help' data-tipped-options=""maxWidth: 150, position: 'top'"" title='<center>"
       response.write rsRibbons.fields.item("Title")
       response.write "</center>'>"
       rsRibbons.MoveNext
@@ -1219,7 +1219,7 @@ end if
 <%
 'show the main tweet stream if this is the Full Roster
 if len(request.querystring("db")) = 0 then 
-  response.write("<P><center><a href='https://twitter.com/KSA_MissionCtrl' class='twitter-follow-button' data-show-count='true'>Follow @KSA_MissionCtrl</a><script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></center> <a class='twitter-timeline' href='https://twitter.com/KSA_MissionCtrl' data-widget-id='598711760149852163' height='600' data-chrome='noheader'>Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','twitter-wjs');</script>  </p>")
+  response.write("<P><center><a href='https://twitter.com/KSA_MissionCtrl' class='twitter-follow-button' data-show-count='true'>Follow @KSA_MissionCtrl</a><script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></center> <a class='twitter-timeline' href='https://twitter.com/KSA_MissionCtrl' data-widget-id='598711760149852163' height='600' data-chrome='nofooter noheader'>Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','twitter-wjs');</script>  </p>")
 else
 
   'reset and find the current kerbal
@@ -1231,9 +1231,9 @@ else
 
   'show the kerbal collection timeline if there is one available, or fall back to the main tweet stream
   if isnull(rsCrew.fields.item("collection")) or rsCrew.eof then 
-    response.write("<p><center><a href='https://twitter.com/KSA_MissionCtrl' class='twitter-follow-button' data-show-count='true'>Follow @KSA_MissionCtrl</a><script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></center><a class='twitter-timeline' href='https://twitter.com/KSA_MissionCtrl' data-widget-id='598711760149852163' height='600' data-chrome='noheader'>Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','twitter-wjs');</script></p>")
+    response.write("<p><center><a href='https://twitter.com/KSA_MissionCtrl' class='twitter-follow-button' data-show-count='true'>Follow @KSA_MissionCtrl</a><script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></center><a class='twitter-timeline' href='https://twitter.com/KSA_MissionCtrl' data-widget-id='598711760149852163' height='600' data-chrome='nofooter noheader'>Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','twitter-wjs');</script></p>")
   else
-    response.write("<p><center><a href='https://twitter.com/KSA_MissionCtrl' class='twitter-follow-button' data-show-count='true'>Follow @KSA_MissionCtrl</a><script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></center> <a class='twitter-timeline' data-partner='tweetdeck' href='https://twitter.com/KSA_MissionCtrl/timelines/" & rsCrew.fields.item("collection") & "' height='600'>Curated tweets by KSA_MissionCtrl</a> <script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></p>")
+    response.write("<p><center><a href='https://twitter.com/KSA_MissionCtrl' class='twitter-follow-button' data-show-count='true'>Follow @KSA_MissionCtrl</a><script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></center> <a class='twitter-timeline' data-partner='tweetdeck' href='https://twitter.com/KSA_MissionCtrl/timelines/" & rsCrew.fields.item("collection") & "' height='600' data-chrome='nofooter noheader'>Curated tweets by KSA_MissionCtrl</a> <script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></p>")
   end if
 end if
 %>
