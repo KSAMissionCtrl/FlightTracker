@@ -51,7 +51,7 @@ Basically you need to install the folders to your server and feed them a databas
 - [FT] Engine/Thruster overlay during a maneuver only has a single image and can't account for rotation
 - [FT] *Chrome Only* launch video replays do not always load fully
 - [FT] *Non-Firefox Only* some system overview pages show an empty tooltip when hovering over a body in addition to the rich HTML tooltip
-- [FT] *Firefox Only* if a tooltip appears in the very middle of the screen, it can sometimes appear to the left and not be formatted properly (too narrow)
+- [FT] *Firefox Only* if a tooltip appears in the very middle of the screen, it can sometimes appear to the left and not be formatted properly (too narrow) - will not be fixed due to lack of tooltip support for image maps. Just scroll up or down slightly and the tooltip will display properly above/below/right
 
 ### Future Fixes/Changes/Additions
 
@@ -69,8 +69,23 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] Fix issues with Sketchfab model support (button display for new hoverbox behavior, start/stop on show/hide)
 * [FT] Multiple thruster/engine images to account for image of current craft rotation position
 * [FT] Proper terminator display taking orbital inclination into account ([Leaflet.Curve](https://github.com/elfalem/Leaflet.curve))
+* [FT/CR] Communicate with the website to display update badges on the menu items for Flight Tracker and Crew Roster
 
 ### Change Log
+
+**v4.11** (2/13/17)
+
+Fixes:
+  - [CR] Tooltips now show always atop the ribbons & status descriptions so mobile users get a better experience when zoomed in to that section of the page
+  
+Changes:
+  - [FT/CR] Twitter streams no longer have headers or footers
+  - [FT] Known issue of the borked tooltips in the center of the window updated. No fix possible at this time
+  
+Additions:
+  - [FT/CR] - New feature added to the wishlist - Communicate with the website to display update badges on the menu items for Flight Tracker and Crew Roster
+  - [FT] The static orbital display box now shows time to Pe if the vessel has yet to reach it while on a hyperbolic/SOI Escape trajectory. It also is removed from the box when Pe is passed
+
 
 **v4.10** (2/5/17)
 
