@@ -72,6 +72,7 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT/CR] Communicate with the website to display update badges on the menu items for Flight Tracker and Crew Roster
 * [CR] when hovering over a ribbon, clicking will show previous types of that ribbon below the current one earned so ppl can hover over them for dates and info. Moving mouse off will hide them. Border needed around them or they will just seem to replace any other ribbons below
 * [FT] Playback controls for ground track data. Include in popup windows to let ppl jump to beginning or end of track and see a real-time update of data (center popup, move along track)
+* [FT] Allow vessels menu to organize by vessel subcat and then year subcat and even month subcat
 
 ### Change Log
 
