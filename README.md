@@ -73,6 +73,7 @@ Basically you need to install the folders to your server and feed them a databas
 * [CR] when hovering over a ribbon, clicking will show previous types of that ribbon below the current one earned so ppl can hover over them for dates and info. Moving mouse off will hide them. Border needed around them or they will just seem to replace any other ribbons below
 * [FT] Playback controls for ground track data. Include in popup windows to let ppl jump to beginning or end of track and see a real-time update of data (center popup, move along track)
 * [FT] Allow vessels menu to organize by vessel subcat and then year subcat and even month subcat
+* [FT] Upgrade to the latest version of Leaflet using a [new maps library](https://gitlab.com/IvanSanchez/Leaflet.Kerbal)
 
 ### Change Log
 
