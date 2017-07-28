@@ -74,6 +74,7 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] Playback controls for ground track data. Include in popup windows to let ppl jump to beginning or end of track and see a real-time update of data (center popup, move along track)
 * [FT] Allow vessels menu to organize by vessel subcat and then year subcat and even month subcat
 * [FT] Upgrade to the latest version of Leaflet using a [new maps library](https://gitlab.com/IvanSanchez/Leaflet.Kerbal)
+* [CR] Reverse-order mission listing so newest is at top
 
 ### Change Log
 
