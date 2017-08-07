@@ -34,7 +34,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
   <title>KSA Flight Tracker</title>
 
   <!-- use this image link to force reddit to use a certain image for its thumbnail -->
-  <meta property="og:image" content="http://i.imgur.com/n68Qrsg.png" />
+  <meta property="og:image" content="http://i.imgur.com/B7r6B2F.png" />
   
   <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 
@@ -60,7 +60,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
   <script type="text/javascript" src="../jslib/leaflet.label.js"></script>
   <script type="text/javascript" src="../jslib/numeral.min.js"></script>
   <script type="text/javascript" src="../jslib/tipped.js"></script>
-  <script type="text/javascript" src="../jslib/codebird.js"></script>  
+  <script type="text/javascript" src="../jslib/codebird_dev.js"></script>  
   <script type="text/javascript" src="../jslib/spin.min.js"></script>  
   <script type="text/javascript" src="../jslib/iosbadge.js"></script>
   <script type="text/javascript" src="../jslib/leaflet.rrose-src.js"></script>
@@ -881,8 +881,11 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             });
             
             // provide the full date and time of the event
+            // GMT-4 Standard times are an hour later than they should be. Adjust if needed
+            // suspect it's because the base UT time from the game started during Daylight Savings and never actually changes an hour forward/back
             atmoUTC = new Date();
             atmoUTC.setTime((startDate + latlon2.length + latlon.length) * 1000);
+            if (atmoUTC.toString().search("Standard") >= 0) { atmoUTC.setTime(((startDate + latlon2.length + latlon.length) - 3600) * 1000); }
             hrs = atmoUTC.getUTCHours();
             if (hrs < 10) { hrs = '0' + hrs; }
             mins = atmoUTC.getUTCMinutes();
@@ -922,8 +925,11 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             });
             
             // provide the full date and time of the event
+            // GMT-4 Standard times are an hour later than they should be. Adjust if needed
+            // suspect it's because the base UT time from the game started during Daylight Savings and never actually changes an hour forward/back
             soiUTC = new Date();
-            soiUTC.setTime(1473742800000 + (Math.abs(period2) * 1000));
+            soiUTC.setTime((StarDate + (Math.abs(period2) - UT)) * 1000);
+            if (soiUTC.toString().search("Standard") >= 0) { soiUTC.setTime(((startDate + (Math.abs(period2) - UT)) - 3600) * 1000); }
             hrs = soiUTC.getUTCHours();
             if (hrs < 10) { hrs = '0' + hrs; }
             mins = soiUTC.getUTCMinutes();
@@ -1286,6 +1292,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
               // use the current index to advance the time ahead to when along the orbit was clicked
               var dd = new Date();
               dd.setTime((startDate + index) * 1000);
+              if (dd.toString().search("Standard") >= 0) { dd.setTime(((startDate + index) - 3600) * 1000); }
 
               // compose the popup HTML and place it on the cursor location then display it
               var hrs = dd.getUTCHours();
@@ -1331,6 +1338,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
               // use the current index to advance the time ahead to when along the orbit was clicked
               var dd = new Date();
               dd.setTime((startDate + index) * 1000);
+              if (dd.toString().search("Standard") >= 0) { dd.setTime(((startDate + index) - 3600) * 1000); }
 
               // compose the popup HTML and place it on the cursor location then display it
               if (latlon[index].lat < 0) {
@@ -1373,8 +1381,12 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             });
             
             // provide the full date and time of the event
+            // GMT-4 Standard times are an hour later than they should be. Adjust if needed
+            // suspect it's because the base UT time from the game started during Daylight Savings and never actually changes an hour forward/back
             atmoUTC = new Date();
             atmoUTC.setTime((startDate + latlon.length) * 1000);
+            console.log(startDate);
+            if (atmoUTC.toString().search("Standard") >= 0) { atmoUTC.setTime(((startDate + latlon.length) - 3600) * 1000); }
             hrs = atmoUTC.getUTCHours();
             if (hrs < 10) { hrs = '0' + hrs; }
             mins = atmoUTC.getUTCMinutes();
@@ -1415,8 +1427,11 @@ if len(fpsCookie) = 0 then fpsCookie = 30
               });
               
               // provide the full date and time of the event
+              // GMT-4 Standard times are an hour later than they should be. Adjust if needed
+              // suspect it's because the base UT time from the game started during Daylight Savings and never actually changes an hour forward/back
               nodeUTC = new Date();
               nodeUTC.setTime((startDate + latlon.length) * 1000);
+              if (nodeUTC.toString().search("Standard") >= 0) { nodeUTC.setTime(((startDate + latlon.length) - 3600) * 1000); }
               hrs = nodeUTC.getUTCHours();
               if (hrs < 10) { hrs = '0' + hrs; }
               mins = nodeUTC.getUTCMinutes();
@@ -1473,8 +1488,11 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             if (bDrawMap) {
             
               // let the user see the exact time of the event in addition to a countdown timer
+              // GMT-4 Standard times are an hour later than they should be. Adjust if needed
+              // suspect it's because the base UT time from the game started during Daylight Savings and never actually changes an hour forward/back
               apUTC = new Date();
               apUTC.setTime((startDate + Math.abs(apTime)) * 1000);
+              if (apUTC.toString().search("Standard") >= 0) { apUTC.setTime(((startDate + Math.abs(apTime)) - 3600) * 1000); }
               hrs = apUTC.getUTCHours();
               if (hrs < 10) { hrs = '0' + hrs; }
               mins = apUTC.getUTCMinutes();
@@ -1496,8 +1514,11 @@ if len(fpsCookie) = 0 then fpsCookie = 30
           }
           if (peTime < latlon.length) { 
             if (bDrawMap) {
+              // GMT-4 Standard times are an hour later than they should be. Adjust if needed
+              // suspect it's because the base UT time from the game started during Daylight Savings and never actually changes an hour forward/back
               peUTC = new Date();
               peUTC.setTime((startDate + Math.abs(peTime)) * 1000);
+              if (peUTC.toString().search("Standard") >= 0) { peUTC.setTime(((startDate + Math.abs(peTime)) - 3600) * 1000); }
               hrs = peUTC.getUTCHours();
               if (hrs < 10) { hrs = '0' + hrs; }
               mins = peUTC.getUTCMinutes();
@@ -1527,8 +1548,11 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             });
             
             // let the user see the exact time of the event in addition to a countdown timer
+            // GMT-4 Standard times are an hour later than they should be. Adjust if needed
+            // suspect it's because the base UT time from the game started during Daylight Savings and never actually changes an hour forward/back
             soiUTC = new Date();
-            soiUTC.setTime(1473742800000 + (Math.abs(period) * 1000));
+            soiUTC.setTime((startDate + (Math.abs(period) - UT)) * 1000);
+            if (soiUTC.toString().search("Standard") >= 0) { soiUTC.setTime(((startDate + (Math.abs(period) - UT)) - 3600) * 1000); }
             hrs = soiUTC.getUTCHours();
             if (hrs < 10) { hrs = '0' + hrs; }
             mins = soiUTC.getUTCMinutes();
@@ -1637,8 +1661,11 @@ if len(fpsCookie) = 0 then fpsCookie = 30
           if (period < 0) {
 
             // let the user see the exact time of the event in addition to a countdown timer
+            // GMT-4 Standard times are an hour later than they should be. Adjust if needed
+            // suspect it's because the base UT time from the game started during Daylight Savings and never actually changes an hour forward/back
             soiUTC = new Date();
-            soiUTC.setTime(1473742800000 + (Math.abs(period) * 1000));
+            soiUTC.setTime((startDate + (Math.abs(period) - UT)) * 1000);
+            if (soiUTC.toString().search("Standard") >= 0) { soiUTC.setTime(((startDate + (Math.abs(period) - UT)) - 3600) * 1000); }
             hrs = soiUTC.getUTCHours();
             if (hrs < 10) { hrs = '0' + hrs; }
             mins = soiUTC.getUTCMinutes();
@@ -1658,8 +1685,11 @@ if len(fpsCookie) = 0 then fpsCookie = 30
           } else if (orbitdata[orbitdata.length-1].alt <= atmoHeight) {
             
             // let the user see the exact time of the event in addition to a countdown timer
+            // GMT-4 Standard times are an hour later than they should be. Adjust if needed
+            // suspect it's because the base UT time from the game started during Daylight Savings and never actually changes an hour forward/back
             atmoUTC = new Date();
             atmoUTC.setTime((startDate + latlon.length) * 1000);
+            if (atmoUTC.toString().search("Standard") >= 0) { atmoUTC.setTime(((startDate + latlon.length) - 3600) * 1000); }
             hrs = atmoUTC.getUTCHours();
             if (hrs < 10) { hrs = '0' + hrs; }
             mins = atmoUTC.getUTCMinutes();
@@ -2599,7 +2629,7 @@ if len(fpsCookie) = 0 then fpsCookie = 30
             return;
           }
         }
-        window.location.href = window.location.href + "&fullorbit=y";
+        window.location.href = window.location.href + "&fullorbit=y&orbits=1";
       });
 
       // upon selection of a new list item, take the user to that event
@@ -3393,8 +3423,13 @@ next
 'not needed but kept for reference if required in the future 
 'http://stackoverflow.com/questions/16474210/detect-if-a-names-field-exists-in-a-record-set
 
+'get the diff between system time and JS time
+'because Brinkster servers are stupid and for some reason not synced to NIST
+response.write("<script>console.log('vbscript: " & Now & "'); console.log('javascript: ' + new Date().toLocaleTimeString());</script>")
+timeOffset = 84
+
 'calculate the time in seconds since epoch 0 when the game started
-UT = datediff("s", "13-Sep-2016 00:00:00", now())
+UT = datediff("s", "13-Sep-2016 00:00:00", now()) + timeOffset
 
 'affects the base UT that is used for some areas that ignore dbUT
 if request.querystring("deltaut") then
@@ -3545,7 +3580,7 @@ if not rsAscent.bof then
     end if
   
     'get the time of the launch (not the time telemetry begins!)
-    response.write("launchUT = " & datediff("s", "16-Feb-2014 00:00:00", rsCraft.fields.item("LaunchDate")) & ";")
+    response.write("launchUT = " & datediff("s", "13-Sep-2016 00:00:00", rsCraft.fields.item("LaunchDate")) & ";")
 
     'load all the initial values from the first entry
     telemetryUT = rsAscent.fields.item("id")
@@ -3679,7 +3714,7 @@ if not rsAscent.bof then
   end if
   
   'debug info for survey data
-  response.write("var iterpolationTime = formatTime(" & datediff("s", interpStart, now()) & ", true);")
+  response.write("var iterpolationTime = formatTime(" & datediff("s", interpStart, now()) + timeOffset & ", true);")
 end if
 response.write("var vidAscentLength = " & vidLength+1 & ";")
 response.write("</script>")
@@ -3734,7 +3769,7 @@ if bPastUT and rsCraft.fields.item("Scrub") then
   if isnull(rsCraft.fields.item("LaunchDate")) then
     msg = "Actual launch time:<br>To Be Determined<br>"
   else
-    if datediff("s", actualdate, now()) > 0 then
+    if datediff("s", actualdate, now()) + timeOffset > 0 then
       msg = "Actual launch time:<br>" & rsCraft.fields.item("LaunchDateUTC") & " UTC<br>"
     else
       msg = "New launch time:<br>" & rsCraft.fields.item("LaunchDateUTC") & " UTC<br>"
@@ -3749,9 +3784,9 @@ end if
 'calculate the time since the start of the mission
 'this field could be blank if a new entry was created in Craft Data after a scrub with no new launch time
 if len(actualdate) then
-  origMET = datediff("s", actualdate, now())
+  origMET = datediff("s", actualdate, now()) + timeOffset
 elseif not isnull(rsCraft.fields.item("LaunchDate")) and not len(actualdate) then 
-  origMET = datediff("s", fromdate, now())
+  origMET = datediff("s", fromdate, now()) + timeOffset
 else
   origMET = 0
   bUpdateMET = false
@@ -4412,7 +4447,7 @@ document.title = document.title + " - <%response.write rsCraft.fields.item("Craf
             Loop
             
             'we might still be counting down from whenever, or we might be launched
-            launchUT = datediff("s", "16-Feb-2014 00:00:00", rsCraft.fields.item("LaunchDate"))
+            launchUT = datediff("s", "13-Sep-2016 00:00:00", rsCraft.fields.item("LaunchDate"))
             if dbUT - launchUT < 0 then
               response.write("<tr><td><b id='captionMET'>Launch in:</b> <span id='launchMET'>")
             else
@@ -4622,7 +4657,7 @@ document.title = document.title + " - <%response.write rsCraft.fields.item("Craf
                   response.write("<span class='tip' title='")
                   response.write values(0)
                   response.write("<br>Boarded on: " & formatdatetime(values(2),2))
-                  response.write("<br>MET: " & datediff("d", values(2), now()) & " days")
+                  response.write("<br>MET: " & datediff("d", values(2), now()) + timeOffset & " days")
                   response.write("'><a target='_blank' href='http://www.kerbalspace.agency/Roster/roster.asp?db=")
                   response.write values(1)
                   response.write(query & "'><img src='http://www.kerbalspace.agency/Tracker/favicon.ico'></a></span> ")
@@ -5214,6 +5249,16 @@ response.write("</script>")
     response.write("var launchLat = " & data(0) & ";")
     response.write("var launchLon = " & data(1) & ";")
     response.write("var launchsite = '" & data(2) & "';")
+    if ubound(data) > 2 then 
+      response.write("var launchAltitude = '<br>" & data(3) & " km';")
+    else
+      response.write("var launchAltitude = '';")
+    end if
+    if rsCraft.fields.item("LaunchDateTerm") = "Launch" then
+      response.write("var strLaunchIconCaption = '<b>Launch Location</b><br>';")
+    else
+      response.write("var strLaunchIconCaption = '';")
+    end if
     response.write("</script>")
     
   'if there is a ! symbol this is an orbital state
@@ -5357,37 +5402,53 @@ if request.querystring("filter") = "inactive" then
     'look through all crafts in the table
     bInactiveVessels = false
     do while not rsCrafts.eof
+    
+      'do not process aircraft
+      if rsCrafts.fields.item("type") <> "aircraft" then 
 
-      'parse all the SOIs this craft has/will be in and find the one it is in currently
-      ref = -2
-      locations = split(rsCrafts.fields.item("SOI"), "|")
-      for each loc in locations
-        values = split(loc, ";")
-        if values(0)*1 <= UT then 
-          ref = values(1)*1
-        end if
-      next 
-
-      'check if this is an inactive vessel or not
-      'then check that this vessel belongs under this filter category
-      if ref = -1 then
-        if rsCrafts.fields.item("type") = x then
-        
-          'if this is the first vessel found for this filter, then create the category to list the vessel under
-          if not bInactiveVessels then
-            bInactiveVessels = true
-            
-            'convert the string to first character upper case
-            letter = left(x, 1)
-            letter = ucase(letter)
-            title = letter & mid(x, 2, len(x)-1)
-            response.write("<li> <label" & title & " for='" & title & "'>" & title & "</label" & title & "> <input type='checkbox' id='" & title & "' /> <ol>")
+        'parse all the SOIs this craft has/will be in and find the one it is in currently
+        ref = -2
+        locations = split(rsCrafts.fields.item("SOI"), "|")
+        for each loc in locations
+          values = split(loc, ";")
+          if values(0)*1 <= UT then 
+            ref = values(1)*1
           end if
+        next 
+
+        'check if this is an inactive vessel or not
+        'then check that this vessel belongs under this filter category
+        if ref = -1 then
+          if rsCrafts.fields.item("type") = x then
           
-          'add the craft under this vessel type
-          response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "' href='http://www.kerbalspace.agency/Tracker/craft.asp?db=" & rsCrafts.fields.item("db") & "&filter=inactive'>" & rsCrafts.fields.item("vessel") & "</a></li>")
+            'if this is the first vessel found for this filter, then create the category to list the vessel under
+            if not bInactiveVessels then
+              bInactiveVessels = true
+              
+              'convert the string to first character upper case
+              letter = left(x, 1)
+              letter = ucase(letter)
+              title = letter & mid(x, 2, len(x)-1)
+              response.write("<li> <label" & title & " for='" & title & "'>" & title & "</label" & title & "> <input type='checkbox' id='" & title & "' /> <ol>")
+            end if
+            
+            'add the craft under this vessel type
+            'get the vessel current name if there is more than one
+            if (instr(rsCrafts.fields.item("vessel"), ";") > 0) then
+              names = split(rsCrafts.fields.item("vessel"), "|")
+              for each name in names
+                values = split(name, ";")
+                if values(0)*1 <= UT then 
+                  vesselName = values(1)
+                end if
+              next 
+            else 
+              vesselName = rsCrafts.fields.item("vessel")
+            end if
+            response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "' href='http://www.kerbalspace.agency/Tracker/craft.asp?db=" & rsCrafts.fields.item("db") & "&filter=inactive'>" & vesselName & "</a></li>")
           end if
         end if
+      end if
       rsCrafts.movenext
     loop
     
@@ -5396,6 +5457,35 @@ if request.querystring("filter") = "inactive" then
     if bInactiveVessels then response.write("</ol> </li>")
     rsCrafts.movefirst
   next
+
+  'look once more through all crafts in the table for any aircraft
+  bInactiveVessels = false
+  do while not rsCrafts.eof
+    if rsCrafts.fields.item("type") = "aircraft" then
+
+      'should this aircraft be shown?
+      if rsCrafts.fields.item("SOI")*1 <= dbUT then
+        
+        'if this is the first vessel found for this filter, then create the category to list the vessel under
+        if not bInactiveVessels then
+          bInactiveVessels = true
+          
+          title = "Aircraft"
+          response.write("<li> <label" & title & " for='" & title & "'>" & title & "</label" & title & "> <input type='checkbox' id='" & title & "' /> <ol>")
+        end if
+        
+        'add the craft under this vessel type
+        response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "' href='http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=Kerbin&map=true&flt=" & rsCrafts.fields.item("db") & "&filter=inactive'>" & rsCrafts.fields.item("vessel") & "</a></li>")
+      end if
+    end if
+    rsCrafts.movenext
+  loop
+  
+  'only close off the category if entries were created
+  'then re-rack the crafts for the next search
+ if bInactiveVessels then response.write("</ol> </li>")
+ rsCrafts.movefirst
+
 else
 
   'loop through all the planets
@@ -5408,59 +5498,75 @@ else
         bVessels = false
         do while not rsCrafts.eof
 
-          'parse all the SOIs this craft has/will be in and find the one it is in currently
-          ref = -1
-          locations = split(rsCrafts.fields.item("SOI"), "|")
-          for each loc in locations
-            values = split(loc, ";")
-            if values(0)*1 <= UT then 
-              ref = values(1)*1
+          'do not process aircraft
+          if rsCrafts.fields.item("type") <> "aircraft" then 
+
+            'parse all the SOIs this craft has/will be in and find the one it is in currently
+            ref = -1
+            locations = split(rsCrafts.fields.item("SOI"), "|")
+            for each loc in locations
+              values = split(loc, ";")
+              if values(0)*1 <= UT then 
+                ref = values(1)*1
+              end if
+            next 
+
+            'check for an active filter, otherwise ensure craft is selected by assigning craft type to the filter
+            if request.querystring("filter") = "" then
+              filterBy = rsCrafts.fields.item("type")
+            else
+              filterBy = request.querystring("filter")
             end if
-          next 
+            if filterBy = rsCrafts.fields.item("type") then
+            
+              'check if the craft that matches this UT is within the SOI of this moon
+              if ref = rsMoons.fields.item("id") then
 
-          'check for an active filter, otherwise ensure craft is selected by assigning craft type to the filter
-          if request.querystring("filter") = "" then
-            filterBy = rsCrafts.fields.item("type")
-          else
-            filterBy = request.querystring("filter")
-          end if
-          if filterBy = rsCrafts.fields.item("type") then
-          
-            'check if the craft that matches this UT is within the SOI of this moon
-            if ref = rsMoons.fields.item("id") then
-
-              'include the moon as a child of the planet if this is the first vessel found within its SOI
-              if not bVessels then
-              
-                'include the planet in the tree if this has not yet been done
-                if not bPlanet then
+                'include the moon as a child of the planet if this is the first vessel found within its SOI
+                if not bVessels then
                 
-                  'ensure that some URL variables are not lost in the link
-                  url = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=" & rsPlanets.fields.item("body") & "-System"
-                  if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
-                  if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
-                  response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show System overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsPlanets.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
-                  bPlanet = true
+                  'include the planet in the tree if this has not yet been done
+                  if not bPlanet then
+                  
+                    'ensure that some URL variables are not lost in the link
+                    url = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=" & rsPlanets.fields.item("body") & "-System"
+                    if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
+                    if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
+                    response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show System overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsPlanets.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
+                    bPlanet = true
+                  end if
+                  
+                  //url = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=" & rsMoons.fields.item("body")
+                  //if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
+                  //if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
+                  //response.write("<li><label for='" & rsMoons.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show body overview' href='" & url & "'>" & rsMoons.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsMoons.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
+                  response.write("<li><label for='" & rsMoons.fields.item("body") & "'>" & rsMoons.fields.item("body") & "&nbsp;&nbsp;<span id='" & rsMoons.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
+                  bVessels = true
                 end if
                 
-                //url = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=" & rsMoons.fields.item("body")
-                //if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
-                //if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
-                //response.write("<li><label for='" & rsMoons.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show body overview' href='" & url & "'>" & rsMoons.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsMoons.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
-                response.write("<li><label for='" & rsMoons.fields.item("body") & "'>" & rsMoons.fields.item("body") & "&nbsp;&nbsp;<span id='" & rsMoons.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
-                bVessels = true
-              end if
-              
-              'include the craft as a child of the moon
-              url = "http://www.kerbalspace.agency/Tracker/craft.asp?db=" & rsCrafts.fields.item("db")
-              if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
-              if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
-              response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 255, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "' href='" & url & "'>" & rsCrafts.fields.item("vessel") & "&nbsp;&nbsp;<span id='" & rsCrafts.fields.item("db") & "' style='position: relative;'></span></a></li>")
-              bEntry = true
-              
-              'if this craft is orbiting around the body currently being viewed, it will probably need a rich tooltip to be displayed
-              if instr(request.querystring("body"), rsMoons.fields.item("Body")) then
-                response.write("<script>craftQuery.push('" & rsCrafts.fields.item("db") & "');</script>")
+                'include the craft as a child of the moon
+                'get the vessel current name if there is more than one
+                if (instr(rsCrafts.fields.item("vessel"), ";") > 0) then
+                  names = split(rsCrafts.fields.item("vessel"), "|")
+                  for each name in names
+                    values = split(name, ";")
+                    if values(0)*1 <= UT then 
+                      vesselName = values(1)
+                    end if
+                  next 
+                else 
+                  vesselName = rsCrafts.fields.item("vessel")
+                end if
+                url = "http://www.kerbalspace.agency/Tracker/craft.asp?db=" & rsCrafts.fields.item("db")
+                if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
+                if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
+                response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 255, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "' href='" & url & "'>" & vesselName & "&nbsp;&nbsp;<span id='" & rsCrafts.fields.item("db") & "' style='position: relative;'></span></a></li>")
+                bEntry = true
+                
+                'if this craft is orbiting around the body currently being viewed, it will probably need a rich tooltip to be displayed
+                if instr(request.querystring("body"), rsMoons.fields.item("Body")) then
+                  response.write("<script>craftQuery.push('" & rsCrafts.fields.item("db") & "');</script>")
+                end if
               end if
             end if
           end if
@@ -5486,46 +5592,62 @@ else
     'time to look for any craft orbiting this planet
     'parse all the SOIs this craft has/will be in and find the one it is in currently
     do while not rsCrafts.eof
-      ref = -1
-      locations = split(rsCrafts.fields.item("SOI"), "|")
-      for each loc in locations
-        values = split(loc, ";")
-        if values(0)*1 <= UT then 
-          ref = values(1)*1
-        end if
-      next 
-      
-      'check for an active filter, otherwise ensure craft is selected by assigning craft type to the filter
-      if request.querystring("filter") = "" then
-        filterBy = rsCrafts.fields.item("type")
-      else
-        filterBy = request.querystring("filter")
-      end if
-      if filterBy = rsCrafts.fields.item("type") then
-      
-        'check if the craft that matches this UT is within the SOI of this planet
-        if ref = rsPlanets.fields.item("id") then
+    
+      'do not process aircraft
+      if rsCrafts.fields.item("type") <> "aircraft" then 
+        ref = -1
+        locations = split(rsCrafts.fields.item("SOI"), "|")
+        for each loc in locations
+          values = split(loc, ";")
+          if values(0)*1 <= UT then 
+            ref = values(1)*1
+          end if
+        next 
         
-          'include the planet in the tree if this has not yet been done
-          if not bPlanet then
-            if rsPlanets.fields.item("body") = "Kerbol" then bKerbolUsed = true
-            url = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=" & rsPlanets.fields.item("body") & "-System"
+        'check for an active filter, otherwise ensure craft is selected by assigning craft type to the filter
+        if request.querystring("filter") = "" then
+          filterBy = rsCrafts.fields.item("type")
+        else
+          filterBy = request.querystring("filter")
+        end if
+        if filterBy = rsCrafts.fields.item("type") then
+        
+          'check if the craft that matches this UT is within the SOI of this planet
+          if ref = rsPlanets.fields.item("id") then
+          
+            'include the planet in the tree if this has not yet been done
+            if not bPlanet then
+              if rsPlanets.fields.item("body") = "Kerbol" then bKerbolUsed = true
+              url = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=" & rsPlanets.fields.item("body") & "-System"
+              if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
+              if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
+                response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show System overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsPlanets.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
+              bPlanet = true
+            end if
+            
+            'include the craft as a child of the planet
+            'get the vessel current name if there is more than one
+            if (instr(rsCrafts.fields.item("vessel"), ";") > 0) then
+              names = split(rsCrafts.fields.item("vessel"), "|")
+              for each name in names
+                values = split(name, ";")
+                if values(0)*1 <= UT then 
+                  vesselName = values(1)
+                end if
+              next 
+            else 
+              vesselName = rsCrafts.fields.item("vessel")
+            end if
+            url = "' href='http://www.kerbalspace.agency/Tracker/craft.asp?db=" & rsCrafts.fields.item("db")
             if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
             if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
-              response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""position: 'right'"" title='Show System overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsPlanets.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
-            bPlanet = true
-          end if
-          
-          'include the craft as a child of the planet
-          url = "' href='http://www.kerbalspace.agency/Tracker/craft.asp?db=" & rsCrafts.fields.item("db")
-          if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
-          if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
-            response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & url & "'>" & rsCrafts.fields.item("vessel") & "&nbsp;&nbsp;<span id='" & rsCrafts.fields.item("db") & "' style='position: relative;'></span></a></li>")
-          bEntry = true
-              
-          'if this craft is orbiting around the body currently being viewed, it will probably need a rich tooltip to be displayed
-          if instr(request.querystring("body"), rsPlanets.fields.item("Body")) then
-            response.write("<script>craftQuery.push('" & rsCrafts.fields.item("db") & "');</script>")
+              response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & url & "'>" & vesselName & "&nbsp;&nbsp;<span id='" & rsCrafts.fields.item("db") & "' style='position: relative;'></span></a></li>")
+            bEntry = true
+                
+            'if this craft is orbiting around the body currently being viewed, it will probably need a rich tooltip to be displayed
+            if instr(request.querystring("body"), rsPlanets.fields.item("Body")) then
+              response.write("<script>craftQuery.push('" & rsCrafts.fields.item("db") & "');</script>")
+            end if
           end if
         end if
       end if
@@ -5684,34 +5806,19 @@ end if
               response.write("None Scheduled")
             else
               
-              'has this launch has gone off already?
-              if datediff("s", rsLaunch.fields.item("EventDate"), now()) >= 0 then
+              'is this a countdown hold?
+              if isnull(rsLaunch.fields.item("EventDate")) then 
                 response.write("<script>")
                 response.write("var bLaunchCountdown = false;")
-
-                'if there is a future one to look for, let js know and update when it hits
-                rsLaunch.movenext()
-                if not rsLaunch.eof then
-                  response.write("var bFutureLaunch = true;")
-                  response.write("var nextLaunchSched = " & rsLaunch.fields.item("UT") & ";")
-                else
-                  response.write("var bFutureLaunch = false;")
-                  response.write("var nextLaunchSched = 0;")
-                end if
-                response.write("</script>")
-                response.write("None Scheduled")
-                
-              'this launch is displayable and upcoming, configure js variables for updating the countdown timer
-              else
-                response.write("<script>")
-                response.write("var bLaunchCountdown = true;")
                 response.write("var bFutureLaunch = false;")
                 response.write("var nextLaunchSched = 0;")
+
+                'not an active countdown, but still contains data
                 response.write("var launchLink = '" & rsLaunch.fields.item("CraftLink") & "';")
                 response.write("var launchCraft = '" & rsLaunch.fields.item("CraftName") & "';")
-                response.write("var launchSchedUT = " & datediff("s", rsLaunch.fields.item("EventDate"), now()) & ";")
+                response.write("var launchSchedUT = 0;")
                 response.write("</script>")
-                
+
                 'add a tooltip to give the user more details if available
                 if not isnull(rsLaunch.fields.item("Desc")) then
                   response.write("<a class='tip' title='" & rsLaunch.fields.item("Desc") & "' data-tipped-options=""offset: { y: -10 }, maxWidth: 150, position: 'top'"" href='" & rsLaunch.fields.item("CraftLink") & "'>" & rsLaunch.fields.item("CraftName") & "</a><br>")
@@ -5719,10 +5826,49 @@ end if
                   response.write("<a href='" & rsLaunch.fields.item("CraftLink") & "'>" & rsLaunch.fields.item("CraftName") & "</a><br>")
                 end if
                 
-                'print out the launch details and give the user the option to have the site remind them about it
-                response.write(formatdatetime(rsLaunch.fields.item("EventDate")) & "<br>")
-                response.write("<span id='tminuslaunch'></span>")
-                response.write("<br /><div id='launchDiv'><input type='checkbox' id='remindLaunch'> <span class='tip' data-tipped-options=""maxWidth: 150"" title='Checking this box will cause the browser to alert you 5 minutes before the event' style='cursor: default; vertical-align: 2px;'>Remind Me</span> <img id='launchWarn' style='display: none; vertical-align: 1px; cursor: help;' src='warning-icon.png' class='tip' data-tipped-options=""maxWidth: 150"" title='You do not have cookies enabled, which means this setting will not be saved between pages/sessions. Click to dismiss'></div>")
+                'display the hold message
+                response.write("COUNTDOWN HOLD<br>Awaiting new L-0 time")
+              else
+                'has this launch has gone off already?
+                if datediff("s", rsLaunch.fields.item("EventDate"), now()) + timeOffset >= 0 then
+                  response.write("<script>")
+                  response.write("var bLaunchCountdown = false;")
+
+                  'if there is a future one to look for, let js know and update when it hits
+                  rsLaunch.movenext()
+                  if not rsLaunch.eof then
+                    response.write("var bFutureLaunch = true;")
+                    response.write("var nextLaunchSched = " & rsLaunch.fields.item("UT") & ";")
+                  else
+                    response.write("var bFutureLaunch = false;")
+                    response.write("var nextLaunchSched = 0;")
+                  end if
+                  response.write("</script>")
+                  response.write("None Scheduled")
+                  
+                'this launch is displayable and upcoming, configure js variables for updating the countdown timer
+                else
+                  response.write("<script>")
+                  response.write("var bLaunchCountdown = true;")
+                  response.write("var bFutureLaunch = false;")
+                  response.write("var nextLaunchSched = 0;")
+                  response.write("var launchLink = '" & rsLaunch.fields.item("CraftLink") & "';")
+                  response.write("var launchCraft = '" & rsLaunch.fields.item("CraftName") & "';")
+                  response.write("var launchSchedUT = " & datediff("s", rsLaunch.fields.item("EventDate"), now()) + timeOffset & ";")
+                  response.write("</script>")
+                  
+                  'add a tooltip to give the user more details if available
+                  if not isnull(rsLaunch.fields.item("Desc")) then
+                    response.write("<a class='tip' title='" & rsLaunch.fields.item("Desc") & "' data-tipped-options=""offset: { y: -10 }, maxWidth: 150, position: 'top'"" href='" & rsLaunch.fields.item("CraftLink") & "'>" & rsLaunch.fields.item("CraftName") & "</a><br>")
+                  else
+                    response.write("<a href='" & rsLaunch.fields.item("CraftLink") & "'>" & rsLaunch.fields.item("CraftName") & "</a><br>")
+                  end if
+                
+                  'print out the launch details and give the user the option to have the site remind them about it
+                  response.write(formatdatetime(rsLaunch.fields.item("EventDate")) & "<br>")
+                  response.write("<span id='tminuslaunch'></span>")
+                  response.write("<br /><div id='launchDiv'><input type='checkbox' id='remindLaunch'> <span class='tip' data-tipped-options=""maxWidth: 150"" title='Checking this box will cause the browser to alert you 5 minutes before the event' style='cursor: default; vertical-align: 2px;'>Remind Me</span> <img id='launchWarn' style='display: none; vertical-align: 1px; cursor: help;' src='warning-icon.png' class='tip' data-tipped-options=""maxWidth: 150"" title='You do not have cookies enabled, which means this setting will not be saved between pages/sessions. Click to dismiss'></div>")
+                end if
               end if
             end if
             %>
@@ -5745,7 +5891,7 @@ end if
             else
               
               'has this maneuver has gone off already?
-              if datediff("s", rsManeuver.fields.item("EventDate"), now()) >= 0 then
+              if datediff("s", rsManeuver.fields.item("EventDate"), now()) + timeOffset >= 0 then
                 response.write("<script>")
                 response.write("var bManeuverCountdown = false;")
 
@@ -5767,7 +5913,7 @@ end if
                 response.write("var bManeuverCountdown = true;")
                 response.write("var bFutureManeuver = false;")
                 response.write("var nextManeuverSched = 0;")
-                response.write("var maneuverUT = " & datediff("s", rsManeuver.fields.item("EventDate"), now()) & ";")
+                response.write("var maneuverUT = " & datediff("s", rsManeuver.fields.item("EventDate"), now()) + timeOffset & ";")
                 response.write("var maneuverLink = '" & rsManeuver.fields.item("CraftLink") & "';")
                 response.write("var maneuverCraft = '" & rsManeuver.fields.item("CraftName") & "';")
                 response.write("</script>")
@@ -5797,25 +5943,8 @@ end if
 
 <!-- twitter timeline display --> 
 
-<%
-'find the craft data we need for this vessel
-rsCrafts.movefirst
-rsCrafts.find("db='" & request.querystring("db") & "'")
-
-'if we are watching a live launch, show the main twitter stream even if there is a mission timeline so it auto-updates with launch tweets
-'we should also hide the timeline if the currect craft record is telling us to do so
-if (bAscentActive and len(request.querystring("ut")) = 0) or (rsCraft.fields.item("HideTimeline")) then
-  response.write("<p><center><a href='https://twitter.com/KSA_MissionCtrl' class='twitter-follow-button' data-show-count='true'>Follow @KSA_MissionCtrl</a><script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></center> <a class='twitter-timeline' href='https://twitter.com/KSA_MissionCtrl' data-widget-id='598711760149852163' height='700' data-chrome='nofooter noheader'>Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','twitter-wjs');</script></p>")
-else
-  
-  'show the mission collection timeline if there is one available, or fall back to the main tweet stream
-  if isnull(rsCrafts.fields.item("collection")) or rsCrafts.eof then 
-    response.write("<p><center><a href='https://twitter.com/KSA_MissionCtrl' class='twitter-follow-button' data-show-count='true'>Follow @KSA_MissionCtrl</a><script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></center> <a class='twitter-timeline' href='https://twitter.com/KSA_MissionCtrl' data-widget-id='598711760149852163' height='700' data-chrome='nofooter noheader'>Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','twitter-wjs');</script></p>")
-  else
-    response.write("<p><center><a href='https://twitter.com/KSA_MissionCtrl' class='twitter-follow-button' data-show-count='true'>Follow @KSA_MissionCtrl</a><script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></center> <a class='twitter-timeline' data-partner='tweetdeck' href='https://twitter.com/KSA_MissionCtrl/timelines/" & rsCrafts.fields.item("collection") & "' height='600' data-chrome='nofooter noheader'>>Curated tweets by KSA_MissionCtrl</a> <script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script></p>")
-  end if
-end if
-%>
+<P><center><a href="https://twitter.com/KSA_MissionCtrl" class="twitter-follow-button" data-show-count="true">Follow @KSA_MissionCtrl</a><script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script></center>
+<a class="twitter-timeline" href="https://twitter.com/KSA_MissionCtrl" data-widget-id="598711760149852163" height="700" data-chrome="noheader">Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>  </p>
 
 </span></div> </div>
 
@@ -5845,11 +5974,21 @@ rsMoons.movefirst
   lt.setTime(newTime);
   var ltStr = lt.toString().slice(0, lt.toString().indexOf("GMT"));
   var endStr = lt.toString().slice(lt.toString().indexOf("GMT"), lt.toString().length);
+  
+  // GMT-4 times are an hour later than they should be. Adjust if needed
+  // suspect it's because the base UT time from the game started during Daylight Savings and never actually changes an hour forward/back
+  if (endStr.search("Standard") >= 0) {
+    var strChop = ltStr.split(" ");
+    var strTime = strChop[4].split(":");
+    var hour = parseInt(strTime[0]) - 1;
+    ltStr = strChop[0] + " " + strChop[1] + " " + strChop[2] + " " + strChop[3] + " " + hour + ":" + strTime[1] + ":" + strTime[2];
+  }
   $('#localTime').html(ltStr + "<br>" + endStr);
   
-  // show the time/date this was posted
+  // show the time/date this was posted, adjust for GMT-4 if needed
   // put a zero before hours and minutes if needed
   var lastUpdatehr = lt.getUTCHours();
+  if (endStr.search("0400") >= 0) { lastUpdatehr--; }
   var lastUpdateMin = lt.getUTCMinutes();
   if (lastUpdatehr < 10) { lastUpdatehr = "0" + lastUpdatehr; }
   if (lastUpdateMin < 10) { lastUpdateMin = "0" + lastUpdateMin; }
@@ -6097,17 +6236,27 @@ rsMoons.movefirst
     } else {
       cardinalLon = "E";
     }
-    launchsiteMarker.bindPopup("<b>Launch Location</b><br>" + launchsite + "<br>[" + Math.abs(launchLat) + "&deg;" + cardinalLat + ", " + Math.abs(launchLon) + "&deg;" + cardinalLon + "]" , {closeButton: true});
-    map.setView(launchsiteMarker.getLatLng(), 2); 
+    launchsiteMarker.bindPopup(strLaunchIconCaption + launchsite + launchAltitude + "<br>[" + numeral(Math.abs(launchLat)).format('0.0000') + "&deg;" + cardinalLat + ", " + numeral(Math.abs(launchLon)).format('0.0000') + "&deg;" + cardinalLon + "]" , {closeButton: true});
+    
+    if (!strLaunchIconCaption.length) {
+      map.fitBounds([[-0.0972015435103072, -74.5576762427096], [launchLat, launchLon]]);
+      setTimeout(function () { 
+        if (!$('#iconSurfaceMap').is(":hover") && !$('#map').is(":hover")) { 
+          $("#iconSurfaceMap").fadeOut();
+        }
+      }, 5000);
+    } else {
+      map.setView(launchsiteMarker.getLatLng(), 2); 
+      setTimeout(function () { 
+        launchsiteMarker.closePopup(); 
+        if (!$('#iconSurfaceMap').is(":hover") && !$('#map').is(":hover")) { 
+          $("#iconSurfaceMap").fadeOut();
+        }
+      }, 5000);
+    }
   
-    // show the marker popup then hide it and surface icon in 5s if cursor is not over the icon or the map
+    // show the marker popup 
     launchsiteMarker.openPopup(); 
-    setTimeout(function () { 
-      launchsiteMarker.closePopup(); 
-      if (!$('#iconSurfaceMap').is(":hover") && !$('#map').is(":hover")) { 
-        $("#iconSurfaceMap").fadeOut();
-      }
-    }, 5000);
     
     // okay to update map stuff
     bMapRender = true;
@@ -6267,7 +6416,12 @@ rsMoons.movefirst
       // don't by default exceed 100,000s to ensure computation completes in a reasonable amount of time
       // however allow user to override this if they want
       if (getParameterByName('fullorbit').length) {
-        maxDeltaTime = -1;
+        maxDeltaTime = -1
+        if (getParameterByName('orbits').length) {
+          endTime = UT + (Math.round(period * parseInt(getParameterByName('orbits'))));
+        } else {
+          endTime = UT + (Math.round(period));
+        }
       } else {
         maxDeltaTime = 100000;
         if (endTime - currUT > maxDeltaTime) {
@@ -6792,9 +6946,6 @@ rsMoons.movefirst
             if (peTime-now == 0) {
               strHTML = $("#orbData").html();
               $("#orbData").html(strHTML.slice(0, strHTML.indexOf("Time to Pe")-3) + strHTML.slice(strHTML.indexOf("<br>",strHTML.indexOf("Time to Pe"))+4));
-              console.log(strHTML);
-              console.log(strHTML.slice(0, strHTML.indexOf("Time to Pe")));
-              console.log(strHTML.slice(strHTML.indexOf("<br>",strHTML.indexOf("Time to Pe"))+4));
             } else if (peTime-now > 0) {
               $('#peTime').html(formatTime(peTime-now, false));
             }

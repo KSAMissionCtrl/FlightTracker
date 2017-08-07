@@ -559,8 +559,8 @@ https://github.com/Gaiiden/FlightTracker/wiki/Database-Documentation#background-
   'all info is written out to scroll-up caption text over the kerbal photo
   response.write("<td style='width: 370px'><div id='mainwrapper'><div id='box-1' class='box'>")
   response.write("<img id='image-1' src='" & rsKerbal.fields.item("Image") & "'/>")
-  response.write("<span id='kerbalDesc' style='cursor: pointer;' class='caption simple-caption'><center><b>^^ Additional Information ^^</b></center>")
-  response.write("<p><b>Birth Date:</b> " & formatdatetime(rsBackground.fields.item("BirthDate"),2) & " (Age: " & datediff("yyyy", rsBackground.fields.item("BirthDate"), now()) & ")</p>")
+  response.write("<span id='kerbalDesc' style='cursor: pointer;' class='caption simple-caption'><center><b>^^ Additional Information - Click Here ^^</b></center>")
+  response.write("<p><b>Birth Date:</b> " & formatdatetime(rsBackground.fields.item("BirthDate"),2) & " (Age: " & formatnumber(datediff("d", rsBackground.fields.item("BirthDate"), now())/365.2425, 2) & ")</p>")
   response.write("<p><b>Family Name:</b> " & rsBackground.fields.item("FamName") & "&nbsp;<img src='qmark.png' style='left: initial; cursor: help' class='tip' data-tipped-options=""position: 'right', maxWidth: 160"" title='as a show of global unity, all adult kerbals take the surname of the first planetary leader'></p>")
   response.write("<p><b>Specialty:</b> " & rsBackground.fields.item("Speciality") & "</p>")
   response.write("<p><b>Hobbies:</b> " & rsBackground.fields.item("Hobbies") & "</p>")
@@ -1103,34 +1103,19 @@ end if
               response.write("None Scheduled")
             else
               
-              'has this launch has gone off already?
-              if datediff("s", rsLaunch.fields.item("EventDate"), now()) >= 0 then
+              'is this a countdown hold?
+              if isnull(rsLaunch.fields.item("EventDate")) then 
                 response.write("<script>")
                 response.write("var bLaunchCountdown = false;")
-
-                'if there is a future one to look for, let js know and update when it hits
-                rsLaunch.movenext
-                if not rsLaunch.eof then
-                  response.write("var bFutureLaunch = true;")
-                  response.write("var nextLaunchSched = " & rsLaunch.fields.item("UT") & ";")
-                else
-                  response.write("var bFutureLaunch = false;")
-                  response.write("var nextLaunchSched = 0;")
-                end if
-                response.write("</script>")
-                response.write("None Scheduled")
-                
-              'this launch is displayable and upcoming, configure js variables for updating the countdown timer
-              else
-                response.write("<script>")
-                response.write("var bLaunchCountdown = true;")
                 response.write("var bFutureLaunch = false;")
                 response.write("var nextLaunchSched = 0;")
-                response.write("var launchSchedUT = " & datediff("s", rsLaunch.fields.item("EventDate"), now()) & ";")
-                response.write("var launchCraft = '" & rsLaunch.fields.item("CraftName") & "';")
+
+                'not an active countdown, but still contains data
                 response.write("var launchLink = '" & rsLaunch.fields.item("CraftLink") & "';")
+                response.write("var launchCraft = '" & rsLaunch.fields.item("CraftName") & "';")
+                response.write("var launchSchedUT = 0;")
                 response.write("</script>")
-                
+
                 'add a tooltip to give the user more details if available
                 if not isnull(rsLaunch.fields.item("Desc")) then
                   response.write("<a class='tip' title='" & rsLaunch.fields.item("Desc") & "' data-tipped-options=""offset: { y: -10 }, maxWidth: 150, position: 'top'"" href='" & rsLaunch.fields.item("CraftLink") & "'>" & rsLaunch.fields.item("CraftName") & "</a><br>")
@@ -1138,10 +1123,49 @@ end if
                   response.write("<a href='" & rsLaunch.fields.item("CraftLink") & "'>" & rsLaunch.fields.item("CraftName") & "</a><br>")
                 end if
                 
-                'print out the launch details and give the user the option to have the site remind them about it
-                response.write(formatdatetime(rsLaunch.fields.item("EventDate")) & "<br />")
-                response.write("<span id='tminuslaunch'></span>")
-                response.write("<br /><div id='launchDiv'><input type='checkbox' id='remindLaunch'> <span class='tip' data-tipped-options=""maxWidth: 150"" title='Checking this box will cause the browser to alert you 5 minutes before the event' style='cursor: default; vertical-align: 2px;'>Remind Me</span> <img id='launchWarn' style='display: none; vertical-align: 1px; cursor: help;' src='warning-icon.png' class='tip' data-tipped-options=""maxWidth: 150"" title='You do not have cookies enabled, which means this setting will not be saved between pages/sessions. Click to dismiss'></div>")
+                'display the hold message
+                response.write("COUNTDOWN HOLD<br>Awaiting new L-0 time")
+              else
+                'has this launch has gone off already?
+                if datediff("s", rsLaunch.fields.item("EventDate"), now()) >= 0 then
+                  response.write("<script>")
+                  response.write("var bLaunchCountdown = false;")
+
+                  'if there is a future one to look for, let js know and update when it hits
+                  rsLaunch.movenext()
+                  if not rsLaunch.eof then
+                    response.write("var bFutureLaunch = true;")
+                    response.write("var nextLaunchSched = " & rsLaunch.fields.item("UT") & ";")
+                  else
+                    response.write("var bFutureLaunch = false;")
+                    response.write("var nextLaunchSched = 0;")
+                  end if
+                  response.write("</script>")
+                  response.write("None Scheduled")
+                  
+                'this launch is displayable and upcoming, configure js variables for updating the countdown timer
+                else
+                  response.write("<script>")
+                  response.write("var bLaunchCountdown = true;")
+                  response.write("var bFutureLaunch = false;")
+                  response.write("var nextLaunchSched = 0;")
+                  response.write("var launchLink = '" & rsLaunch.fields.item("CraftLink") & "';")
+                  response.write("var launchCraft = '" & rsLaunch.fields.item("CraftName") & "';")
+                  response.write("var launchSchedUT = " & datediff("s", rsLaunch.fields.item("EventDate"), now()) & ";")
+                  response.write("</script>")
+                  
+                  'add a tooltip to give the user more details if available
+                  if not isnull(rsLaunch.fields.item("Desc")) then
+                    response.write("<a class='tip' title='" & rsLaunch.fields.item("Desc") & "' data-tipped-options=""offset: { y: -10 }, maxWidth: 150, position: 'top'"" href='" & rsLaunch.fields.item("CraftLink") & "'>" & rsLaunch.fields.item("CraftName") & "</a><br>")
+                  else
+                    response.write("<a href='" & rsLaunch.fields.item("CraftLink") & "'>" & rsLaunch.fields.item("CraftName") & "</a><br>")
+                  end if
+                
+                  'print out the launch details and give the user the option to have the site remind them about it
+                  response.write(formatdatetime(rsLaunch.fields.item("EventDate")) & "<br>")
+                  response.write("<span id='tminuslaunch'></span>")
+                  response.write("<br /><div id='launchDiv'><input type='checkbox' id='remindLaunch'> <span class='tip' data-tipped-options=""maxWidth: 150"" title='Checking this box will cause the browser to alert you 5 minutes before the event' style='cursor: default; vertical-align: 2px;'>Remind Me</span> <img id='launchWarn' style='display: none; vertical-align: 1px; cursor: help;' src='warning-icon.png' class='tip' data-tipped-options=""maxWidth: 150"" title='You do not have cookies enabled, which means this setting will not be saved between pages/sessions. Click to dismiss'></div>")
+                end if
               end if
             end if
             %>

@@ -16,7 +16,7 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
   <title>KSA Flight Tracker</title>
 
   <!-- use this image link to force reddit to use a certain image for its thumbnail -->
-  <meta property="og:image" content="http://i.imgur.com/Or7L6Dd.png" />
+  <meta property="og:image" content="http://i.imgur.com/UC1B3Bc.png" />
 
   <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
   
@@ -47,8 +47,314 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
   <script type="text/javascript" src="../jslib/Control.FullScreen.js"></script>
   <script type="text/javascript" src="../jslib/leaflet.groupedlayercontrol.min.js"></script>
   <script type="text/javascript" src="../jslib/leaflet.rrose-src.js"></script>
+  <script type="text/javascript" src="https://cdn.geogebra.org/apps/deployggb.js"></script>
+  
+  <!-- "Data load" screen -->
+  <style>
+    html { 
+      width:100%; 
+      height:100%; 
+      background:url(dataload.png) center center no-repeat;
+    }
+  </style>
 
   <script>
+    // for retrieving URL query strings
+    // http://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
+    function getParameterByName(name) {
+      name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+      var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+          results = regex.exec(location.search);
+      return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+    }		
+    
+    // setup GeoGebra
+    // use a random number to always load a new file not from cache
+    // can use cookies to check for prev version and load new cache if needed
+    var parameters = {"prerelease":false,"width":840,"height":840,"showToolBar":false,"borderColor":null,"showMenuBar":false,"showAlgebraInput":false,"showResetIcon":true,"enableLabelDrags":false,"enableShiftDragZoom":true,"enableRightClick":false,"capturingThreshold":null,"showToolBarHelp":false,"errorDialogsActive":true,"useBrowserForJS":true,"filename":"ggb/" + getParameterByName("body") + ".ggb?v=" + Math.random()};
+    var views = {"is3D":1};
+    var applet = new GGBApplet('5.0', parameters, views);
+    var ggbAppletLoaded = false;
+    var strTinyBodyLabel = "";
+    var planetLabels = [];
+    var nodes = [];
+    var nodesVisible = [];
+    window.onload = function() { applet.inject('applet_container'); }
+    // called after load and after user clicks the reset
+    function ggbOnInit(){
+      ggbAppletLoaded = true;
+      nodesVisible = [];
+      planetLabels = [];
+      nodes = [];
+      if (getParameterByName("body").includes("Kerbin")) {
+        ggbApplet.evalCommand('M2="dgu-266"');
+        ggbApplet.evalCommand("M3=18756.2316090024");
+        ggbApplet.evalCommand("M5=11554.04+600");
+        ggbApplet.evalCommand("M6=24758.46+600");
+        ggbApplet.evalCommand("M8=0.352002569278094");
+        ggbApplet.evalCommand("M9=54.169863254196pi/180");
+        ggbApplet.evalCommand("M10=270.49462751749pi/180");
+        ggbApplet.evalCommand("M11=44.6140261917081pi/180");
+        ggbApplet.evalCommand("M12=271589.199286178");
+        ggbApplet.evalCommand("M14=6.0168559406875115");
+        ggbApplet.evalCommand("M4=M3 sqrt(1 - M8^2)");
+        ggbApplet.evalCommand("M7=M6 - M5");
+        ggbApplet.evalCommand("M13=2pi / M12");
+        ggbApplet.evalCommand("M20=Line(origin, Vector((1; M10 - pi / 2; pi / 2 - M9)))");
+        ggbApplet.setVisible("M20", false);
+        ggbApplet.evalCommand("M21=Rotate(Rotate((M7; 0; 0), M10, zAxis), M11 + pi, M20)");
+        ggbApplet.setVisible("M21", false);
+        ggbApplet.evalCommand("M22=Rotate(Rotate((M3; 0; 0), M10, zAxis), M11 - acos(-M8), M20)");
+        ggbApplet.setVisible("M22", false);
+        ggbApplet.evalCommand("M23=Ellipse(origin, M21, M22)");
+        ggbApplet.setColor("M23", 153, 102, 51);
+        ggbApplet.setFixed("M23", true, false);
+        ggbApplet.evalCommand("M26=Point(M23, 0)");
+        ggbApplet.setCaption("M26", "Pe");
+        ggbApplet.setLabelStyle("M26", 3);
+        ggbApplet.setLabelVisible("M26", true);
+        ggbApplet.setColor("M26", 0, 153, 255);
+        ggbApplet.setPointSize("M26", 3);
+        ggbApplet.setFixed("M26", true, false);
+        ggbApplet.evalCommand("M27=Point(M23, 0.5)");
+        ggbApplet.setCaption("M27", "Ap");
+        ggbApplet.setLabelStyle("M27", 3);
+        ggbApplet.setLabelVisible("M27", true);
+        ggbApplet.setColor("M27", 0, 153, 255);
+        ggbApplet.setPointSize("M27", 3);
+        ggbApplet.setFixed("M27", true, false);
+        ggbApplet.evalCommand("M28=If(M9 != 0, Element({Intersect(xOyPlane, M23)}, 1), Point(M23, M10 / (2pi)))");
+        ggbApplet.setCaption("M28", "AN");
+        ggbApplet.setLabelStyle("M28", 3);
+        ggbApplet.setLabelVisible("M28", true);
+        ggbApplet.setColor("M28", 51, 255, 0);
+        ggbApplet.setPointSize("M28", 3);
+        ggbApplet.setFixed("M28", true, false);
+        ggbApplet.evalCommand("M29=If(M11 != 0, Angle(M26, origin, M28), 0)");
+        ggbApplet.evalCommand("M30=If(M29 > pi, 2pi - acos((M8 + cos(M29)) / (1 + M8 cos(M29))), acos((M8 + cos(M29)) / (1 + M8 cos(M29))))");
+        ggbApplet.evalCommand("M31=M30 - M8 sin(M30)");
+        ggbApplet.evalCommand("M32=If(M9 != 0, Element({Intersect(xOyPlane, M23)}, 2), Point(M23, (M10 + pi) / (2pi)))");
+        ggbApplet.setCaption("M32", "DN");
+        ggbApplet.setLabelStyle("M32", 3);
+        ggbApplet.setLabelVisible("M32", true);
+        ggbApplet.setColor("M32", 51, 255, 0);
+        ggbApplet.setPointSize("M32", 3);
+        ggbApplet.setFixed("M32", true, false);
+        ggbApplet.evalCommand("M34=Mod(M14 + M13 (UT-24389614.5343108), 2pi)");
+        ggbApplet.evalCommand("M35=Iteration(M - (M - M8 sin(M) - M34) / (1 - M8 cos(M)), M, {M34}, 20)");
+        ggbApplet.evalCommand("M36=Point(M23, M35 / (2pi))");
+        ggbApplet.setCaption("M36", "Remises");
+        ggbApplet.setLabelStyle("M36", 3);
+        ggbApplet.setPointSize("M36", 3);
+        ggbApplet.setLabelVisible("M36", true);
+        ggbApplet.setColor("M36", 153, 102, 51);
+        ggbApplet.evalCommand('N2="icx-922"');
+        ggbApplet.evalCommand("N3=43615.7938577481");
+        ggbApplet.evalCommand("N5=2537.064+600");
+        ggbApplet.evalCommand("N6=83495.45+600");
+        ggbApplet.evalCommand("N8=0.92809646649485");
+        ggbApplet.evalCommand("N9=65.578370337925pi/180");
+        ggbApplet.evalCommand("N10=113.919439382577pi/180");
+        ggbApplet.evalCommand("N11=266.029760107074pi/180");
+        ggbApplet.evalCommand("N12=963074.28425002");
+        ggbApplet.evalCommand("N14=2.8404884410964564");
+        ggbApplet.evalCommand("N4=N3 sqrt(1 - N8^2)");
+        ggbApplet.evalCommand("N7=N6 - N5");
+        ggbApplet.evalCommand("N13=2pi / N12");
+        ggbApplet.evalCommand("N20=Line(origin, Vector((1; N10 - pi / 2; pi / 2 - N9)))");
+        ggbApplet.setVisible("N20", false);
+        ggbApplet.evalCommand("N21=Rotate(Rotate((N7; 0; 0), N10, zAxis), N11 + pi, N20)");
+        ggbApplet.setVisible("N21", false);
+        ggbApplet.evalCommand("N22=Rotate(Rotate((N3; 0; 0), N10, zAxis), N11 - acos(-N8), N20)");
+        ggbApplet.setVisible("N22", false);
+        ggbApplet.evalCommand("N23=Ellipse(origin, N21, N22)");
+        ggbApplet.setColor("N23", 153, 102, 51);
+        ggbApplet.setFixed("N23", true, false);
+        ggbApplet.evalCommand("N26=Point(N23, 0)");
+        ggbApplet.setCaption("N26", "Pe");
+        ggbApplet.setLabelStyle("N26", 3);
+        ggbApplet.setLabelVisible("N26", true);
+        ggbApplet.setColor("N26", 0, 153, 255);
+        ggbApplet.setPointSize("N26", 3);
+        ggbApplet.setLabelVisible("N26", true);
+        ggbApplet.evalCommand("N27=Point(N23, 0.5)");
+        ggbApplet.setCaption("N27", "Ap");
+        ggbApplet.setLabelStyle("N27", 3);
+        ggbApplet.setLabelVisible("N27", true);
+        ggbApplet.setColor("N27", 0, 153, 255);
+        ggbApplet.setPointSize("N27", 3);
+        ggbApplet.setLabelVisible("N27", true);
+        ggbApplet.evalCommand("N28=If(N9 != 0, Element({Intersect(xOyPlane, N23)}, 1), Point(N23, N10 / (2pi)))");
+        ggbApplet.setCaption("N28", "AN");
+        ggbApplet.setLabelStyle("N28", 3);
+        ggbApplet.setLabelVisible("N28", true);
+        ggbApplet.setColor("N28", 51, 255, 0);
+        ggbApplet.setPointSize("N28", 3);
+        ggbApplet.setLabelVisible("N28", true);
+        ggbApplet.evalCommand("N29=If(N11 != 0, Angle(N26, origin, N28), 0)");
+        ggbApplet.evalCommand("N30=If(N29 > pi, 2pi - acos((N8 + cos(N29)) / (1 + N8 cos(N29))), acos((N8 + cos(N29)) / (1 + N8 cos(N29))))");
+        ggbApplet.evalCommand("N31=N30 - N8 sin(N30)");
+        ggbApplet.evalCommand("N32=If(N9 != 0, Element({Intersect(xOyPlane, N23)}, 2), Point(N23, (N10 + pi) / (2pi)))");
+        ggbApplet.setCaption("N32", "DN");
+        ggbApplet.setLabelStyle("N32", 3);
+        ggbApplet.setLabelVisible("N32", true);
+        ggbApplet.setColor("N32", 51, 255, 0);
+        ggbApplet.setPointSize("N32", 3);
+        ggbApplet.setLabelVisible("N32", true);
+        ggbApplet.evalCommand("N34=Mod(N14 + N13 (UT-17193600), 2pi)");
+        ggbApplet.evalCommand("N35=Iteration(N - (N - N8 sin(N) - N34) / (1 - N8 cos(N)), N, {N34}, 20)");
+        ggbApplet.evalCommand("N36=Point(N23, N35 / (2pi))");
+        ggbApplet.setCaption("N36", "Chikelu");
+        ggbApplet.setLabelStyle("N36", 3);
+        ggbApplet.setPointSize("N36", 3);
+        ggbApplet.setLabelVisible("N36", true);
+        ggbApplet.setColor("N36", 153, 102, 51);
+      }
+      // bring figure up to date
+      ggbApplet.setValue("UT", UT);
+      // listen for any planets clicked on
+      ggbApplet.registerClickListener("planetInfo");
+      // declutter the view
+      setTimeout(function() { 
+        // loop through all the objects - we'll only do this once
+        for (obj=0; obj<ggbApplet.getObjectNumber(); obj++) {
+          // if it's a node, hide the object and stash it
+          if (ggbApplet.getCaption(ggbApplet.getObjectName(obj)).includes("AN") ||
+              ggbApplet.getCaption(ggbApplet.getObjectName(obj)).includes("DN") ||
+              ggbApplet.getCaption(ggbApplet.getObjectName(obj)).includes("Pe") ||
+              ggbApplet.getCaption(ggbApplet.getObjectName(obj)).includes("Ap")) {
+            ggbApplet.setVisible(ggbApplet.getObjectName(obj), false);
+            nodes.push(ggbApplet.getObjectName(obj));
+          // otherwise it's a planet
+          } else if (ggbApplet.getCaption(ggbApplet.getObjectName(obj)).length) { 
+            planetLabels.push(ggbApplet.getObjectName(obj)); 
+            ggbApplet.setLabelVisible(ggbApplet.getObjectName(obj), false);
+          }
+        }
+        ggbApplet.setVisible("RefLine", false);
+        // uncheck all the boxes
+        $(".checkboxes").prop('checked', false);
+      }, 2500);
+    }
+    // display planetary info
+    function planetInfo(object) {
+      if (ggbApplet.getColor(object.charAt(0) + "36") == "#996633") { 
+        for (craftIndex=0; craftIndex<bodyCrafts.length; craftIndex++) {
+          if (ggbApplet.getValueString(object.charAt(0) + "2") == bodyCrafts[craftIndex].DB) { 
+            strHTML = bodyCrafts[craftIndex].HTML;
+            strHTML = strHTML.replace("INSERT", "<div style='cursor: pointer; position: absolute; top: 5px; right: 5px;' onclick='closePlanetInfo(&quot;" + object + "&quot;)'><img src='close-button.png' style='width: 25px; height: 25px;'></div>");
+            strHTML += "<p><a href='http://www.kerbalspace.agency/Tracker/craft.asp?db=" + bodyCrafts[craftIndex].DB + "' style='cursor: pointer; color: blue; text-decoration: none;'>View Craft Page</a> | ";
+            // no nodes to show unless body has an eccentric or inclined orbit
+            if (parseFloat(bodyCrafts[craftIndex].Ecc) || parseFloat(bodyCrafts[craftIndex].Inc)) {
+              if (nodesVisible.includes(object.charAt(0))) {
+                strHTML += "<span onclick='nodesToggle(&quot;" + object + "&quot;)' style='cursor: pointer; color: blue;'>Hide Nodes</span></p>"
+              } else {
+                strHTML += "<span onclick='nodesToggle(&quot;" + object + "&quot;)' style='cursor: pointer; color: blue;'>Show Nodes</span></p>"
+              }
+            } else { strHTML = strHTML.substring(0, strHTML.length-2); }
+            strHTML += "</td></tr></table>";
+          }
+        }
+      } else {
+        if (object == "RefLine") {
+          ggbApplet.evalCommand("SetViewDirection((0,0,1), true)");
+          return;
+        }
+        // show label if clicked on an orbit
+        if (strTinyBodyLabel.length) {
+          ggbApplet.setLabelVisible(strTinyBodyLabel.charAt(0) + "36", false);
+          strTinyBodyLabel = "";
+        }
+        if (parseInt(object.substring(1)) == 23) {
+          ggbApplet.setLabelVisible(object.charAt(0) + "36", true);
+          strTinyBodyLabel = object;
+        }
+        strBodyName = ggbApplet.getCaption(object.charAt(0) + "36");
+        strHTML = "<table style='border: 0px; border-collapse: collapse;'><tr><td style='vertical-align: top; width: 256px;'>";
+        var bodyIndex;
+        for (bodyIndex=0; bodyIndex<bodiesCatalog.length; bodyIndex++) {
+          if (strBodyName == bodiesCatalog[bodyIndex].Name) { break; }
+        }
+        if (bodiesCatalog[bodyIndex].Image != 'null') {
+          strHTML += "<img src='" + bodiesCatalog[bodyIndex].Image + "' style='background-color:black;'>";
+        } else {
+          strHTML += "<img src='nada.png'>";
+        }
+        strHTML += "<i><p>&quot;" + bodiesCatalog[bodyIndex].Desc + "&quot;</p></i><p><b>- Kerbal Astronomical Society</b></p></td>";
+        strHTML += "<td style='vertical-align: top;'><div style='cursor: pointer; position: absolute; top: 5px; right: 5px;' onclick='closePlanetInfo(&quot;" + object + "&quot;)'><img src='close-button.png' style='width: 25px; height: 25px;'></div><b><span style='font-size: 24px; line-height: 20px'>" + bodiesCatalog[bodyIndex].Name + "</span><p>Orbital Data</b></p>";
+        strHTML += "<p>Apoapsis: " + bodiesCatalog[bodyIndex].Ap + " m<br>";
+        strHTML += "Periapsis: " + bodiesCatalog[bodyIndex].Pe + " m<br>";
+        strHTML += "Eccentricity: " + bodiesCatalog[bodyIndex].Ecc + "<br>";
+        strHTML += "Inclination: "+ bodiesCatalog[bodyIndex].Inc + "&deg;<br>";
+        strHTML += "Orbital period: " + formatTime(bodiesCatalog[bodyIndex].ObtPeriod, false) + "<br>";
+        strHTML += "Orbital velocity: " + bodiesCatalog[bodyIndex].ObtVel + " m/s</p><p><b>Physical Data</b></p>";
+        strHTML += "<p>Equatorial radius: " + numeral(bodiesCatalog[bodyIndex].EqRad*1000).format('0,0') + " m<br>";
+        strHTML += "Mass: " + bodiesCatalog[bodyIndex].Mass + "x10 kg<br>";
+        strHTML += "Density: " + bodiesCatalog[bodyIndex].Mass + " kg/m<sup>3</sup><br>";
+        gravity = bodiesCatalog[bodyIndex].SurfaceG.split(":");
+        strHTML += "Surface gravity: " + gravity[0] + " m/s<sup>2</sup> <i>(" + gravity[1] + " g)</i><br>";
+        strHTML += "Escape velocity: " + bodiesCatalog[bodyIndex].EscapeVel + " m/s<br>";
+        strHTML += "Rotational period: " + formatTime(bodiesCatalog[bodyIndex].SolDay, true) + "<br>";
+        strHTML += "Atmosphere: " + bodiesCatalog[bodyIndex].Atmo + "</p>";
+        if (bodiesCatalog[bodyIndex].Moons) { strHTML += "<p><b>Moons</b></p><p>" + bodiesCatalog[bodyIndex].Moons + "</p>"; }
+        if (getParameterByName("body") == "Kerbin-System" && strBodyName == "Kerbin") {
+          strHTML += "<p><a href='http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=Kerbin&map=true' style='cursor: pointer; color: blue; text-decoration: none;'>View Surface</a> | ";
+        } else if (getParameterByName("body").includes("System") && bodiesCatalog[bodyIndex].Moons && !getParameterByName("body").includes(strBodyName)) {
+          strHTML += "<p><a href='http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=" + strBodyName + "-System' style='cursor: pointer; color: blue; text-decoration: none;'>View System</a> | ";
+        }
+        // no nodes to show unless body has an eccentric or inclined orbit
+        if ((parseFloat(bodiesCatalog[bodyIndex].Ecc) || parseFloat(bodiesCatalog[bodyIndex].Inc)) && !getParameterByName("body").includes(strBodyName)) {
+          if (nodesVisible.includes(object.charAt(0))) {
+            strHTML += "<span onclick='nodesToggle(&quot;" + object + "&quot;)' style='cursor: pointer; color: blue;'>Hide Nodes</span>"
+          } else {
+            strHTML += "<span onclick='nodesToggle(&quot;" + object + "&quot;)' style='cursor: pointer; color: blue;'>Show Nodes</span>"
+          }
+        } else { strHTML = strHTML.substring(0, strHTML.length-2); }
+        strHTML += "</p></td></tr></table>";
+      }
+      $('#planetInfo').html(strHTML);
+      $('#planetInfoBox').fadeIn();
+    }
+    function closePlanetInfo(object) { 
+      $('#planetInfoBox').fadeOut(); 
+      if (strTinyBodyLabel.length) {
+        ggbApplet.setLabelVisible(object.charAt(0) + "36", false);
+        strTinyBodyLabel = false;
+      }
+    }
+    function nodesToggle(object) {
+      if ($('#planetInfo').html().includes("Show Nodes")) {
+        $('#planetInfo').html($('#planetInfo').html().replace("Show Nodes", "Hide Nodes"));
+        if (ggbApplet.getCaption(object.charAt(0) + "36") == "Priax") { object = object.replace("D", "C"); }
+        ggbApplet.setVisible(object.charAt(0) + "26", true);
+        ggbApplet.setVisible(object.charAt(0) + "27", true);
+        ggbApplet.setVisible(object.charAt(0) + "28", true);
+        ggbApplet.setVisible(object.charAt(0) + "32", true);
+        nodesVisible.push(object.charAt(0));
+        if (ggbApplet.getCaption(object.charAt(0) + "36") == "Polta") { nodesVisible.push("D"); }
+        if (ggbApplet.getCaption(object.charAt(0) + "36") == "Priax") { nodesVisible.push("C"); }
+      } else {
+        $('#planetInfo').html($('#planetInfo').html().replace("Hide Nodes", "Show Nodes"));
+        if (ggbApplet.getCaption(object.charAt(0) + "36") == "Priax") { object = object.replace("D", "C"); }
+        ggbApplet.setVisible(object.charAt(0) + "26", false);
+        ggbApplet.setVisible(object.charAt(0) + "27", false);
+        ggbApplet.setVisible(object.charAt(0) + "28", false);
+        ggbApplet.setVisible(object.charAt(0) + "32", false);
+        nodesVisible.splice(nodesVisible.indexOf(object.charAt(0)), 1);
+        if (ggbApplet.getCaption(object.charAt(0) + "36") == "Polta") { nodesVisible.splice(nodesVisible.indexOf("D"), 1); }
+        if (ggbApplet.getCaption(object.charAt(0) + "36") == "Priax") { nodesVisible.splice(nodesVisible.indexOf("C"), 1); }
+      }
+    }
+    function showMap() {
+      $("#map").css("visibility", "visible");
+      $("#close").css("visibility", "visible");
+      $("#kscflags").css("visibility", "visible");
+      $("#applet_container").css("display", "none");
+      $("#mapholder").css("display", "block");
+      $("#key").css("visibility", "hidden");
+      $("#utc").css("visibility", "hidden");
+    }
+    
     // gets values for URL parameters of the same name and returns them in an array
     // http://stackoverflow.com/questions/22209307/how-to-get-multiple-parameters-with-same-name-from-a-url-in-javascript
     function getQueryParams(name) {
@@ -190,15 +496,6 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
         }
       }
     }
-    
-    // for retrieving URL query strings
-    // http://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
-    function getParameterByName(name) {
-      name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-      var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-          results = regex.exec(location.search);
-      return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
-    }		
     
     // determine whether this is a touchscreen device for proper tooltip handling
     // http://ctrlq.org/code/19616-detect-touch-screen-javascript
@@ -545,7 +842,20 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
         strHTML += "<i><p>&quot;" + bodyCrafts[currCraft].Desc + "&quot;</p></i>";
         strHTML += "<p><a href='http://www.kerbalspace.agency/Tracker/craft.asp?db=" + bodyCrafts[currCraft].DB + "'>View Craft Page</a></p>";
       }
-      strHTML += "</td><td style='vertical-align: top;'><b><span style='font-size: 24px; line-height: 20px'>" + bodyCrafts[currCraft].Name + "</span><p>Current Orbital Data</b></p><p>";
+      
+      // possibly more than one name
+      if (bodyCrafts[currCraft].Name.search(";") >= 0) {
+        var names = bodyCrafts[currCraft].Name.split("|");
+        var currentName = 0;
+        
+        // I apologize to my future self for how convoluted I made these next two lines of code :P
+        for (n=0; n < names.length; n++) { if (names[n].split(";")[0] < UT) { currentName = n; } }
+        strHTML += "</td><td style='vertical-align: top;'><b><span style='font-size: 24px; line-height: 20px'>" + bodyCrafts[currCraft].Name.split("|")[currentName].split(";")[1] + "</span><p>Current Orbital Data</b></p><p>";
+      } else {
+        strHTML += "</td><td style='vertical-align: top;'><b><span style='font-size: 24px; line-height: 20px'>" + bodyCrafts[currCraft].Name + "</span><p>Current Orbital Data</b></p><p>";
+      }
+      
+      
       if (bodyCrafts[currCraft].Obt[0].Lat < 0) {
         cardinalLat = "S";
       } else {
@@ -820,14 +1130,14 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
     function popupMarkerOpen(indexFlt, linkNum) {
       map.closePopup(positionPopup);
 
-      for (pinIndex=0; pinIndex<flightData[indexFlt].Pins.length; pinIndex++) {
+      for (pinIndex=0; pinIndex<flightData[indexFlt].Pins[linkNum].Group.length; pinIndex++) {
       
         // don't create this pin if it is already created
         if (!flightData[indexFlt].Pins[linkNum].Group[pinIndex].Pin) {
           flightData[indexFlt].Pins[linkNum].Group[pinIndex].Pin = L.marker([flightData[indexFlt].Pins[linkNum].Group[pinIndex].Lat, flightData[indexFlt].Pins[linkNum].Group[pinIndex].Lng]).bindPopup(decodeURI(flightData[indexFlt].Pins[linkNum].Group[pinIndex].HTML) + "<p><center><span onclick='popupMarkerClose(" + indexFlt + "," + linkNum + "," + pinIndex + ")' style='color: blue; cursor: pointer;'>Remove Pin</span></center></p>", {closeButton: false}).addTo(map);
           
           // if there is just one pin, open the popup
-          if (flightData[indexFlt].Pins.length == 1) { flightData[indexFlt].Pins[linkNum].Group[pinIndex].Pin.openPopup(); }
+          if (flightData[indexFlt].Pins[linkNum].Group.length == 1) { flightData[indexFlt].Pins[linkNum].Group[pinIndex].Pin.openPopup(); }
           
         // if the pin is already created, open the popup
         } else {
@@ -938,7 +1248,19 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
               strHTML += "<img src='nada.png' width='256px'>";
             }
             strHTML += "<i><p>&quot;" + craftsCatalog[craftIndex].Desc.replace(/'/g, "&#39;") + "&quot;</p></i></td>";
-            strHTML += "<td style='vertical-align: top;'><b><span style='font-size: 24px; line-height: 20px'>" + craftsCatalog[craftIndex].Name + "</span><p>Orbital Data</b></p><p>";
+            
+            // possibly more than one name
+            if (craftsCatalog[craftIndex].Name.search(";") >= 0) {
+              var names = craftsCatalog[craftIndex].Name.split("|");
+              var currentName = 0;
+              
+              // I apologize to my future self for how convoluted I made these next two lines of code :P
+              for (n=0; n < names.length; n++) { if (names[n].split(";")[0] < UT) { currentName = n; } }
+              strHTML += "<td style='vertical-align: top;'>INSERT<b><span style='font-size: 24px; line-height: 20px'>" + craftsCatalog[craftIndex].Name.split("|")[currentName].split(";")[1] + "</span><p>Orbital Data</b></p><p>";
+            } else {
+              strHTML += "<td style='vertical-align: top;'>INSERT<b><span style='font-size: 24px; line-height: 20px'>" + craftsCatalog[craftIndex].Name + "</span><p>Orbital Data</b></p><p>";
+            }
+            
             strHTML += "Apoapsis: " + craftInfo[2] + " m<br>";
             strHTML += "Periapsis: " + craftInfo[3] + " m<br>";
             strHTML += "Eccentricity: " + craftInfo[4] + "<br>";
@@ -966,13 +1288,16 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
             // show the time/date this was posted
             // put a zero before hours and minutes if needed
             // 1473742800000 ms = 9/13/16 00:00:00
+            // GMT-4 Standard times are an hour later than they should be. Adjust if needed
+            // suspect it's because the base UT time from the game started during Daylight Savings and never actually changes an hour forward/back
             var lt = new Date();
             lt.setTime(1473742800000 + (craftInfo[15] * 1000));
+            if (lt.toString().search("Standard") >= 0) { lt.setTime(1473742800000 + ((craftInfo[15] - 3600) * 1000)); }
             var lastUpdatehr = lt.getUTCHours();
             var lastUpdateMin = lt.getUTCMinutes();
             if (lastUpdatehr < 10) { lastUpdatehr = "0" + lastUpdatehr; }
             if (lastUpdateMin < 10) { lastUpdateMin = "0" + lastUpdateMin; }
-            strHTML += "Last Updated: " + (lt.getUTCMonth() + 1) + "/" + lt.getUTCDate() + "/" + (lt.getUTCFullYear() - 2000) + " @ " + lastUpdatehr + ":" + lastUpdateMin + " UTC</p></td></tr></table>";
+            strHTML += "Last Updated: " + (lt.getUTCMonth() + 1) + "/" + lt.getUTCDate() + "/" + (lt.getUTCFullYear() - 2000) + " @ " + lastUpdatehr + ":" + lastUpdateMin + " UTC";
             
             // search for multiple instances of the craft represented on the orbital diagram to assign the content to
             $("area").each(function(index) {
@@ -1017,7 +1342,8 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
                                 Obt: [],
                                 Loaded: false,
                                 Paths: [],
-                                Craft: ''});
+                                Craft: '',
+                                HTML: strHTML});
               }
             }
           }
@@ -1205,8 +1531,11 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
                 }
                 
                 // set the current time
+                // GMT-4 Standard times are an hour later than they should be. Adjust if needed
+                // suspect it's because the base UT time from the game started during Daylight Savings and never actually changes an hour forward/back
                 var dd = new Date();
-                dd.setTime(1473742800000 + (flightData[indexFlt].Data[index].UT * 1000));
+                dd.setTime((1473742800000 + (flightData[indexFlt].Data[index].UT) * 1000));
+                if (dd.toString().search("Standard") >= 0) { console.log("hi"); dd.setTime(1473742800000 + ((flightData[indexFlt].Data[index].UT - 3600) * 1000)); }
 
                 // compose the popup HTML and place it on the cursor location then display it
                 if (flightData[indexFlt].Data[index].Lat < 0) {
@@ -1228,7 +1557,7 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
                 if (timePopup) { map.closePopup(timePopup); }
                 timePopup = new L.Rrose({ offset: new L.Point(0,-1), closeButton: false, autoPan: false });
                 timePopup.setLatLng(e.latlng);
-                timePopup.setContent(dd.getUTCMonth() + 1 + '/' + dd.getUTCDate() + '/' + dd.getUTCFullYear() + ' @ ' + hrs + ':' + mins + ':' + secs + ' UTC<br>Latitude: ' + numeral(flightData[indexFlt].Data[index].Lat).format('0.0000') + '&deg;' + cardinalLat + '<br>Longitutde: ' + numeral(flightData[indexFlt].Data[index].Lng).format('0.0000') + '&deg;' + cardinalLng + '<br>Altitude ASL: ' + numeral(flightData[indexFlt].Data[index].ASL/1000).format('0,0.000') + ' km<br>Altitude AGL: ' + numeral(flightData[indexFlt].Data[index].AGL/1000).format('0,0.000') + " km<br>Velocity: " + numeral(flightData[indexFlt].Data[index].Spd).format('0,0.000') + " m/s" + '<br>Downrange Distance: ' + numeral(flightData[indexFlt].Data[index].Dist/1000).format('0,0.000') + " km<p>Click for additional flight information</p>");
+                timePopup.setContent(dd.getUTCMonth() + 1 + '/' + dd.getUTCDate() + '/' + dd.getUTCFullYear() + ' @ ' + hrs + ':' + mins + ':' + secs + ' UTC<br>Latitude: ' + numeral(flightData[indexFlt].Data[index].Lat).format('0.0000') + '&deg;' + cardinalLat + '<br>Longitutde: ' + numeral(flightData[indexFlt].Data[index].Lng).format('0.0000') + '&deg;' + cardinalLng + '<br>Altitude ASL: ' + numeral(flightData[indexFlt].Data[index].ASL/1000).format('0,0.000') + ' km<br>Altitude AGL: ' + numeral(flightData[indexFlt].Data[index].AGL/1000).format('0,0.000') + " km<br>Velocity: " + numeral(flightData[indexFlt].Data[index].Spd).format('0,0.000') + " m/s" + '<br>Distance from KSC: ' + numeral(flightData[indexFlt].Data[index].Dist/1000).format('0,0.000') + " km<p>Click for additional flight information</p>");
                 timePopup.openOn(map);
               }
             });
@@ -1263,40 +1592,50 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
                   
                   // extract the popup data, checking for multiple links
                   var charLinkIndex = 0;
-                  for (linkNum=0; linkNum<flightData[indexFlt].Desc.match("<a").length; linkNum++) {
+                  for (linkNum=0; linkNum<flightData[indexFlt].Desc.match(/<a/g).length; linkNum++) {
                     
                     // push a new pin group to the list
                     flightData[indexFlt].Pins.push({Group: []});
                     
                     // get the full link text
                     var linkStr = flightData[indexFlt].Desc.slice(flightData[indexFlt].Desc.indexOf("<a", charLinkIndex), flightData[indexFlt].Desc.indexOf('">', charLinkIndex));
-                    
+
                     // iterate through all the pins
                     var charPinIndex = 0;
-                    for (pinNum=0; pinNum<linkStr.match("loc=").length; pinNum++) {
+                    for (pinNum=0; pinNum<linkStr.match(/loc=/g).length; pinNum++) {
                     
                       // get the pin from the link
-                      var pinData = flightData[indexFlt].Desc.slice(flightData[indexFlt].Desc.indexOf("loc=", charPinIndex)+4, flightData[indexFlt].Desc.indexOf('"', flightData[indexFlt].Desc.indexOf("loc=", charPinIndex))).split(",");
+                      // this works except for the last pin
+                      if (pinNum < linkStr.match(/loc=/g).length-1) {
+                        var pinData = flightData[indexFlt].Desc.slice(flightData[indexFlt].Desc.indexOf("loc=", charLinkIndex + charPinIndex)+4, flightData[indexFlt].Desc.indexOf('&amp', flightData[indexFlt].Desc.indexOf("loc=", charLinkIndex + charPinIndex))).split(",");
+                      } else {
+                        var pinData = flightData[indexFlt].Desc.slice(flightData[indexFlt].Desc.indexOf("loc=", charLinkIndex + charPinIndex)+4, flightData[indexFlt].Desc.indexOf('"', flightData[indexFlt].Desc.indexOf("loc=", charLinkIndex + charPinIndex))).split(",");
+                      }
                       
                       // push the data to the group
-                      flightData[indexFlt].Pins[pinNum].Group.push({Lat: pinData[0],
+                      flightData[indexFlt].Pins[linkNum].Group.push({Lat: pinData[0],
                                                                     Lng: pinData[1],
                                                                     HTML: pinData[2],
                                                                     Pin: null});
                                                                                           
                       // set the index so we search past the previous location
-                      charPinIndex = flightData[indexFlt].Desc.indexOf("loc=", charPinIndex)+4;
+                      charPinIndex = flightData[indexFlt].Desc.indexOf("loc=", charLinkIndex + charPinIndex)+4;
                     }
 
                     // set the link name
                     strHTML += "<span onclick='popupMarkerOpen(" + indexFlt + "," + linkNum + ")' style='color: blue; cursor: pointer'>" + flightData[indexFlt].Desc.slice(flightData[indexFlt].Desc.indexOf('">', charLinkIndex)+2, flightData[indexFlt].Desc.indexOf('</a>', charLinkIndex)) + "</span>";
                     
                     // set the index so we search past the previous link
-                    charLinkIndex = flightData[indexFlt].Desc.indexOf("<a", charLinkIndex)+2;
+                    charLinkIndex = flightData[indexFlt].Desc.indexOf("</a>", charLinkIndex)+4;
+                      
+                    // if we're going around for more links, get the text between this and the next one
+                    if (flightData[indexFlt].Desc.match(/<a/g).length > 1) {
+                      strHTML += flightData[indexFlt].Desc.slice(charLinkIndex, flightData[indexFlt].Desc.indexOf("<a", charLinkIndex));
+                    }
                   }
                     
                   // get the rest of the text
-                  strHTML += flightData[indexFlt].Desc.slice(flightData[indexFlt].Desc.indexOf('</a>', charLinkIndex)+4, flightData[indexFlt].Desc.length) + "</p><p>";
+                  strHTML += flightData[indexFlt].Desc.slice(charLinkIndex, flightData[indexFlt].Desc.length) + "</p><p>";
                 } else {
                   strHTML += flightData[indexFlt].Desc + "</p><p>";
                 }
@@ -1487,15 +1826,11 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
       $("#close").click(function(){
         if ($("#map").css("visibility") == "visible")
         {
-          // hack for other browsers because hiding the map for some reason no longer makes the tooltip <div> accessible
-          // so just reload the page, minus the show map flag if it is included
-          if (browserName != "Firefox") { window.location.href = window.location.href.replace("&map=true", ""); }
+          window.location.href = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=Kerbin-System"
           $("#map").css("visibility", "hidden");
           $("#close").css("visibility", "hidden");
           $("#kscflags").css("visibility", "hidden");
-          $("#orbitImg").css("display", "block");
-          $("#key").css("visibility", "visible");
-          $("#utc").css("visibility", "visible");
+          $("#applet_container").css("visibility", "visible");
           $("#mapholder").css("display", "none");
         }
         else if ($("#map").css("visibility") == "hidden")
@@ -1552,24 +1887,57 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
       $('#launchWarn').click(function() { $('#launchWarn').fadeOut(); });
       $('#maneuverWarn').click(function() { $('#maneuverWarn').fadeOut(); });
       
+      // close the planet info box
+      $('#planetInfoClose').click(function() { console.log("clicky"); });
+      
+      // checkbox handling for dynamic figure
+      // ensure all start checked
+      $(".checkboxes").prop('checked', true);
+      $("input").change(function () {
+        if ($(this).is(":checked")) {
+          if ($(this).attr("name") == "nodes") {
+            nodes.forEach(function(item, index) {
+              ggbApplet.setVisible(item, true);
+            });
+          } else if ($(this).attr("name") == "labels") {
+            planetLabels.forEach(function(item, index) {
+              ggbApplet.setLabelVisible(item, true);
+            });
+          } else if ($(this).attr("name") == "ref") {
+            ggbApplet.setVisible("RefLine", true);
+          }
+        } else {
+          if ($(this).attr("name") == "nodes") {
+            nodes.forEach(function(item, index) {
+              // don't hide the nodes if they were shown individually
+              if (!nodesVisible.includes(item.charAt(0))) {
+                ggbApplet.setVisible(item, false);
+              }
+            });
+          } else if ($(this).attr("name") == "labels") {
+            planetLabels.forEach(function(item, index) {
+              ggbApplet.setLabelVisible(item, false);
+            });
+          } else if ($(this).attr("name") == "ref") {
+            ggbApplet.setVisible("RefLine", false);
+          }
+        }
+      });
+      
       // load straight to the map?
       if (getParameterByName("map")) { 
         $("#map").css("visibility", "visible");
         $("#close").css("visibility", "visible");
-        $("#orbitImg").css("display", "none");
+        $("#applet_container").css("visibility", "hidden");
         $("#mapholder").css("display", "block");
-        $("#key").css("visibility", "hidden");
-        $("#utc").css("visibility", "hidden");
       }
 
       // load straight to a map location?
       if (getParameterByName("center")) {
         $("#map").css("visibility", "visible");
-        $("#orbitImg").css("display", "none");
+        $("#applet_container").css("visibility", "hidden");
         $("#close").css("visibility", "visible");
         $("#mapholder").css("display", "block");
-        $("#key").css("visibility", "hidden");
-        $("#utc").css("visibility", "hidden");
         mapLocation = getParameterByName("center").split(",");
         map.setView([mapLocation[0], mapLocation[1]], 3);
       }
@@ -1577,11 +1945,9 @@ if request.querystring("db") = "" then response.redirect "http://www.kerbalspace
       // load a map pin and caption?
       if (getParameterByName("loc")) {
         $("#map").css("visibility", "visible");
-        $("#orbitImg").css("display", "none");
+        $("#applet_container").css("visibility", "hidden");
         $("#close").css("visibility", "visible");
         $("#mapholder").css("display", "block");
-        $("#key").css("visibility", "hidden");
-        $("#utc").css("visibility", "hidden");
         
         // get all pin locations and iterate through them
         mapLocationMulti = getQueryParams("loc");
@@ -1673,8 +2039,13 @@ https://github.com/Gaiiden/FlightTracker/wiki/Database-Documentation#dbbodies
 -->
 
 <%
+'get the diff between system time and JS time
+'because Brinkster servers are stupid and for some reason not synced to NIST
+response.write("<script>console.log('vbscript: " & Now & "'); console.log('javascript: ' + new Date().toLocaleTimeString());</script>")
+timeOffset = 84
+
 'calculate the time in seconds since epoch 0 when the game started
-UT = datediff("s", "13-Sep-2016 00:00:00", now())
+UT = datediff("s", "13-Sep-2016 00:00:00", now()) + timeOffset
 
 'open database. "db" was prepended because without it for some reason I had trouble connecting
 db = "..\..\database\db" & request.querystring("db") & ".mdb"
@@ -1761,18 +2132,7 @@ response.write("&nbsp;<span><img class='tip-update' onclick=""viewTag('" & lcase
 document.title = document.title + " - <%response.write(replace(request.querystring("body"), "-", " "))%>";
 </script>
 
-<%
-'image map data for the system
-'image maps created via http://summerstyle.github.io/summer/
-'tooltips added via replace function so code itself can be copied and used straight from image map editor
-'however only let these be created into Tipped tooltips when using Firefox otherwise they will not work
-strContent = Request.ServerVariables("HTTP_USER_AGENT")
-if instr(strContent, "Firefox") > 0 then
-  response.write(replace(rsBody.fields.item("HTML"), "title", "class='tip' data-tipped-options=""target: 'mouse', behavior: 'hide'"" title"))
-else
-  response.write rsBody.fields.item("HTML")
-end if
-%>
+<div id="applet_container"></div>
 
 <!-- anchor to pull down page when scrolling through body diagrams -->
 <a name="top">
@@ -1782,16 +2142,6 @@ hack used to allow collapse of orbital image and still display footer text below
 as Leaflet map doesn't play nice with the 'display' CSS property
 -->
 <img src="mapholder.png" style="display: none; z-index: -1;" id="mapholder">
-
-<!-- the Key and Timestamp boxes, displayed according to position data from the database -->
-<%
-if not isnull(rsBody.fields.item("Key")) then
-  response.write("<table id='key' style='border: 1px solid black;	border-collapse: collapse; background-color: #E6E6E6; position: absolute; " & rsBody.fields.item("Key") & "'><tr><td style='font-size: 10px;'><b>Orbit Color Key</b><br><span style='color: red;'>Debris</span><br><span style='color: green;'>Communications</span><br><span style='color: magenta;'>Station</span><br><span style='color: blue;'>Probe</span><br><span style='color: #33CCFF;'>Ship</span><br><span style='color: brown;'>Asteroid</span></td></tr></table>")
-end if
-if not isnull(rsBody.fields.item("UTCPos")) then 
-  response.write("<table id='utc' style='border: 1px solid black;	border-collapse: collapse; background-color: #E6E6E6; position: absolute; " & rsBody.fields.item("UTCPos") & "'><tr><td style='font-size: 10px;'>Positions shown as of " & rsBody.fields.item("UTC") & "</td></tr></table>")
-end if
-%>
 
 <!-- map close button -->
 <img id="close" src="close.png" class='tip' data-tipped-options="position: 'left', offset: {y:-6}" title="Close" style="cursor: pointer; z-index: 10; position: absolute; top: 27px; right: 5px; visibility: hidden;" />
@@ -1831,42 +2181,19 @@ if not isnull(rsMaps.fields.item("KSC")) then
 end if
 %>
 
-<!-- Forward/Back time buttons -->
+<!-- Planet Info Box -->
 
-<%
-'currently, the ability to page between UT is only available for Kerbol, as it is updated at a constant rate
-if instr(request.querystring("body"), "Kerbol-System") then
-  url = "http://" & Request.ServerVariables("SERVER_NAME") & Request.ServerVariables("URL") & "?db=" & request.querystring("db") & "&body=" & request.querystring("body")
-  
-  'going forward/back a week or day?
-  if instr(request.querystring("body"), "Inner") then
-    timeSpan = "day"
-  else
-    timeSpan = "week"
-  end if
-  
-  'determine if we need a Prev button
-  if rsBody.AbsolutePosition > 1 then
-    rsBody.moveprevious
-    response.write("<table style='border: 1px solid black;	border-collapse: collapse; background-color: #E6E6E6; position: absolute; top: 57px; left: 10px;'><tr><td style='font-size: 10px;'><a style='text-decoration: none; color: black;' class='tip' title='Back one " & timeSpan & "' href='" & url & "&ut=" & rsBody.fields.item("UT") + 1 & "#top'><<</a></td></tr></table>")
-    rsBody.movenext
-  end if
-  
-  'determine if we need a Next button
-  if rsBody.AbsolutePosition < rsBody.recordcount then
-    rsBody.movenext
-    if rsBody.fields.item("UT") < UT then
-      response.write("<table style='border: 1px solid black;	border-collapse: collapse; background-color: #E6E6E6; position: absolute; top: 57px; left: 40px;'><tr><td style='font-size: 10px;'><a style='text-decoration: none; color: black;' class='tip' title='Forward one " & timeSpan & "' href='" & url & "&ut=" & rsBody.fields.item("UT") & "#top'>>></a></td></tr></table>")
-    end if
-  end if
-end if
-%>
+<table id="planetInfoBox" style='display: none; border: 1px solid black;	border-collapse: collapse; background-color: #E6E6E6; position: absolute; top: 52px; left: 5px;'><tr><td style='font-size: 10px;'><span id='planetInfo'></span></td></tr></table>
+
+<!-- Figure Controls -->
+
+<div style='color: white; position: absolute; top: 865px; left: 5px;'><input class="checkboxes" name="nodes" type="checkbox"> Show Nodes <input class="checkboxes" name="labels" type="checkbox"> Show Names <input class="checkboxes" name="ref" type="checkbox"> Show Reference Line</div>
 
 <!-- footer links-->
 
-<span style="font-family:arial;color:black;font-size:12px;">
+<span style="font-family:arial;color:black;font-size:10px;">
 <p>
-<a target='_blank' href='http://www.kerbalspace.agency'>KSA Home Page</a> | Orbit rendering: <a target='_blank' href="http://bit.ly/KSPTOT">KSPTOT</a> | Image mapping: <a target='_blank' href="http://summerstyle.github.io/summer/">Summer Image Map Creator</a> | <a href='https://github.com/Gaiiden/FlightTracker/wiki/Flight-Tracker-Documentation'>Flight Tracker Wiki</a>
+<a target='_blank' href='http://www.kerbalspace.agency'>KSA Home Page</a> | 2D Orbit rendering: <a target='_blank' href="http://bit.ly/KSPTOT">KSPTOT</a> | 3D Orbit Rendering: <a target='_blank' href="http://forum.kerbalspaceprogram.com/index.php?/topic/158826-3d-ksp-solar-system-scale-model-major-update-05202017/">by Syntax</a> | <a href='https://github.com/Gaiiden/FlightTracker/wiki/Flight-Tracker-Documentation'>Flight Tracker Wiki</a>
 </p>
 </span>
 </center>
@@ -1899,7 +2226,7 @@ https://github.com/Gaiiden/FlightTracker/wiki/Database-Documentation#dbcatalog
 <%
 'calculate the time in seconds since epoch 0 when the game started
 'we need to reset dbUT in case an earlier time was used to access past body map data
-dbUT = datediff("s", "13-Sep-2016 00:00:00", now())
+dbUT = datediff("s", "13-Sep-2016 00:00:00", now()) + timeOffset
 
 'what record are we looking to pull from the DB, the one that is most recent to the current UT or a specific entry?
 if request.querystring("ut") then
@@ -1913,7 +2240,7 @@ if request.querystring("ut") then
     if request.querystring("pass") <> "2725" then 
     
       'passcode incorrect or not supplied. Revert back to current UT
-      dbUT = datediff("s", "13-Sep-2016 00:00:00", now())
+      dbUT = datediff("s", "13-Sep-2016 00:00:00", now()) + timeOffset
     else
       UT = request.querystring("ut") * 1
     end if
@@ -1967,36 +2294,52 @@ if request.querystring("filter") = "inactive" then
     bInactiveVessels = false
     do while not rsCrafts.eof
 
-      'parse all the SOIs this craft has/will be in and find the one it is in currently
-      ref = -2
-      locations = split(rsCrafts.fields.item("SOI"), "|")
-      for each loc in locations
-        values = split(loc, ";")
-        if values(0)*1 <= dbUT then 
-          ref = values(1)*1
-        end if
-      next 
+      'do not process aircraft
+      if rsCrafts.fields.item("type") <> "aircraft" then 
+      
+        'parse all the SOIs this craft has/will be in and find the one it is in currently
+        ref = -2
+        locations = split(rsCrafts.fields.item("SOI"), "|")
+        for each loc in locations
+          values = split(loc, ";")
+          if values(0)*1 <= dbUT then 
+            ref = values(1)*1
+          end if
+        next 
 
-      'check if this is an inactive vessel or not
-      'then check that this vessel belongs under this filter category
-      if ref = -1 then
-        if rsCrafts.fields.item("type") = x then
-        
-          'if this is the first vessel found for this filter, then create the category to list the vessel under
-          if not bInactiveVessels then
-            bInactiveVessels = true
-            
-            'convert the string to first character upper case
-            letter = left(x, 1)
-            letter = ucase(letter)
-            title = letter & mid(x, 2, len(x)-1)
-            response.write("<li> <label" & title & " for='" & title & "'>" & title & "</label" & title & "> <input type='checkbox' id='" & title & "' /> <ol>")
-          end if
+        'check if this is an inactive vessel or not
+        'then check that this vessel belongs under this filter category
+        if ref = -1 then
+          if rsCrafts.fields.item("type") = x then
           
-          'add the craft under this vessel type
-          response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "' href='http://www.kerbalspace.agency/Tracker/craft.asp?db=" & rsCrafts.fields.item("db") & "&filter=inactive'>" & rsCrafts.fields.item("vessel") & "</a></li>")
+            'if this is the first vessel found for this filter, then create the category to list the vessel under
+            if not bInactiveVessels then
+              bInactiveVessels = true
+              
+              'convert the string to first character upper case
+              letter = left(x, 1)
+              letter = ucase(letter)
+              title = letter & mid(x, 2, len(x)-1)
+              response.write("<li> <label" & title & " for='" & title & "'>" & title & "</label" & title & "> <input type='checkbox' id='" & title & "' /> <ol>")
+            end if
+            
+            'add the craft under this vessel type
+            'get the vessel current name if there is more than one
+            if (instr(rsCrafts.fields.item("vessel"), ";") > 0) then
+              names = split(rsCrafts.fields.item("vessel"), "|")
+              for each name in names
+                values = split(name, ";")
+                if values(0)*1 <= UT then 
+                  vesselName = values(1)
+                end if
+              next 
+            else 
+              vesselName = rsCrafts.fields.item("vessel")
+            end if
+            response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "' href='http://www.kerbalspace.agency/Tracker/craft.asp?db=" & rsCrafts.fields.item("db") & "&filter=inactive'>" & vesselName & "</a></li>")
           end if
         end if
+      end if 
       rsCrafts.movenext
     loop
     
@@ -2005,6 +2348,35 @@ if request.querystring("filter") = "inactive" then
     if bInactiveVessels then response.write("</ol> </li>")
     rsCrafts.movefirst
   next
+
+  'look once more through all crafts in the table for any aircraft
+  bInactiveVessels = false
+  do while not rsCrafts.eof
+    if rsCrafts.fields.item("type") = "aircraft" then
+
+      'should this aircraft be shown?
+      if rsCrafts.fields.item("SOI")*1 <= dbUT then
+        
+        'if this is the first vessel found for this filter, then create the category to list the vessel under
+        if not bInactiveVessels then
+          bInactiveVessels = true
+          
+          title = "Aircraft"
+          response.write("<li> <label" & title & " for='" & title & "'>" & title & "</label" & title & "> <input type='checkbox' id='" & title & "' /> <ol>")
+        end if
+        
+        'add the craft under this vessel type
+        response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "' href='http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=Kerbin&map=true&flt=" & rsCrafts.fields.item("db") & "&filter=inactive'>" & rsCrafts.fields.item("vessel") & "</a></li>")
+      end if
+    end if
+    rsCrafts.movenext
+  loop
+  
+  'only close off the category if entries were created
+  'then re-rack the crafts for the next search
+ if bInactiveVessels then response.write("</ol> </li>")
+ rsCrafts.movefirst
+
 else
 
   'loop through all the planets
@@ -2017,60 +2389,75 @@ else
         bVessels = false
         do while not rsCrafts.eof
 
-          'parse all the SOIs this craft has/will be in and find the one it is in currently
-          ref = -1
-          locations = split(rsCrafts.fields.item("SOI"), "|")
-          for each loc in locations
-            values = split(loc, ";")
-            if values(0)*1 <= dbUT then 
-              ref = values(1)*1
+          'do not process aircraft
+          if rsCrafts.fields.item("type") <> "aircraft" then 
+            'parse all the SOIs this craft has/will be in and find the one it is in currently
+            ref = -1
+            locations = split(rsCrafts.fields.item("SOI"), "|")
+            for each loc in locations
+              values = split(loc, ";")
+              if values(0)*1 <= dbUT then 
+                ref = values(1)*1
+              end if
+            next 
+
+            'check for an active filter, otherwise ensure craft is selected by assigning craft type to the filter
+            if request.querystring("filter") = "" then
+              filterBy = rsCrafts.fields.item("type")
+            else
+              filterBy = request.querystring("filter")
             end if
-          next 
+            if filterBy = rsCrafts.fields.item("type") then
+            
+              'check if the craft that matches this UT is within the SOI of this moon
+              if ref = rsMoons.fields.item("id") then
 
-          'check for an active filter, otherwise ensure craft is selected by assigning craft type to the filter
-          if request.querystring("filter") = "" then
-            filterBy = rsCrafts.fields.item("type")
-          else
-            filterBy = request.querystring("filter")
-          end if
-          if filterBy = rsCrafts.fields.item("type") then
-          
-            'check if the craft that matches this UT is within the SOI of this moon
-            if ref = rsMoons.fields.item("id") then
-
-              'include the moon as a child of the planet if this is the first vessel found within its SOI
-              if not bVessels then
-              
-                'include the planet in the tree if this has not yet been done
-                if not bPlanet then
+                'include the moon as a child of the planet if this is the first vessel found within its SOI
+                if not bVessels then
                 
-                  'ensure that some URL variables are not lost in the link
-                  url = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=" & rsPlanets.fields.item("body") & "-System"
-                  if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
-                  if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
-                  response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""showOn: 'mouseover', position: 'right'"" title='Show System overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsPlanets.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
-                  bPlanet = true
+                  'include the planet in the tree if this has not yet been done
+                  if not bPlanet then
+                  
+                    'ensure that some URL variables are not lost in the link
+                    url = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=" & rsPlanets.fields.item("body") & "-System"
+                    if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
+                    if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
+                    response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""showOn: 'mouseover', position: 'right'"" title='Show System overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsPlanets.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
+                    bPlanet = true
+                  end if
+                  
+                  // disable the ability to click on moon links to go to there body pages
+                  //url = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=" & rsMoons.fields.item("body")
+                  //if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
+                  //if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
+                  //response.write("<li><label for='" & rsMoons.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""showOn: 'mouseover', position: 'right'"" title='Show body overview' href='" & url & "'>" & rsMoons.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsMoons.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
+                  response.write("<li><label for='" & rsMoons.fields.item("body") & "'>" & rsMoons.fields.item("body") & "&nbsp;&nbsp;<span id='" & rsMoons.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
+                  bVessels = true
                 end if
                 
-                // disable the ability to click on moon links to go to there body pages
-                //url = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=" & rsMoons.fields.item("body")
-                //if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
-                //if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
-                //response.write("<li><label for='" & rsMoons.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""showOn: 'mouseover', position: 'right'"" title='Show body overview' href='" & url & "'>" & rsMoons.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsMoons.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
-                response.write("<li><label for='" & rsMoons.fields.item("body") & "'>" & rsMoons.fields.item("body") & "&nbsp;&nbsp;<span id='" & rsMoons.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
-                bVessels = true
-              end if
-              
-              'include the craft as a child of the moon
-              url = "http://www.kerbalspace.agency/Tracker/craft.asp?db=" & rsCrafts.fields.item("db")
-              if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
-              if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
-              response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""showOn: 'mouseover', offset: { x: -10 }, maxWidth: 255, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "' href='" & url & "'>" & rsCrafts.fields.item("vessel") & "&nbsp;&nbsp;<span id='" & rsCrafts.fields.item("db") & "' style='position: relative;'></span></a></li>")
-              bEntry = true
-              
-              'if this craft is orbiting around the body currently being viewed, it will probably need a rich tooltip to be displayed
-              if instr(request.querystring("body"), rsMoons.fields.item("Body")) then
-                response.write("<script>craftQuery.push('" & rsCrafts.fields.item("db") & "');</script>")
+                'include the craft as a child of the moon
+                'get the vessel current name if there is more than one
+                if (instr(rsCrafts.fields.item("vessel"), ";") > 0) then
+                  names = split(rsCrafts.fields.item("vessel"), "|")
+                  for each name in names
+                    values = split(name, ";")
+                    if values(0)*1 <= UT then 
+                      vesselName = values(1)
+                    end if
+                  next 
+                else 
+                  vesselName = rsCrafts.fields.item("vessel")
+                end if
+                url = "http://www.kerbalspace.agency/Tracker/craft.asp?db=" & rsCrafts.fields.item("db")
+                if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
+                if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
+                response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""showOn: 'mouseover', offset: { x: -10 }, maxWidth: 255, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & "' href='" & url & "'>" & vesselName & "&nbsp;&nbsp;<span id='" & rsCrafts.fields.item("db") & "' style='position: relative;'></span></a></li>")
+                bEntry = true
+                
+                'if this craft is orbiting around the body currently being viewed, it will probably need a rich tooltip to be displayed
+                if instr(request.querystring("body"), rsMoons.fields.item("Body")) then
+                  response.write("<script>craftQuery.push('" & rsCrafts.fields.item("db") & "');</script>")
+                end if
               end if
             end if
           end if
@@ -2096,50 +2483,65 @@ else
     'time to look for any craft orbiting this planet
     'parse all the SOIs this craft has/will be in and find the one it is in currently
     do while not rsCrafts.eof
-      ref = -1
-      locations = split(rsCrafts.fields.item("SOI"), "|")
-      for each loc in locations
-        values = split(loc, ";")
-        if values(0)*1 <= dbUT then 
-          ref = values(1)*1
-        end if
-      next 
-      
-      'check for an active filter, otherwise ensure craft is selected by assigning craft type to the filter
-      if request.querystring("filter") = "" then
-        filterBy = rsCrafts.fields.item("type")
-      else
-        filterBy = request.querystring("filter")
-      end if
-      if filterBy = rsCrafts.fields.item("type") then
-      
-        'check if the craft that matches this UT is within the SOI of this planet
-        if ref = rsPlanets.fields.item("id") then
+    
+      'do not process aircraft
+      if rsCrafts.fields.item("type") <> "aircraft" then
+        ref = -1
+        locations = split(rsCrafts.fields.item("SOI"), "|")
+        for each loc in locations
+          values = split(loc, ";")
+          if values(0)*1 <= dbUT then 
+            ref = values(1)*1
+          end if
+        next 
         
-          'include the planet in the tree if this has not yet been done
-          if not bPlanet then
-            if rsPlanets.fields.item("body") = "Kerbol" then bKerbolUsed = true
-            url = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=" & rsPlanets.fields.item("body") & "-System"
+        'check for an active filter, otherwise ensure craft is selected by assigning craft type to the filter
+        if request.querystring("filter") = "" then
+          filterBy = rsCrafts.fields.item("type")
+        else
+          filterBy = request.querystring("filter")
+        end if
+        if filterBy = rsCrafts.fields.item("type") then
+        
+          'check if the craft that matches this UT is within the SOI of this planet
+          if ref = rsPlanets.fields.item("id") then
+          
+            'include the planet in the tree if this has not yet been done
+            if not bPlanet then
+              if rsPlanets.fields.item("body") = "Kerbol" then bKerbolUsed = true
+              url = "http://www.kerbalspace.agency/Tracker/body.asp?db=bodies&body=" & rsPlanets.fields.item("body") & "-System"
+              if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
+              if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
+                response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""showOn: 'mouseover', position: 'right'"" title='Show System overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsPlanets.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
+              bPlanet = true
+            end if
+            
+            'include the craft as a child of the planet
+            'get the vessel current name if there is more than one
+            if (instr(rsCrafts.fields.item("vessel"), ";") > 0) then
+              names = split(rsCrafts.fields.item("vessel"), "|")
+              for each name in names
+                values = split(name, ";")
+                if values(0)*1 <= UT then 
+                  vesselName = values(1)
+                end if
+              next 
+            else 
+              vesselName = rsCrafts.fields.item("vessel")
+            end if
+            url = "' href='http://www.kerbalspace.agency/Tracker/craft.asp?db=" & rsCrafts.fields.item("db")
             if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
             if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
-              response.write("<li> <label for='" & rsPlanets.fields.item("body") & "'><a id='link' class='tip' data-tipped-options=""showOn: 'mouseover', position: 'right'"" title='Show System overview' href='" & url & "'>" & rsPlanets.fields.item("body") & "</a>&nbsp;&nbsp;<span id='" & rsPlanets.fields.item("body") & "' style='position: relative;'></span></label> <input type='checkbox' id='' /> <ol>")
-            bPlanet = true
-          end if
-          
-          'include the craft as a child of the planet
-          url = "' href='http://www.kerbalspace.agency/Tracker/craft.asp?db=" & rsCrafts.fields.item("db")
-          if len(request.querystring("filter")) then url = url & "&filter=" & request.querystring("filter")
-          if len(request.querystring("pass")) then url = url & "&pass=" & request.querystring("pass")
-            response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""showOn: 'mouseover', offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & url & "'>" & rsCrafts.fields.item("vessel") & "&nbsp;&nbsp;<span id='" & rsCrafts.fields.item("db") & "' style='position: relative;'></span></a></li>")
-          bEntry = true
-              
-          'if this craft is orbiting around the body currently being viewed, it will probably need a rich tooltip to be displayed
-          if instr(request.querystring("body"), rsPlanets.fields.item("Body")) then
-            response.write("<script>craftQuery.push('" & rsCrafts.fields.item("db") & "');</script>")
+              response.write("<li class='" & rsCrafts.fields.item("type") & "'><a class='tip' data-tipped-options=""showOn: 'mouseover', offset: { x: -10 }, maxWidth: 278, position: 'topleft'"" title='" & rsCrafts.fields.item("desc") & url & "'>" & vesselName & "&nbsp;&nbsp;<span id='" & rsCrafts.fields.item("db") & "' style='position: relative;'></span></a></li>")
+            bEntry = true
+                
+            'if this craft is orbiting around the body currently being viewed, it will probably need a rich tooltip to be displayed
+            if instr(request.querystring("body"), rsPlanets.fields.item("Body")) then
+              response.write("<script>craftQuery.push('" & rsCrafts.fields.item("db") & "');</script>")
+            end if
           end if
         end if
       end if
-      
       'advance to the next craft
       rsCrafts.movenext
     loop
@@ -2239,19 +2641,23 @@ rsMoons.movefirst
 
 response.write("<script>var craftsCatalog = []; var bodiesCatalog = []; var bodyObtData = [];")
 do while not rsCrafts.eof
-  ref = -1
-  locations = split(rsCrafts.fields.item("SOI"), "|")
-  for each loc in locations
-    values = split(loc, ";")
-    if values(0)*1 <= dbUT then 
-      ref = values(1)*1
+  
+  'do not process aircraft
+  if rsCrafts.fields.item("type") <> "aircraft" then 
+    ref = -1
+    locations = split(rsCrafts.fields.item("SOI"), "|")
+    for each loc in locations
+      values = split(loc, ";")
+      if values(0)*1 <= dbUT then 
+        ref = values(1)*1
+      end if
+    next 
+    if ref >= 0 then
+      response.write("craftsCatalog.push({DB: '" & rsCrafts.fields.item("DB") & _
+                      "', Name: '" & rsCrafts.fields.item("Vessel") & _
+                      "', Type: '" & rsCrafts.fields.item("Type") & _
+                      "', Desc: """ & rsCrafts.fields.item("Desc") & """});")
     end if
-  next 
-  if ref >= 0 then
-    response.write("craftsCatalog.push({DB: '" & rsCrafts.fields.item("DB") & _
-                    "', Name: '" & rsCrafts.fields.item("Vessel") & _
-                    "', Type: '" & rsCrafts.fields.item("Type") & _
-                    "', Desc: """ & rsCrafts.fields.item("Desc") & """});")
   end if
   rsCrafts.movenext
 loop
@@ -2388,34 +2794,19 @@ end if
               response.write("None Scheduled")
             else
               
-              'has this launch has gone off already?
-              if datediff("s", rsLaunch.fields.item("EventDate"), now()) >= 0 then
+              'is this a countdown hold?
+              if isnull(rsLaunch.fields.item("EventDate")) then 
                 response.write("<script>")
                 response.write("var bLaunchCountdown = false;")
-
-                'if there is a future one to look for, let js know and update when it hits
-                rsLaunch.movenext()
-                if not rsLaunch.eof then
-                  response.write("var bFutureLaunch = true;")
-                  response.write("var nextLaunchSched = " & rsLaunch.fields.item("UT") & ";")
-                else
-                  response.write("var bFutureLaunch = false;")
-                  response.write("var nextLaunchSched = 0;")
-                end if
-                response.write("</script>")
-                response.write("None Scheduled")
-                
-              'this launch is displayable and upcoming, configure js variables for updating the countdown timer
-              else
-                response.write("<script>")
-                response.write("var bLaunchCountdown = true;")
                 response.write("var bFutureLaunch = false;")
                 response.write("var nextLaunchSched = 0;")
-                response.write("var launchSchedUT = " & datediff("s", rsLaunch.fields.item("EventDate"), now()) & ";")
-                response.write("var launchCraft = '" & rsLaunch.fields.item("CraftName") & "';")
+
+                'not an active countdown, but still contains data
                 response.write("var launchLink = '" & rsLaunch.fields.item("CraftLink") & "';")
+                response.write("var launchCraft = '" & rsLaunch.fields.item("CraftName") & "';")
+                response.write("var launchSchedUT = 0;")
                 response.write("</script>")
-                
+
                 'add a tooltip to give the user more details if available
                 if not isnull(rsLaunch.fields.item("Desc")) then
                   response.write("<a class='tip' title='" & rsLaunch.fields.item("Desc") & "' data-tipped-options=""offset: { y: -10 }, maxWidth: 150, position: 'top'"" href='" & rsLaunch.fields.item("CraftLink") & "'>" & rsLaunch.fields.item("CraftName") & "</a><br>")
@@ -2423,10 +2814,49 @@ end if
                   response.write("<a href='" & rsLaunch.fields.item("CraftLink") & "'>" & rsLaunch.fields.item("CraftName") & "</a><br>")
                 end if
                 
-                'print out the launch details and give the user the option to have the site remind them about it
-                response.write(formatdatetime(rsLaunch.fields.item("EventDate")) & "<br />")
-                response.write("<span id='tminuslaunch'></span>")
-                response.write("<br /><div id='launchDiv'><input type='checkbox' id='remindLaunch'> <span class='tip' data-tipped-options=""maxWidth: 150"" title='Checking this box will cause the browser to alert you 5 minutes before the event' style='cursor: default; vertical-align: 2px;'>Remind Me</span> <img id='launchWarn' style='display: none; vertical-align: 1px; cursor: help;' src='warning-icon.png' class='tip' data-tipped-options=""maxWidth: 150"" title='You do not have cookies enabled, which means this setting will not be saved between pages/sessions. Click to dismiss'></div>")
+                'display the hold message
+                response.write("COUNTDOWN HOLD<br>Awaiting new L-0 time")
+              else
+                'has this launch has gone off already?
+                if datediff("s", rsLaunch.fields.item("EventDate"), now()) + timeOffset >= 0 then
+                  response.write("<script>")
+                  response.write("var bLaunchCountdown = false;")
+
+                  'if there is a future one to look for, let js know and update when it hits
+                  rsLaunch.movenext()
+                  if not rsLaunch.eof then
+                    response.write("var bFutureLaunch = true;")
+                    response.write("var nextLaunchSched = " & rsLaunch.fields.item("UT") & ";")
+                  else
+                    response.write("var bFutureLaunch = false;")
+                    response.write("var nextLaunchSched = 0;")
+                  end if
+                  response.write("</script>")
+                  response.write("None Scheduled")
+                  
+                'this launch is displayable and upcoming, configure js variables for updating the countdown timer
+                else
+                  response.write("<script>")
+                  response.write("var bLaunchCountdown = true;")
+                  response.write("var bFutureLaunch = false;")
+                  response.write("var nextLaunchSched = 0;")
+                  response.write("var launchLink = '" & rsLaunch.fields.item("CraftLink") & "';")
+                  response.write("var launchCraft = '" & rsLaunch.fields.item("CraftName") & "';")
+                  response.write("var launchSchedUT = " & datediff("s", rsLaunch.fields.item("EventDate"), now()) + timeOffset & ";")
+                  response.write("</script>")
+                  
+                  'add a tooltip to give the user more details if available
+                  if not isnull(rsLaunch.fields.item("Desc")) then
+                    response.write("<a class='tip' title='" & rsLaunch.fields.item("Desc") & "' data-tipped-options=""offset: { y: -10 }, maxWidth: 150, position: 'top'"" href='" & rsLaunch.fields.item("CraftLink") & "'>" & rsLaunch.fields.item("CraftName") & "</a><br>")
+                  else
+                    response.write("<a href='" & rsLaunch.fields.item("CraftLink") & "'>" & rsLaunch.fields.item("CraftName") & "</a><br>")
+                  end if
+                
+                  'print out the launch details and give the user the option to have the site remind them about it
+                  response.write(formatdatetime(rsLaunch.fields.item("EventDate")) & "<br>")
+                  response.write("<span id='tminuslaunch'></span>")
+                  response.write("<br /><div id='launchDiv'><input type='checkbox' id='remindLaunch'> <span class='tip' data-tipped-options=""maxWidth: 150"" title='Checking this box will cause the browser to alert you 5 minutes before the event' style='cursor: default; vertical-align: 2px;'>Remind Me</span> <img id='launchWarn' style='display: none; vertical-align: 1px; cursor: help;' src='warning-icon.png' class='tip' data-tipped-options=""maxWidth: 150"" title='You do not have cookies enabled, which means this setting will not be saved between pages/sessions. Click to dismiss'></div>")
+                end if
               end if
             end if
             %>
@@ -2449,7 +2879,7 @@ end if
             else
                 
               'has this maneuver has gone off already?
-              if datediff("s", rsManeuver.fields.item("EventDate"), now()) >= 0 then
+              if datediff("s", rsManeuver.fields.item("EventDate"), now()) + timeOffset >= 0 then
                 response.write("<script>")
                 response.write("var bManeuverCountdown = false;")
 
@@ -2471,7 +2901,7 @@ end if
                 response.write("var bManeuverCountdown = true;")
                 response.write("var bFutureManeuver = false;")
                 response.write("var nextManeuverSched = 0;")
-                response.write("var maneuverUT = " & datediff("s", rsManeuver.fields.item("EventDate"), now()) & ";")
+                response.write("var maneuverUT = " & datediff("s", rsManeuver.fields.item("EventDate"), now()) + timeOffset & ";")
                 response.write("var maneuverLink = '" & rsManeuver.fields.item("CraftLink") & "';")
                 response.write("var maneuverCraft = '" & rsManeuver.fields.item("CraftName") & "';")
                 response.write("</script>")
@@ -2500,8 +2930,9 @@ end if
 </p>
 
 <!-- this will display the recent tweets from @KSA_MissionCtrl --> 
+
 <P><center><a href="https://twitter.com/KSA_MissionCtrl" class="twitter-follow-button" data-show-count="true">Follow @KSA_MissionCtrl</a><script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script></center>
-<a class="twitter-timeline" href="https://twitter.com/KSA_MissionCtrl" data-widget-id="598711760149852163" height="700" data-chrome="noheader">Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>  </p>
+<a class="twitter-timeline" href="https://twitter.com/KSA_MissionCtrl" data-widget-id="598711760149852163" height="625" data-chrome="noheader">Tweets by @KSA_MissionCtrl</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>  </p>
 </span></div> </div>
 
 <!-- Setting up known map layers -->
@@ -2509,7 +2940,8 @@ end if
 <script>
   // don't run this script if we don't have any maps on this body
   var currUT = initialUT = UT = <%response.write UT%>;
-  if (<%response.write(lcase(rsBody.fields.item("Map")))%>) 
+  var hasMap = <%response.write(lcase(rsBody.fields.item("Map")))%>;
+  if (hasMap) 
   {
   
     // create the map with some custom options
@@ -3125,6 +3557,9 @@ end if
     
     // increase the current time elapsed since epoch 0
     UT++;
+    
+    // update the dynamic orbit figure
+    if (ggbAppletLoaded) { ggbApplet.setValue("UT", UT); }
     
     // ensure timer accuracy, even catch up if browser slows tab in background
     // http://www.sitepoint.com/creating-accurate-timers-in-javascript/
