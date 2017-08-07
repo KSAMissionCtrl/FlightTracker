@@ -1,13 +1,13 @@
 # FlightTracker & Crew Roster
 A means of dynamically displaying craft & crew information online for vessels in Kerbal Space Program
 
-These files use a mix of HTML, JavaScript, JQuery and ASP with MSAccess dtabases to create a dynamic page to allow users to browse various craft a player has in KSP to see very specific details about the vessel, including resources, orbital information, crew members, etc. This provides a way to create persistence for any KSP role-play.
+These files use a mix of HTML, JavaScript, JQuery and ASP with MSAccess databases to create a dynamic page to allow users to browse various craft a player has in KSP to see very specific details about the vessel, including resources, orbital information, crew members, etc. This provides a way to create persistence for any KSP role-play.
 
 Included also is the code for displaying crew rosters that let people find out more information about the astronauts that make up your space program.
 
 The Flight Tracker is fully compatible with touchscreens on mobile devices.
 
-The following mods/apps are used to provide the data the Flight Tracker and Crew Roster require:
+The following KSP mods/apps are used to provide the data the Flight Tracker and Crew Roster require:
 
 * [KSPTOT](http://forum.kerbalspaceprogram.com/threads/36476-WIN-KSP-Trajectory-Optimization-Tool-v0-12-2-Mission-Architect-Update!)
 * [Final Frontier](http://forum.kerbalspaceprogram.com/threads/67246)
@@ -29,12 +29,13 @@ The following JavaScript libraries are used:
 * [Rrose](http://erictheise.github.io/rrose/)
 * [Leaflet.Fullscreen](https://github.com/brunob/leaflet.fullscreen)
 * [Leaflet.GroupedLayerControl](https://github.com/ismyrnow/Leaflet.groupedlayercontrol)
+* [GeoGebra](https://wiki.geogebra.org/en/Reference:JavaScript)
 
-Blank template MDB Access files are included for both crafts and rosters, as well as filled-in example databases.
+Blank template MDB Access files are included for both crafts and rosters.
 
 ### Getting Started
 
-Basically you need to install the folders to your server and feed them a database to reference with `?db=[name]` appended to the URL pointing to either craft.asp, body.asp or roster.asp. The databases included in the Flight Tracker that are not labeled as examples are required to be present for the pages to load. Search the files for `db =` which is where the databases are opened and change the relative path to point to where you store your database tables if you don't want to keep them in the public directory. See the [current KSA Flight Tracker](http://bit.ly/FltTracker) to get an idea of how things work together.
+Basically you need to install the folders to your server and feed them a database to reference with `?db=[name]` appended to the URL pointing to either craft.asp, body.asp or roster.asp. The databases included in the Flight Tracker that are not labeled as examples are required to be present for the pages to load. Search the files for `db =` which is where the databases are opened and change the relative path to point to where you store your database tables if you don't want to keep them in the public directory. See the [current KSA Flight Tracker](http://www.kerbalspace.agency/Tracker) to get an idea of how things work together.
 
 ### Known Issues
 
@@ -50,8 +51,6 @@ Basically you need to install the folders to your server and feed them a databas
 - [FT] Leaflet popups will overlap and are not smart enough to position themselves to stay off other popups
 - [FT] Engine/Thruster overlay during a maneuver only has a single image and can't account for rotation
 - [FT] *Chrome Only* launch video replays do not always load fully
-- [FT] *Non-Firefox Only* some system overview pages show an empty tooltip when hovering over a body in addition to the rich HTML tooltip
-- [FT] *Firefox Only* if a tooltip appears in the very middle of the screen, it can sometimes appear to the left and not be formatted properly (too narrow) - will not be fixed due to lack of tooltip support for image maps. Just scroll up or down slightly and the tooltip will display properly above/below/right
 
 ### Future Fixes/Changes/Additions
 
@@ -75,8 +74,34 @@ Basically you need to install the folders to your server and feed them a databas
 * [FT] Allow vessels menu to organize by vessel subcat and then year subcat and even month subcat
 * [FT] Upgrade to the latest version of Leaflet using a [new maps library](https://gitlab.com/IvanSanchez/Leaflet.Kerbal)
 * [CR] Reverse-order mission listing so newest is at top
+* [FT] Hyperbolic orbit rendering in GeoGebra figures
 
 ### Change Log
+
+**v4.12** (8/6/17)
+
+Fixes:
+  - [FT] Pins loaded from ground tracks are now properly detected when multiple links are included in the description
+  - [FT] More finagling to account for whether daylight savings is in effect or not when displaying times in various places
+  - [FT] Times to next SOI change are now converted properly
+  - [FT] Times for ground track data points are now converted properly
+  - [FT] Instance where the original KSA start date was being used to calculate current UT is now set to present KSA start date
+  - [FT] Removed some debugging code left over from v4.10
+  
+Changes:
+  - [CR] Ages are now calculated as days and converted to years to be shown with extra precision without rounding (42.65 is now displayed instead of 43 ahead of their birthday)
+  - [FT] Tooltips and selection for planets and vessels have been replaced by the new 3D-rendered system figures. All associated known issues have been removed
+  - [FT] Using a dev version of Codebird to access more recently-added twitter functions to manipulate Collections
+  - [FT] When a vessel's orbit exceeds 100,000s and the user is given the option to render a full orbit, only 1 full orbit is rendered instead of 3 by default, and the new URL parameter `&orbits=1` is added, which can be changed to a higher number & page reloaded for more
+  - [FT] String data for `ImgDataCode` can now use the ascent string to add current altitude to the position marker (see (database docs)[https://github.com/KSAMissionCtrl/FlightTracker/wiki/Database-Documentation#craft-data-fields])
+  - [FT] If altitude is used as well as moving the ascent marker, the map zooms in to keep it and KSC in view
+  
+Additions:
+  - [CR/FT] Next Launch time in the Events window can now handle a HOLD event during the countdown, which it detects by a blank field for the `EventDate` of the launch (see [database docs](https://github.com/KSAMissionCtrl/FlightTracker/wiki/Database-Documentation#dbevents))
+  - [CR] New stat to track: Time in Space, a subset of Mission Time, which includes anytime spent *anywhere* outside Kerbin's atmosphere
+  - [FT] **3D-rendered system views** using [GeoGebra](https://www.geogebra.org/) with massive props to [Syntax](http://forum.kerbalspaceprogram.com/index.php?/topic/158826-3d-ksp-solar-system-scale-model-major-update-05202017/) from the KSP forums for figuring out all the maths
+  - [FT/CR] `timeOffset` variable contains the offset in seconds between the current time reported by JavaScript (which uses a constant start value) and VBScript (which uses the server system clock, which apparently cannot stay synced properly) - this ensures the event clock shows the proper time, but needs to be updated prior to any upcoming events that require to-the-second timing
+  - [FT] Aircraft ground tracks can now be shown in the Inactive Vessels listing and scheduled to appear when their data is valid
 
 **v4.11** (2/13/17)
 
